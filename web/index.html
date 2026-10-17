@@ -1,0 +1,856 @@
+<title>Jezero Base Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: full-bleed particle terrain; quiet glass panels float above it (layers left, bases right, readout bottom-left). Single dark theme by design. */
+:root{
+  color-scheme: dark;
+  --bg:#040506;
+  --panel:rgba(9,11,14,.76);
+  --panel-solid:#0a0c0f;
+  --line:rgba(214,220,230,.08);
+  --line-strong:rgba(214,220,230,.16);
+  --fg:#dcd9d2;
+  --muted:#8a8d95;
+  --faint:#5b5f67;
+  --accent:#cdb48e;
+  --mist:#8fb3c4;
+  --ok:#9fbfa8;
+  --warn:#d49a92;
+  --font-display:"Instrument Serif", "Iowan Old Style", Georgia, serif;
+  --font-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:13px;line-height:1.45;overflow:hidden;-webkit-font-smoothing:antialiased}
+#stage{position:fixed;inset:0;background:var(--bg)}
+#gl,#ov{position:absolute;inset:0;width:100%;height:100%;display:block}
+#ov{pointer-events:none}
+#gl{cursor:grab;touch-action:none}
+body.dragging #gl{cursor:grabbing}
+body.placing #gl{cursor:crosshair}
+.vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 75% 70% at 50% 48%, rgba(4,5,6,0) 55%, rgba(4,5,6,.7) 100%)}
+
+.topbar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 20px);left:calc(env(safe-area-inset-left,0px) + 20px);display:flex;flex-direction:column;gap:8px;max-width:calc(100% - 40px);pointer-events:none}
+h1{font-family:var(--font-display);font-weight:400;font-size:32px;line-height:1;margin:0;letter-spacing:.005em;text-wrap:balance}
+h1 em{font-style:italic;color:var(--accent)}
+.coords{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.top-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;pointer-events:auto}
+.chip{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:rgba(9,11,14,.5)}
+.btn-ghost{font:inherit;font-size:12px;color:var(--fg);background:rgba(9,11,14,.6);border:1px solid var(--line-strong);border-radius:999px;padding:4px 12px;cursor:pointer}
+.btn-ghost:hover,.btn-ghost[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.panel,.tabbar{transition:opacity .5s ease}
+body.overview .panel,body.overview .tabbar{opacity:0;pointer-events:none}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:1.5px solid var(--accent);outline-offset:2px}
+
+.panel{position:absolute;background:var(--panel);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:14px;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
+#layers{left:calc(env(safe-area-inset-left,0px) + 20px);top:calc(env(safe-area-inset-top,0px) + 132px);width:296px;max-height:calc(100% - 132px - 76px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:14px 14px 10px}
+#bases{right:calc(env(safe-area-inset-right,0px) + 20px);top:calc(env(safe-area-inset-top,0px) + 20px);width:318px;max-height:calc(100% - 40px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:16px}
+.panel h2{font-family:var(--font-display);font-weight:400;font-size:21px;margin:0;line-height:1.1}
+.panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px}
+.panel-sub{font-size:11.5px;color:var(--muted)}
+.group-label{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:14px 2px 6px}
+.group-label:first-of-type{margin-top:4px}
+
+.layer{border-radius:9px;padding:7px 8px;transition:background .2s}
+.layer:hover{background:rgba(214,220,230,.035)}
+.layer.on{background:rgba(214,220,230,.045)}
+.layer-head{display:grid;grid-template-columns:auto 10px 1fr auto;align-items:center;gap:8px;cursor:pointer}
+.layer-head input{margin:0;accent-color:var(--accent);width:14px;height:14px;cursor:pointer}
+.swatch{width:10px;height:10px;border-radius:3px}
+.layer-name{font-weight:500;color:var(--fg);min-width:0}
+.layer:not(.on) .layer-name{color:var(--muted)}
+.layer-res{font-family:var(--font-mono);font-size:10px;color:var(--faint);white-space:nowrap}
+.layer-src{font-size:11px;color:var(--faint);margin:2px 0 0 32px}
+.layer-detail{margin:8px 0 2px 32px;display:flex;flex-direction:column;gap:7px}
+.legend-ramp{height:6px;border-radius:3px}
+.legend-labels{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9.5px;color:var(--muted);margin-top:3px}
+.legend-sw{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px;color:var(--muted)}
+.legend-sw span{display:inline-flex;align-items:center;gap:5px}
+.legend-sw i{width:8px;height:8px;border-radius:2px;display:inline-block}
+.op-row{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;font-family:var(--font-mono);font-size:9.5px;color:var(--faint);letter-spacing:.06em}
+.op-row input{accent-color:var(--accent);width:100%;margin:0}
+.op-val{font-variant-numeric:tabular-nums;width:30px;text-align:right}
+
+.count{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+#base-list{list-style:none;margin:0 0 4px;padding:0;display:flex;flex-direction:column;gap:8px}
+.base{border:1px solid var(--line);border-radius:11px;padding:10px 11px;cursor:pointer;transition:border-color .2s, background .2s}
+.base:hover{border-color:var(--line-strong)}
+.base.sel{border-color:rgba(205,180,142,.45);background:rgba(205,180,142,.05)}
+.base-top{display:flex;align-items:center;gap:8px}
+.base-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);flex:none}
+.base-name{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line-strong);border-radius:999px;padding:1px 7px}
+.icon-btn{font:inherit;font-size:15px;line-height:1;color:var(--faint);background:none;border:0;cursor:pointer;padding:2px 4px;border-radius:6px}
+.icon-btn:hover{color:var(--warn)}
+.base-meta{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);margin:4px 0 8px 15px}
+.stats{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0 0 0 15px;font-size:12px}
+.stats dt{color:var(--faint)}
+.stats dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;display:flex;justify-content:flex-end;gap:6px;align-items:center}
+.pill{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.04em;border-radius:999px;padding:1px 7px}
+.pill.ok{color:var(--ok);background:rgba(159,191,168,.1)}
+.pill.warn{color:var(--warn);background:rgba(212,154,146,.12)}
+
+#base-form{border-top:1px solid var(--line);margin-top:14px;padding-top:14px;display:flex;flex-direction:column;gap:9px}
+#base-form h3{font-family:var(--font-display);font-weight:400;font-size:18px;margin:0}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:11px;color:var(--muted)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+input[type=text],input[type=number],select{font:inherit;font-size:13px;color:var(--fg);background:rgba(214,220,230,.04);border:1px solid var(--line-strong);border-radius:8px;padding:7px 9px;width:100%;box-sizing:border-box;min-width:0}
+select option{background:var(--panel-solid)}
+.btn-primary{font:inherit;font-weight:500;font-size:13px;color:#16130e;background:var(--accent);border:0;border-radius:9px;padding:9px 12px;cursor:pointer;margin-top:3px;transition:filter .2s}
+.btn-primary:hover{filter:brightness(1.08)}
+.note{font-size:11px;color:var(--faint);margin:10px 0 0}
+
+#readout{position:absolute;left:calc(env(safe-area-inset-left,0px) + 20px);bottom:calc(env(safe-area-inset-bottom,0px) + 20px);font-family:var(--font-mono);font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:3px;pointer-events:none;max-width:calc(100% - 40px)}
+#readout .hover{color:var(--fg);font-variant-numeric:tabular-nums}
+#readout .scale{color:var(--faint);letter-spacing:.06em}
+
+#hint{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 24px);background:var(--panel);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(205,180,142,.35);border-radius:999px;padding:7px 8px 7px 16px;display:flex;align-items:center;gap:12px;font-size:12.5px;white-space:nowrap;max-width:calc(100% - 32px)}
+#hint span{overflow:hidden;text-overflow:ellipsis}
+
+.tabbar{display:none}
+#nogl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);padding:0 24px;text-align:center}
+
+@media (max-width:760px){
+  h1{font-size:24px}
+  .topbar{left:calc(env(safe-area-inset-left,0px) + 16px);top:calc(env(safe-area-inset-top,0px) + 16px);max-width:calc(100% - 32px)}
+  .panel{display:none;left:calc(env(safe-area-inset-left,0px) + 16px)!important;right:calc(env(safe-area-inset-right,0px) + 16px)!important;width:auto!important;top:auto!important;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);max-height:52%!important}
+  body[data-sheet="layers"] #layers, body[data-sheet="bases"] #bases{display:block}
+  #readout{top:calc(env(safe-area-inset-top,0px) + 112px);bottom:auto;left:calc(env(safe-area-inset-left,0px) + 16px)}
+  body[data-sheet="layers"] #readout, body[data-sheet="bases"] #readout{display:none}
+  .tabbar{display:flex;position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);gap:4px;background:var(--panel);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:999px;padding:4px}
+  .tabbar button{font:inherit;font-size:12.5px;color:var(--muted);background:none;border:0;border-radius:999px;padding:6px 16px;cursor:pointer}
+  .tabbar button[aria-pressed="true"]{color:#16130e;background:var(--accent)}
+  #hint{bottom:calc(env(safe-area-inset-bottom,0px) + 70px)}
+  body.placing .panel{display:none!important}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div id="stage">
+  <canvas id="gl" aria-label="Particle elevation map of the Jezero region. Drag to orbit, scroll to zoom."></canvas>
+  <canvas id="ov" aria-hidden="true"></canvas>
+  <div class="vignette"></div>
+</div>
+
+<header class="topbar">
+  <h1>Jezero <em>Base Planner</em></h1>
+  <div class="coords">Jezero · Nili Fossae · NE Syrtis &nbsp; 15.1–21.9° N, 73.4–80.6° E</div>
+  <div class="top-row">
+    <span class="chip">Real terrain: USGS HRSC + MOLA 200 m · some layers are placeholders</span>
+    <button class="btn-ghost" id="overview-btn" type="button" aria-pressed="false">Overview</button>
+    <button class="btn-ghost" id="reset-view" type="button">Reset view</button>
+  </div>
+</header>
+
+<aside id="layers" class="panel" aria-label="Map layers">
+  <div class="panel-head"><h2>Layers</h2><span class="panel-sub" id="layer-count"></span></div>
+  <div id="layer-list"></div>
+</aside>
+
+<aside id="bases" class="panel" aria-label="Bases">
+  <div class="panel-head"><h2>Bases</h2><span class="count" id="base-count"></span></div>
+  <ul id="base-list"></ul>
+  <form id="base-form" autocomplete="off">
+    <h3>Add a facility</h3>
+    <div class="field"><label for="base-name">Name</label><input type="text" id="base-name" maxlength="40"></div>
+    <div class="field"><label for="base-type">Facility type</label>
+      <select id="base-type">
+        <option value="habitat">Habitat</option>
+        <option value="pad">Landing pad</option>
+        <option value="solar">Solar farm</option>
+        <option value="isru">ISRU plant</option>
+        <option value="depot">Storage depot</option>
+      </select>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="base-foot">Footprint side (m)</label><input type="number" id="base-foot" min="20" max="2000" step="10"></div>
+      <div class="field"><label for="base-slope">Max slope (°)</label><input type="number" id="base-slope" min="0.5" max="30" step="0.5"></div>
+    </div>
+    <div class="field"><label for="base-rate">Grading rate, m³ per sol (assumed)</label><input type="number" id="base-rate" min="1" max="10000" step="1" value="50"></div>
+    <button class="btn-primary" type="submit" id="place-btn">Place on map</button>
+  </form>
+  <p class="note">Slope comes from 200 m elevation data, averaged into 1.8 km cells. At a chosen site, the 1 m HiRISE elevation data would refine the grading volume.</p>
+</aside>
+
+<div id="readout">
+  <div class="hover" id="hover-text">Drag to orbit · scroll to zoom</div>
+  <div class="scale">404 × 403 km · vertical exaggeration ×20</div>
+</div>
+<script src="terrain.js"></script>
+
+<div id="hint" hidden><span id="hint-text"></span><button class="btn-ghost" type="button" id="cancel-place">Cancel</button></div>
+
+<nav class="tabbar" aria-label="Panels">
+  <button type="button" data-sheet="layers" aria-pressed="false">Layers</button>
+  <button type="button" data-sheet="bases" aria-pressed="false">Bases</button>
+</nav>
+
+<script>
+(() => {
+'use strict';
+/* ---------- constants ---------- */
+const T = window.TERRAIN;
+if (!T) throw new Error('terrain.js did not load');
+const N = T.N, EXAG = 20, M = T.meta;
+const LAT0 = M.lat_south, LAT1 = M.lat_north, LON0 = M.lon_west, LON1 = M.lon_east;
+const DEG_KM = 2 * Math.PI * 3396.19 / 360;
+const SPAN_KM = (LON1 - LON0) * DEG_KM * Math.cos((LAT0 + LAT1) / 2 * Math.PI / 180); // ~404 km; the box is close to square
+const uOf = lon => (lon - LON0) / (LON1 - LON0), vOf = lat => (lat - LAT0) / (LAT1 - LAT0);
+const ISI = { u: uOf(88), v: vOf(13) };               // Isidis basin centre, off-map to the SE
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- helpers ---------- */
+const clamp = (x, a = 0, b = 1) => x < a ? a : x > b ? b : x;
+function ss(a, b, x) { let t = (x - a) / (b - a); t = t < 0 ? 0 : t > 1 ? 1 : t; return t * t * (3 - 2 * t); }
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function hash2(i, j) { let h = (Math.imul(i, 374761393) + Math.imul(j, 668265263)) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+function vnoise(x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+  const a = hash2(xi, yi), b = hash2(xi + 1, yi), c = hash2(xi, yi + 1), d = hash2(xi + 1, yi + 1);
+  const ux = xf * xf * (3 - 2 * xf), uy = yf * yf * (3 - 2 * yf);
+  return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy;
+}
+function fbm(x, y, o) { let s = 0, amp = .5, f = 1; for (let i = 0; i < o; i++) { s += (vnoise(x * f, y * f) - .5) * 2 * amp; f *= 2.03; amp *= .5; } return s; }
+function segDist(px, py, ax, ay, bx, by) { const dx = bx - ax, dy = by - ay; const t = clamp(((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)); return Math.hypot(px - ax - t * dx, py - ay - t * dy); }
+function hx(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; }
+function ramp(stops, t) { t = clamp(t); const s = t * (stops.length - 1); const i = Math.min(stops.length - 2, Math.floor(s)); const f = s - i; const a = stops[i], b = stops[i + 1]; return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f]; }
+const latOf = v => LAT0 + v * (LAT1 - LAT0), lonOf = u => LON0 + u * (LON1 - LON0);
+const fmtLL = (u, v) => `${latOf(v).toFixed(2)}° N  ${lonOf(u).toFixed(2)}° E`;
+const fmtKm = h => (h < 0 ? '−' : '') + Math.abs(h).toFixed(2) + ' km';
+const fmtInt = n => Math.round(n).toLocaleString('en-US');
+
+/* ---------- real terrain: USGS HRSC+MOLA blended DEM (200 m), averaged into N x N cells ---------- */
+function unpack(b64, Type) { const bin = atob(b64); const u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); return new Type(u8.buffer); }
+const NP = N * N;
+const GH = unpack(T.H, Int16Array), GS = unpack(T.S, Uint16Array), GSM = unpack(T.SM, Uint16Array), GRO = unpack(T.RO, Uint16Array);
+function gridH(i, j) { i = i < 0 ? 0 : i >= N ? N - 1 : i; j = j < 0 ? 0 : j >= N ? N - 1 : j; return GH[j * N + i] / 1000; }
+function height(u, v) { // km, bilinear between cell centres
+  const x = u * N - 0.5, y = v * N - 0.5, i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j;
+  const a = gridH(i, j), b = gridH(i + 1, j), c = gridH(i, j + 1), d = gridH(i + 1, j + 1);
+  return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+}
+const craters = T.craters.map(([lon, lat, dkm]) => ({ u: uOf(lon), v: vOf(lat), r: dkm / 2 / SPAN_KM, dkm }));
+const jz = T.craters.reduce((b, c) => Math.hypot(c[0] - 77.58, c[1] - 18.38) < Math.hypot(b[0] - 77.58, b[1] - 18.38) ? c : b);
+const J = { u: uOf(jz[0]), v: vOf(jz[1]), R: jz[2] / 2 / SPAN_KM };   // Jezero, from the Robbins database
+const deltaC = { u: J.u - 0.5 * J.R, v: J.v + 0.12 * J.R };
+function deltaQ(u, v) { return Math.hypot((u - deltaC.u) / (0.42 * J.R), (v - deltaC.v) / (0.32 * J.R)); }
+const CH1 = [J.u - 0.98 * J.R, J.v + 0.18 * J.R, J.u - 2.8 * J.R, J.v + 1.1 * J.R];  // inlet valley (approx.)
+const CH2 = [J.u + 0.98 * J.R, J.v - 0.10 * J.R, J.u + 2.4 * J.R, J.v - 0.75 * J.R];  // outlet valley (approx.)
+
+/* ---------- per-particle fields ---------- */
+const U = new Float32Array(NP), V = new Float32Array(NP), H = new Float32Array(NP);
+const GX = new Float32Array(NP), GY = new Float32Array(NP), SL = new Float32Array(NP), SMX = new Float32Array(NP), RO = new Float32Array(NP);
+const PX = new Float32Array(NP), TI = new Float32Array(NP), HZ = new Float32Array(NP);
+const MS = new Float32Array(NP), MT = new Int8Array(NP), GU = new Int8Array(NP);
+const RAND = new Float32Array(NP);
+
+// Placeholder layers (minerals, thermal inertia, geologic units) until the real CRISM / THEMIS / USGS files are loaded.
+const MINERALS = [
+  { name: 'Olivine', color: '#a9bf7e', blobs: [[0.62, 0.52, 0.13], [0.47, 0.70, 0.11], [0.72, 0.40, 0.09], [0.40, 0.60, 0.06]] },
+  { name: 'Carbonate', color: '#7fc4b6', blobs: [[0.42, 0.78, 0.05], [0.36, 0.68, 0.035]] },
+  { name: 'Clay', color: '#b9a3dc', blobs: [[0.30, 0.83, 0.09], [0.20, 0.72, 0.07], [0.38, 0.90, 0.06], [deltaC.u, deltaC.v, 0.03]] },
+];
+const UNITS = [
+  { name: 'Crater floor', color: '#7f8aa3' },
+  { name: 'Delta', color: '#cfae80' },
+  { name: 'Crater rim', color: '#a4879f' },
+  { name: 'Valley', color: '#8fb3c4' },
+  { name: 'Nili Planum', color: '#6f8c7d' },
+];
+const GEO_HALF = 0.075; // 60 km box around Jezero
+
+(function build() {
+  const rnd = mulberry32(20261017), cell = SPAN_KM / N;
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const k = j * N + i;
+    const u = (i + 0.5 + (rnd() - 0.5) * 0.5) / N, v = (j + 0.5 + (rnd() - 0.5) * 0.5) / N;
+    U[k] = u; V[k] = v; RAND[k] = rnd();
+    H[k] = GH[k] / 1000;
+    GX[k] = (gridH(i + 1, j) - gridH(i - 1, j)) / (2 * cell);
+    GY[k] = (gridH(i, j + 1) - gridH(i, j - 1)) / (2 * cell);
+    SL[k] = GS[k] / 10; SMX[k] = GSM[k] / 10; RO[k] = GRO[k] / 10;
+    // crater-rim proximity (real craters)
+    let prox = 0;
+    for (const c of craters) {
+      const ex = c.r * 2, dx = u - c.u, dy = v - c.v;
+      if (dx > ex || dx < -ex || dy > ex || dy < -ex) continue;
+      const cq = Math.hypot(dx, dy) / c.r; if (cq < 2) prox = Math.max(prox, Math.exp(-(((cq - 1) / 0.3) ** 2)));
+    }
+    PX[k] = prox;
+    const q = Math.hypot(u - J.u, v - J.v) / J.R;
+    const dI = Math.hypot(u - ISI.u, v - ISI.v);
+    TI[k] = clamp(0.55 + 0.35 * fbm(u * 5 + 11, v * 5 - 4, 3) - 0.15 * ss(1.6, 1.2, dI) + (q < 1 ? 0.25 * (1 - ss(0.6, 1, q)) : 0), 0.02, 1);
+    let best = 0, bt = -1;
+    MINERALS.forEach((m, t) => {
+      for (const [bu, bv, br] of m.blobs) {
+        const s = (1 - ss(0.35, 1, Math.hypot(u - bu, v - bv) / br)) * (0.55 + 0.45 * vnoise(u * 30 + t * 9, v * 30));
+        if (s > best) { best = s; bt = t; }
+      }
+    });
+    const carbRing = 0.9 * Math.exp(-(((q - 0.9) / 0.07) ** 2));
+    if (carbRing > best) { best = carbRing; bt = 1; }
+    MS[k] = best > 0.15 ? best : 0; MT[k] = best > 0.15 ? bt : -1;
+    if (Math.abs(u - J.u) < GEO_HALF && Math.abs(v - J.v) < GEO_HALF) {
+      const cd = Math.min(segDist(u, v, ...CH1), segDist(u, v, ...CH2));
+      GU[k] = (deltaQ(u, v) < 1 && q < 1) ? 1 : q < 0.9 ? 0 : q < 1.22 ? 2 : cd < 0.007 ? 3 : 4;
+    } else GU[k] = -1;
+  }
+})();
+
+const sortedH = Float32Array.from(H).sort();
+const hLo = sortedH[Math.floor(NP * 0.01)], hHi = sortedH[Math.floor(NP * 0.995)];
+const hMid = (hLo + hHi) / 2;
+const sortedR = Float32Array.from(RO).sort();
+const roughP95 = sortedR[Math.floor(NP * 0.95)] || 1;
+for (let k = 0; k < NP; k++) {
+  HZ[k] = clamp(0.35 * clamp(SL[k] / 15) + 0.15 * clamp(SMX[k] / 30) + 0.2 * clamp(RO[k] / roughP95) + 0.2 * PX[k] + 0.1 * (1 - TI[k]));
+}
+
+const worldY = h => (h - hMid) / SPAN_KM * 2 * EXAG;
+const world = (u, v, h) => [(u - 0.5) * 2, worldY(h), -(v - 0.5) * 2];
+const POS = new Float32Array(NP * 3);
+for (let k = 0; k < NP; k++) { const w = world(U[k], V[k], H[k]); POS[3 * k] = w[0]; POS[3 * k + 1] = w[1]; POS[3 * k + 2] = w[2]; }
+
+/* ---------- layers ---------- */
+const ELEV = ['#1f3448', '#2c4357', '#4f606c', '#8b8678', '#c6ae8a', '#f0e6d4'];
+const SLOPE = ['#22302f', '#5f8a7a', '#a9c7a4', '#ebe0a8'];
+const HAZ = ['#7d5560', '#d4908a', '#f3c9ae'];
+const TIR = ['#5a3f2e', '#8c6b4f', '#7d8f98', '#a9c8da'];
+const rgb = a => a.map(hx);
+const ELEVc = rgb(ELEV), SLOPEc = rgb(SLOPE), HAZc = rgb(HAZ), TIc = rgb(TIR);
+const MINc = MINERALS.map(m => hx(m.color)), UNITc = UNITS.map(m => hx(m.color));
+
+const LAYERS = [
+  { id: 'elev', group: 'Terrain', name: 'Elevation', src: 'USGS HRSC + MOLA blended model · real', res: '200 m', on: true, op: 1, sw: ELEV[4], legend: { ramp: ELEV, labels: [fmtKm(hLo), fmtKm(hHi)] } },
+  { id: 'slope', group: 'Terrain', name: 'Slope', src: 'Computed from the 200 m elevation · real', res: 'cell mean', on: false, op: .85, sw: SLOPE[2], legend: { ramp: SLOPE, labels: ['0°', '15°+'] } },
+  { id: 'hazard', group: 'Hazard', name: 'Hazard score', src: 'Slope, roughness, crater rims, soft ground', res: 'composite', on: false, op: .8, sw: HAZ[1], legend: { ramp: ['#00000000', ...HAZ], labels: ['Safe', 'Hazardous'] } },
+  { id: 'craters', group: 'Hazard', name: 'Craters', src: `Robbins database (USGS) · ${craters.length} craters, real`, res: '≥ 1 km', on: true, op: .55, sw: '#efe6d8', legend: null },
+  { id: 'ti', group: 'Hazard', name: 'Thermal inertia', src: 'THEMIS · placeholder until loaded', res: '100 m', on: false, op: .8, sw: TIR[3], legend: { ramp: TIR, labels: ['Dust, loose soil', 'Rock'] } },
+  { id: 'min', group: 'Resources & geology', name: 'Minerals', src: 'CRISM · placeholder until loaded', res: '18 m, patches', on: false, op: .85, sw: MINERALS[2].color, legend: { sw: MINERALS } },
+  { id: 'geo', group: 'Resources & geology', name: 'Geologic units', src: 'USGS SIM 3464 · placeholder until loaded', res: '60 km area', on: false, op: .8, sw: UNITS[1].color, legend: { sw: UNITS } },
+  { id: 'ctx', group: 'Coverage & ground truth', name: 'CTX elevation coverage', src: 'USGS mosaics · outlines approximate', res: '20 m', on: false, op: .8, sw: '#8fb3c4', legend: null },
+  { id: 'hirise', group: 'Coverage & ground truth', name: 'HiRISE elevation coverage', src: 'Mars 2020 and MSR mosaics · outlines approximate', res: '1 m', on: false, op: .9, sw: '#cdb48e', legend: null },
+  { id: 'trav', group: 'Coverage & ground truth', name: 'Perseverance traverse', src: `NASA mission path to sol ${T.traverse_last_sol} · real`, res: 'path', on: true, op: .9, sw: '#efdcb8', legend: null },
+  { id: 'names', group: 'Coverage & ground truth', name: 'Place names', src: 'IAU nomenclature', res: '', on: true, op: .8, sw: '#8a8d95', legend: null },
+];
+const L = Object.fromEntries(LAYERS.map(l => [l.id, l]));
+
+function buildLayerUI() {
+  const host = document.getElementById('layer-list');
+  let group = '';
+  for (const l of LAYERS) {
+    if (l.group !== group) { group = l.group; const g = document.createElement('div'); g.className = 'group-label'; g.textContent = group; host.appendChild(g); }
+    const row = document.createElement('div'); row.className = 'layer' + (l.on ? ' on' : '');
+    const head = document.createElement('label'); head.className = 'layer-head';
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'layer-' + l.id; cb.checked = l.on;
+    const sw = document.createElement('span'); sw.className = 'swatch'; sw.style.background = l.sw;
+    const nm = document.createElement('span'); nm.className = 'layer-name'; nm.textContent = l.name;
+    const rs = document.createElement('span'); rs.className = 'layer-res'; rs.textContent = l.res;
+    head.append(cb, sw, nm, rs);
+    const src = document.createElement('div'); src.className = 'layer-src'; src.textContent = l.src;
+    const det = document.createElement('div'); det.className = 'layer-detail'; det.hidden = !l.on;
+    if (l.legend && l.legend.ramp) {
+      const wrap = document.createElement('div');
+      const bar = document.createElement('div'); bar.className = 'legend-ramp'; bar.style.background = `linear-gradient(90deg, ${l.legend.ramp.join(',')})`;
+      const lab = document.createElement('div'); lab.className = 'legend-labels';
+      const a = document.createElement('span'); a.textContent = l.legend.labels[0];
+      const b = document.createElement('span'); b.textContent = l.legend.labels[1];
+      lab.append(a, b); wrap.append(bar, lab); det.appendChild(wrap);
+    } else if (l.legend && l.legend.sw) {
+      const s = document.createElement('div'); s.className = 'legend-sw';
+      for (const it of l.legend.sw) { const sp = document.createElement('span'); const i = document.createElement('i'); i.style.background = it.color; sp.append(i, document.createTextNode(it.name)); s.appendChild(sp); }
+      det.appendChild(s);
+    }
+    const op = document.createElement('div'); op.className = 'op-row';
+    const opl = document.createElement('label'); opl.htmlFor = 'op-' + l.id; opl.textContent = 'OPACITY';
+    const rng = document.createElement('input'); rng.type = 'range'; rng.id = 'op-' + l.id; rng.min = 0; rng.max = 100; rng.value = Math.round(l.op * 100);
+    const val = document.createElement('span'); val.className = 'op-val'; val.textContent = rng.value + '%';
+    op.append(opl, rng, val); det.appendChild(op);
+    row.append(head, src, det); host.appendChild(row);
+    cb.addEventListener('change', () => { l.on = cb.checked; row.classList.toggle('on', l.on); det.hidden = !l.on; layersChanged(); });
+    rng.addEventListener('input', () => { l.op = rng.value / 100; val.textContent = rng.value + '%'; layersChanged(); });
+  }
+}
+function layersChanged() {
+  document.getElementById('layer-count').textContent = LAYERS.filter(l => l.on).length + ' of ' + LAYERS.length + ' on';
+  computeColors();
+}
+
+/* ---------- WebGL ---------- */
+const glc = document.getElementById('gl'), ovc = document.getElementById('ov');
+const gl = glc.getContext('webgl', { antialias: false, alpha: false, premultipliedAlpha: true });
+const ctx = ovc.getContext('2d');
+if (!gl) {
+  const m = document.createElement('div'); m.id = 'nogl'; m.textContent = 'This map needs WebGL, which this browser has turned off.';
+  document.getElementById('stage').appendChild(m);
+}
+const COL = new Float32Array(NP * 4);
+let colBuf, prog, loc = {};
+
+function computeColors() {
+  const dim = [0.2, 0.21, 0.235];
+  const lx = -0.7071, ly = 0.7071; // light from the north-west
+  const e = L.elev, s = L.slope, z = L.hazard, t = L.ti, m = L.min, g = L.geo;
+  for (let k = 0; k < NP; k++) {
+    const shade = clamp(0.82 - (GX[k] * lx + GY[k] * ly) * 7, 0.42, 1.4);
+    let c = e.on ? ramp(ELEVc, (H[k] - hLo) / (hHi - hLo)) : dim;
+    if (e.on && e.op < 1) c = [dim[0] + (c[0] - dim[0]) * e.op, dim[1] + (c[1] - dim[1]) * e.op, dim[2] + (c[2] - dim[2]) * e.op];
+    let r = c[0] * shade, gg = c[1] * shade, b = c[2] * shade;
+    const mix = (col, a) => { r += (col[0] - r) * a; gg += (col[1] - gg) * a; b += (col[2] - b) * a; };
+    if (s.on) { const sv = SL[k] / 15; mix(ramp(SLOPEc, sv), clamp(0.25 + sv) * s.op); }
+    if (t.on) mix(ramp(TIc, TI[k]), t.op);
+    if (z.on) { const a = ss(0.2, 0.75, HZ[k]); if (a > 0) mix(ramp(HAZc, (HZ[k] - 0.2) / 0.6), a * z.op); }
+    if (m.on && MT[k] >= 0) mix(MINc[MT[k]], clamp(MS[k] * 1.3) * m.op);
+    if (g.on && GU[k] >= 0) mix(UNITc[GU[k]], g.op * 0.85);
+    COL[4 * k] = r; COL[4 * k + 1] = gg; COL[4 * k + 2] = b; COL[4 * k + 3] = 1;
+  }
+  if (gl && colBuf) { gl.bindBuffer(gl.ARRAY_BUFFER, colBuf); gl.bufferSubData(gl.ARRAY_BUFFER, 0, COL); }
+}
+
+const RASTER_SHEETS = ['elev', 'slope', 'ti', 'hazard', 'min', 'geo'];
+let sheetBufs = {}, locCol = -1;
+// Colors for one dataset on its own sheet (overview mode); alpha marks where the layer has data.
+function sheetColors(id) {
+  const out = new Float32Array(NP * 4), lx = -0.7071, ly = 0.7071, grey = [0.5, 0.52, 0.56];
+  for (let k = 0; k < NP; k++) {
+    const shade = clamp(0.82 - (GX[k] * lx + GY[k] * ly) * 7, 0.42, 1.4);
+    let c, a;
+    if (id === 'elev') { c = ramp(ELEVc, (H[k] - hLo) / (hHi - hLo)); a = 1; }
+    else if (id === 'slope') { const sv = clamp(SL[k] / 15); c = ramp(SLOPEc, sv); a = 0.35 + 0.65 * sv; }
+    else if (id === 'ti') { c = ramp(TIc, TI[k]); a = 0.85; }
+    else if (id === 'hazard') { c = ramp(HAZc, (HZ[k] - 0.2) / 0.6); a = Math.max(0.12, ss(0.2, 0.75, HZ[k])); }
+    else if (id === 'min') { if (MT[k] >= 0) { c = MINc[MT[k]]; a = clamp(MS[k] * 1.3); } else { c = grey; a = 0.07; } }
+    else { if (GU[k] >= 0) { c = UNITc[GU[k]]; a = 0.9; } else { c = grey; a = 0.06; } }
+    out[4 * k] = c[0] * shade; out[4 * k + 1] = c[1] * shade; out[4 * k + 2] = c[2] * shade; out[4 * k + 3] = a;
+  }
+  return out;
+}
+function initGL() {
+  const vs = `attribute vec3 aPos;attribute vec4 aCol;attribute float aRnd;
+  uniform mat4 uMVP;uniform float uTime;uniform float uRise;uniform float uSize;
+  uniform float uOff;uniform float uScale;uniform float uAlpha;uniform float uDist;
+  varying vec4 vCol;varying float vA;
+  void main(){vec3 p=aPos;p.y=p.y*uRise*uScale+uOff+0.0035*sin(uTime*0.5+aRnd*6.2831);
+  vec4 c=uMVP*vec4(p,1.0);gl_Position=c;
+  float tw=0.84+0.16*sin(uTime*(0.35+aRnd*0.5)+aRnd*40.0);
+  vCol=vec4(aCol.rgb*tw,aCol.a);gl_PointSize=max(1.0,uSize*2.6/c.w);
+  vA=clamp(1.0-(c.w-uDist)*0.25,0.45,1.0)*uAlpha*aCol.a;}`;
+  const fs = `precision mediump float;varying vec4 vCol;varying float vA;
+  void main(){vec2 d=gl_PointCoord-vec2(0.5);float r=length(d);float a=smoothstep(0.5,0.1,r)*vA;if(a<0.01)discard;gl_FragColor=vec4(vCol.rgb*a,a);}`;
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+  prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = (data, name, size, usage) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, usage); const l = gl.getAttribLocation(prog, name); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, size, gl.FLOAT, false, 0, 0); return b; };
+  buf(POS, 'aPos', 3, gl.STATIC_DRAW);
+  buf(RAND, 'aRnd', 1, gl.STATIC_DRAW);
+  colBuf = buf(COL, 'aCol', 4, gl.DYNAMIC_DRAW);
+  locCol = gl.getAttribLocation(prog, 'aCol');
+  for (const n of ['uMVP', 'uTime', 'uRise', 'uSize', 'uOff', 'uScale', 'uAlpha', 'uDist']) loc[n] = gl.getUniformLocation(prog, n);
+  for (const id of RASTER_SHEETS) { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, sheetColors(id), gl.STATIC_DRAW); sheetBufs[id] = b; }
+  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+  gl.clearColor(0.016, 0.02, 0.024, 1);
+}
+
+/* ---------- camera ---------- */
+function perspective(fovy, aspect, n, f) { const t = 1 / Math.tan(fovy / 2); return [t / aspect, 0, 0, 0, 0, t, 0, 0, 0, 0, (f + n) / (n - f), -1, 0, 0, 2 * f * n / (n - f), 0]; }
+function lookAt(e, t, up) {
+  let z = [e[0] - t[0], e[1] - t[1], e[2] - t[2]]; let zl = Math.hypot(...z); z = z.map(x => x / zl);
+  let x = [up[1] * z[2] - up[2] * z[1], up[2] * z[0] - up[0] * z[2], up[0] * z[1] - up[1] * z[0]]; let xl = Math.hypot(...x); x = x.map(a => a / xl);
+  const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]];
+  const d = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  return [x[0], y[0], z[0], 0, x[1], y[1], z[1], 0, x[2], y[2], z[2], 0, -d(x, e), -d(y, e), -d(z, e), 1];
+}
+function mul(a, b) { const o = new Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k]; o[c * 4 + r] = s; } return o; }
+
+const narrow = () => innerWidth < 760;
+const HOME = () => ({ yaw: -0.22, pitch: 0.92, dist: narrow() ? 3.7 : 2.75, target: [0.04, 0, 0.02] });
+const cam = HOME();
+let goal = null, overview = false, sep = 0, savedCam = null;
+const OVERVIEW_POSE = () => ({ target: [0, GAP * (SHEETS.length - 1) / 2, 0], dist: narrow() ? 8.6 : 6.3, yaw: cam.yaw, pitch: 0.4 });
+function setOverview(on) {
+  if (on === overview) return;
+  overview = on; document.body.classList.toggle('overview', on);
+  const btn = document.getElementById('overview-btn'); btn.setAttribute('aria-pressed', String(on)); btn.textContent = on ? 'Back to map' : 'Overview';
+  if (on) { if (placing) stopPlacing(); savedCam = { yaw: cam.yaw, pitch: cam.pitch, dist: cam.dist, target: [...cam.target] }; hoverK = -1; goal = OVERVIEW_POSE(); }
+  else { const h = savedCam || HOME(); goal = { target: h.target, dist: h.dist, yaw: h.yaw, pitch: h.pitch }; }
+  setHover();
+}
+let MVP = null, W = 0, Hh = 0, dpr = 1, rise = reduced ? 1 : 0;
+
+function resize() {
+  dpr = Math.min(devicePixelRatio || 1, 2);
+  W = glc.clientWidth; Hh = glc.clientHeight;
+  for (const c of [glc, ovc]) { c.width = Math.round(W * dpr); c.height = Math.round(Hh * dpr); }
+  if (gl) gl.viewport(0, 0, glc.width, glc.height);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function updateMVP() {
+  const cp = Math.cos(cam.pitch);
+  const eye = [cam.target[0] + cam.dist * cp * Math.sin(cam.yaw), cam.target[1] + cam.dist * Math.sin(cam.pitch), cam.target[2] + cam.dist * cp * Math.cos(cam.yaw)];
+  MVP = mul(perspective(40 * Math.PI / 180, W / Hh, 0.03, 30), lookAt(eye, cam.target, [0, 1, 0]));
+}
+function proj(x, y, z, off = 0, sc = 1) {
+  const m = MVP; y = y * rise * sc + off;
+  const w = m[3] * x + m[7] * y + m[11] * z + m[15];
+  if (w <= 0.02) return null;
+  return [((m[0] * x + m[4] * y + m[8] * z + m[12]) / w * 0.5 + 0.5) * W, (1 - ((m[1] * x + m[5] * y + m[9] * z + m[13]) / w * 0.5 + 0.5)) * Hh, w];
+}
+function pick(mx, my) {
+  const m = MVP; let best = -1, bw = 1e9, near = -1, bd = 1e9;
+  for (let k = 0; k < NP; k++) {
+    const x = POS[3 * k], y = POS[3 * k + 1] * rise, z = POS[3 * k + 2];
+    const w = m[3] * x + m[7] * y + m[11] * z + m[15]; if (w <= 0.02) continue;
+    const sx = ((m[0] * x + m[4] * y + m[8] * z + m[12]) / w * 0.5 + 0.5) * W;
+    const sy = (1 - ((m[1] * x + m[5] * y + m[9] * z + m[13]) / w * 0.5 + 0.5)) * Hh;
+    const d = (sx - mx) ** 2 + (sy - my) ** 2;
+    if (d < 64 && w < bw) { bw = w; best = k; }
+    if (d < bd) { bd = d; near = k; }
+  }
+  return best >= 0 ? best : (bd < 900 ? near : -1);
+}
+
+/* ---------- vector overlays (precomputed in world space) ---------- */
+const ringPts = craters.map(c => {
+  const pts = []; for (let i = 0; i <= 40; i++) { const a = i / 40 * Math.PI * 2; const u = c.u + Math.cos(a) * c.r * 1.02, v = c.v + Math.sin(a) * c.r * 1.02; pts.push(world(u, v, height(u, v) + 0.03)); } return pts;
+});
+function rectPts([u0, v0, u1, v1]) {
+  const pts = [], seg = 18, edge = (ua, va, ub, vb) => { for (let i = 0; i < seg; i++) { const t = i / seg, u = ua + (ub - ua) * t, v = va + (vb - va) * t; pts.push(world(u, v, height(u, v) + 0.05)); } };
+  edge(u0, v0, u1, v0); edge(u1, v0, u1, v1); edge(u1, v1, u0, v1); edge(u0, v1, u0, v0); pts.push(pts[0]); return pts;
+}
+const CTX_RECTS = [[J.u - 0.12, J.v - 0.12, J.u + 0.12, J.v + 0.12], [0.47, 0.30, 0.54, 0.45], [0.28, 0.70, 0.34, 0.93], [0.17, 0.60, 0.22, 0.82], [0.70, 0.55, 0.76, 0.78]].map(r => ({ r, pts: rectPts(r) }));
+const LAND = { u: uOf(T.traverse[0][0]), v: vOf(T.traverse[0][1]) };   // Perseverance landing site
+const HIRISE_RECTS = [[LAND.u - 0.035, LAND.v - 0.032, LAND.u + 0.04, LAND.v + 0.036], [J.u - 0.075, J.v - 0.005, J.u - 0.038, J.v + 0.05]].map(r => ({ r, pts: rectPts(r) }));
+const travPts = T.traverse.map(([lon, lat]) => { const u = uOf(lon), v = vOf(lat); return world(u, v, height(u, v) + 0.03); });
+const NAMES = [
+  { n: 'Jezero', u: J.u, v: J.v + J.R * 1.35, big: true },
+  { n: 'Nili Fossae', u: 0.26, v: 0.9 }, { n: 'NE Syrtis', u: 0.51, v: 0.4 }, { n: 'Midway', u: 0.5, v: 0.465 },
+  { n: 'Isidis Planitia', u: 0.85, v: 0.18 }, { n: 'Syrtis Major', u: 0.12, v: 0.1 }, { n: 'Nili Planum', u: 0.62, v: 0.64 },
+].map(p => ({ ...p, w: world(p.u, p.v, height(p.u, p.v) + 0.35) }));
+
+function strokePath(pts, off = 0, sc = 1) {
+  ctx.beginPath(); let on = false;
+  for (const p of pts) { const s = proj(p[0], p[1], p[2], off, sc); if (!s) { on = false; continue; } if (!on) { ctx.moveTo(s[0], s[1]); on = true; } else ctx.lineTo(s[0], s[1]); }
+  ctx.stroke();
+}
+
+/* ---------- bases ---------- */
+const TYPES = {
+  habitat: { label: 'Habitat', foot: 120, slope: 3 },
+  pad: { label: 'Landing pad', foot: 300, slope: 2 },
+  solar: { label: 'Solar farm', foot: 400, slope: 8 },
+  isru: { label: 'ISRU plant', foot: 150, slope: 5 },
+  depot: { label: 'Storage depot', foot: 80, slope: 5 },
+};
+const bases = [];
+let nextId = 1, selected = null, placing = null, hoverK = -1, nameEdited = false, letter = 1;
+
+function nearestK(u, v) { let b = 0, bd = 1e9; for (let k = 0; k < NP; k++) { const d = (U[k] - u) ** 2 + (V[k] - v) ** 2; if (d < bd) { bd = d; b = k; } } return b; }
+function stats(k, cfg) {
+  const s = SL[k], rN = clamp(RO[k] / roughP95), foot = cfg.foot;
+  const cut = Math.pow(foot, 3) * Math.tan(s * Math.PI / 180) / 8 + foot * foot * rN * 1.2;
+  let near = null;
+  for (let q = 0; q < NP; q++) if (MS[q] > 0.45) { const d = Math.hypot(U[q] - U[k], V[q] - V[k]) * SPAN_KM; if (!near || d < near.d) near = { d, t: MT[q] }; }
+  return { h: H[k], slope: s, haz: HZ[k], cut, sols: cut / cfg.rate, pressure: 610 * Math.exp(-H[k] / 11.1), near };
+}
+function addBase(k, cfg, example) {
+  const b = { id: nextId++, k, ...cfg, example: !!example, w: [POS[3 * k], POS[3 * k + 1], POS[3 * k + 2]] };
+  b.s = stats(k, cfg); bases.push(b); selected = b.id; renderBases(); return b;
+}
+function renderBases() {
+  const list = document.getElementById('base-list'); list.replaceChildren();
+  document.getElementById('base-count').textContent = bases.length + (bases.length === 1 ? ' facility' : ' facilities');
+  for (const b of bases) {
+    const li = document.createElement('li'); li.className = 'base' + (b.id === selected ? ' sel' : ''); li.tabIndex = 0;
+    const top = document.createElement('div'); top.className = 'base-top';
+    const dot = document.createElement('span'); dot.className = 'base-dot';
+    const nm = document.createElement('span'); nm.className = 'base-name'; nm.textContent = b.name;
+    top.append(dot, nm);
+    if (b.example) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = 'Example'; top.appendChild(t); }
+    const rm = document.createElement('button'); rm.className = 'icon-btn'; rm.type = 'button'; rm.textContent = '×'; rm.setAttribute('aria-label', 'Remove ' + b.name);
+    rm.addEventListener('click', e => { e.stopPropagation(); bases.splice(bases.indexOf(b), 1); if (selected === b.id) selected = null; renderBases(); });
+    top.appendChild(rm);
+    const meta = document.createElement('div'); meta.className = 'base-meta'; meta.textContent = `${TYPES[b.type].label} · ${b.foot} m · ${fmtLL(U[b.k], V[b.k])}`;
+    const dl = document.createElement('dl'); dl.className = 'stats';
+    const row = (k, v, pill) => { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); if (pill) { const p = document.createElement('span'); p.className = 'pill ' + pill[1]; p.textContent = pill[0]; dd.appendChild(p); } dd.appendChild(document.createTextNode(v)); dl.append(dt, dd); };
+    const s = b.s;
+    row('Elevation', fmtKm(s.h));
+    row('Slope', s.slope.toFixed(1) + '°', s.slope <= b.maxSlope ? ['within ' + b.maxSlope + '°', 'ok'] : ['over ' + b.maxSlope + '°', 'warn']);
+    const hz = s.haz < 0.3 ? ['low', 'ok'] : s.haz < 0.55 ? ['moderate', 'warn'] : ['high', 'warn'];
+    row('Hazard', s.haz.toFixed(2), hz);
+    row('Cut and fill', '≈ ' + fmtInt(s.cut) + ' m³');
+    row('Grading time', s.sols < 1 ? 'under 1 sol' : '≈ ' + fmtInt(s.sols) + ' sols');
+    row('Air pressure', '≈ ' + fmtInt(s.pressure) + ' Pa');
+    if (s.near) row('Nearest ' + MINERALS[s.near.t].name.toLowerCase(), Math.round(s.near.d) + ' km');
+    li.append(top, meta, dl);
+    const focus = () => { selected = b.id; goal = { target: [b.w[0], b.w[1] * rise, b.w[2]], dist: 1.05 }; renderBases(); };
+    li.addEventListener('click', focus);
+    li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); focus(); } });
+    list.appendChild(li);
+  }
+}
+
+/* form */
+const fName = document.getElementById('base-name'), fType = document.getElementById('base-type'), fFoot = document.getElementById('base-foot'), fSlope = document.getElementById('base-slope'), fRate = document.getElementById('base-rate');
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function suggestName() { return TYPES[fType.value].label + ' ' + LETTERS[letter % 26]; }
+function applyTypeDefaults() { const t = TYPES[fType.value]; fFoot.value = t.foot; fSlope.value = t.slope; if (!nameEdited) fName.value = suggestName(); }
+fName.addEventListener('input', () => { nameEdited = fName.value.trim() !== ''; });
+fType.addEventListener('change', applyTypeDefaults);
+document.getElementById('base-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const cfg = { name: fName.value.trim() || suggestName(), type: fType.value, foot: clamp(+fFoot.value || TYPES[fType.value].foot, 20, 2000), maxSlope: clamp(+fSlope.value || TYPES[fType.value].slope, 0.5, 30), rate: Math.max(1, +fRate.value || 50) };
+  if (overview) setOverview(false);
+  startPlacing(cfg);
+});
+function startPlacing(cfg) {
+  placing = cfg; document.body.classList.add('placing');
+  document.getElementById('hint-text').textContent = `Click the map to place ${cfg.name}. Press Esc to cancel.`;
+  document.getElementById('hint').hidden = false;
+}
+function stopPlacing() { placing = null; document.body.classList.remove('placing'); document.getElementById('hint').hidden = true; }
+document.getElementById('cancel-place').addEventListener('click', stopPlacing);
+addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (placing) stopPlacing(); else if (overview) setOverview(false); });
+
+/* tabs (phone) */
+document.querySelectorAll('.tabbar button').forEach(btn => btn.addEventListener('click', () => {
+  const s = btn.dataset.sheet; const cur = document.body.dataset.sheet;
+  document.body.dataset.sheet = cur === s ? 'none' : s;
+  document.querySelectorAll('.tabbar button').forEach(b => b.setAttribute('aria-pressed', String(document.body.dataset.sheet === b.dataset.sheet)));
+}));
+document.getElementById('reset-view').addEventListener('click', () => { const h = overview ? OVERVIEW_POSE() : HOME(); goal = { target: h.target, dist: h.dist, yaw: h.yaw, pitch: h.pitch }; });
+document.getElementById('overview-btn').addEventListener('click', () => setOverview(!overview));
+
+/* ---------- interaction ---------- */
+const pointers = new Map();
+let down = null, lastInteract = performance.now(), pinch0 = 0, hoverPending = null;
+glc.addEventListener('pointerdown', e => {
+  glc.setPointerCapture(e.pointerId); pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pointers.size === 1) down = { x: e.clientX, y: e.clientY, moved: 0 };
+  if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch0 = Math.hypot(a[0] - b[0], a[1] - b[1]); }
+  lastInteract = performance.now();
+});
+glc.addEventListener('pointermove', e => {
+  const r = glc.getBoundingClientRect();
+  if (!pointers.has(e.pointerId)) { hoverPending = [e.clientX - r.left, e.clientY - r.top]; return; }
+  const prev = pointers.get(e.pointerId); pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+    if (pinch0 > 0) cam.dist = clamp(cam.dist * pinch0 / d, 0.55, overview ? 12 : 4.5); pinch0 = d; goal = null; if (down) down.moved = 99; return;
+  }
+  const dx = e.clientX - prev[0], dy = e.clientY - prev[1];
+  if (down) down.moved += Math.abs(dx) + Math.abs(dy);
+  if (down && down.moved > 4) {
+    document.body.classList.add('dragging'); goal = null;
+    cam.yaw -= dx * 0.005; cam.pitch = clamp(cam.pitch + dy * 0.004, 0.3, 1.45);
+  }
+  lastInteract = performance.now();
+});
+const endPointer = e => {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.delete(e.pointerId); document.body.classList.remove('dragging');
+  if (down && down.moved <= 4 && pointers.size === 0 && e.type === 'pointerup') {
+    const r = glc.getBoundingClientRect(); const k = pick(e.clientX - r.left, e.clientY - r.top);
+    if (k >= 0 && placing) {
+      const cfg = placing; stopPlacing(); addBase(k, cfg); letter++; nameEdited = false; fName.value = suggestName();
+      if (narrow()) { document.body.dataset.sheet = 'bases'; document.querySelectorAll('.tabbar button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.sheet === 'bases'))); }
+    }
+  }
+  if (pointers.size === 0) down = null;
+  lastInteract = performance.now();
+};
+glc.addEventListener('pointerup', endPointer);
+glc.addEventListener('pointercancel', endPointer);
+glc.addEventListener('pointerleave', () => { if (!pointers.size) { hoverK = -1; setHover(); } });
+glc.addEventListener('wheel', e => { e.preventDefault(); goal = null; cam.dist = clamp(cam.dist * Math.exp(e.deltaY * 0.001), 0.55, overview ? 12 : 4.5); lastInteract = performance.now(); }, { passive: false });
+
+const hoverEl = document.getElementById('hover-text');
+function setHover() {
+  if (overview) { hoverEl.textContent = 'Overview · each dataset on its own sheet over the same 405 km box · Esc to return'; return; }
+  if (hoverK < 0) { hoverEl.textContent = placing ? 'Click the terrain to place the facility' : 'Drag to orbit · scroll to zoom'; return; }
+  const k = hoverK;
+  hoverEl.textContent = `${fmtLL(U[k], V[k])}   ${fmtKm(H[k])}   slope ${SL[k].toFixed(1)}°   hazard ${HZ[k].toFixed(2)}`;
+}
+
+/* ---------- frame ---------- */
+let t0 = performance.now(), last = t0;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  const t = (now - t0) / 1000;
+  if (!reduced) rise = 1 - Math.pow(1 - clamp((t - 0.2) / 2.6), 3);
+  if (goal) {
+    const f = 1 - Math.exp(-dt * 3.2);
+    for (let i = 0; i < 3; i++) cam.target[i] += (goal.target[i] - cam.target[i]) * f;
+    cam.dist += (goal.dist - cam.dist) * f;
+    let err = Math.abs(goal.dist - cam.dist) + Math.abs(goal.target[1] - cam.target[1]);
+    if (goal.yaw !== undefined) { cam.yaw += (goal.yaw - cam.yaw) * f; cam.pitch += (goal.pitch - cam.pitch) * f; err += Math.abs(goal.pitch - cam.pitch); }
+    if (err < 0.002) goal = null;
+  }
+  const st = overview ? 1 : 0;
+  sep = reduced ? st : sep + (st - sep) * (1 - Math.exp(-dt * 2.6));
+  if (Math.abs(st - sep) < 0.001) sep = st;
+  if (!reduced && !pointers.size && now - lastInteract > 5000) cam.yaw += dt * (overview ? 0.03 : 0.012);
+  updateMVP();
+  if (hoverPending && !pointers.size && !overview) { hoverK = pick(hoverPending[0], hoverPending[1]); hoverPending = null; setHover(); }
+
+  if (gl) {
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniformMatrix4fv(loc.uMVP, false, new Float32Array(MVP));
+    gl.uniform1f(loc.uTime, reduced ? 0 : t);
+    gl.uniform1f(loc.uRise, rise);
+    gl.uniform1f(loc.uDist, cam.dist);
+    gl.uniform1f(loc.uSize, 2.3 * dpr * clamp(Hh / 900, 0.75, 1.4) * (1 + 0.7 * sep));
+    const draw = (b, off, sc, a) => {
+      if (a < 0.01) return;
+      gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.vertexAttribPointer(locCol, 4, gl.FLOAT, false, 0, 0);
+      gl.uniform1f(loc.uOff, off); gl.uniform1f(loc.uScale, sc); gl.uniform1f(loc.uAlpha, a);
+      gl.drawArrays(gl.POINTS, 0, NP);
+    };
+    draw(colBuf, 0, 1, 1 - sep);
+    for (const s of SHEETS) if (!s.vec) draw(sheetBufs[s.id], sheetOff(s.i), sheetSc(s.i), sep);
+  }
+  drawOverlay(t);
+  requestAnimationFrame(frame);
+}
+
+function drawOverlay(t) {
+  ctx.clearRect(0, 0, W, Hh);
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  if (sep < 0.99) { ctx.globalAlpha = 1 - sep; drawMapOverlay(t); }
+  if (sep > 0.01) { ctx.globalAlpha = sep; drawStackOverlay(); }
+  ctx.globalAlpha = 1;
+}
+
+/* ---------- overview: every dataset on its own sheet ---------- */
+const GAP = 0.34;
+const SHEETS = [
+  { id: 'elev' }, { id: 'slope' }, { id: 'ti' }, { id: 'hazard' }, { id: 'min' }, { id: 'geo' },
+  { id: 'craters', vec: true },
+  { id: 'coverage', vec: true, name: 'CTX + HiRISE coverage', src: 'USGS mosaics · outlines approximate', res: '20 m / 1 m', sw: '#8fb3c4' },
+  { id: 'plan', vec: true, name: 'Your plan', src: 'Bases and the Perseverance traverse', res: '', sw: '#cdb48e' },
+].map((s, i) => ({ ...s, i, name: s.name || L[s.id].name, src: s.src || L[s.id].src, res: s.res ?? L[s.id].res, sw: s.sw || L[s.id].sw }));
+const sheetOff = i => sep * GAP * i;
+const sheetSc = i => i === 0 ? 1 : 1 - 0.45 * sep;
+
+function drawStackOverlay() {
+  const yb = worldY(hLo), top = SHEETS.length - 1;
+  // dashed guides show that every sheet covers the same ground
+  ctx.setLineDash([2, 4]); ctx.lineWidth = 1;
+  const guide = (w, color) => {
+    const a = proj(w[0], w[1], w[2], sheetOff(0), 1), b = proj(w[0], w[1], w[2], sheetOff(top), sheetSc(top));
+    if (!a || !b) return; ctx.strokeStyle = color; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+  };
+  guide(world(J.u, J.v, height(J.u, J.v)), 'rgba(220,217,210,.25)');
+  for (const b of bases) guide(b.w, 'rgba(205,180,142,.4)');
+  ctx.setLineDash([]);
+  for (const s of SHEETS) {
+    const off = sheetOff(s.i), sc = sheetSc(s.i);
+    const cs = [[-1, yb, -1], [1, yb, -1], [1, yb, 1], [-1, yb, 1]].map(c => proj(c[0], c[1], c[2], off, sc));
+    if (cs.some(c => !c)) continue;
+    ctx.strokeStyle = 'rgba(220,217,210,.14)'; ctx.lineWidth = 1;
+    ctx.beginPath(); cs.forEach((c, i) => i ? ctx.lineTo(c[0], c[1]) : ctx.moveTo(c[0], c[1])); ctx.closePath(); ctx.stroke();
+    if (s.vec) { ctx.fillStyle = 'rgba(220,217,210,.025)'; ctx.fill(); }
+    if (s.id === 'craters') { ctx.lineWidth = 0.9; ctx.strokeStyle = 'rgba(239,230,216,.45)'; for (const r of ringPts) strokePath(r, off, sc); }
+    if (s.id === 'coverage') {
+      ctx.lineWidth = 1; ctx.setLineDash([4, 5]); ctx.strokeStyle = 'rgba(143,179,196,.8)'; for (const r of CTX_RECTS) strokePath(r.pts, off, sc); ctx.setLineDash([]);
+      ctx.strokeStyle = 'rgba(205,180,142,.9)'; ctx.fillStyle = 'rgba(205,180,142,.1)'; for (const r of HIRISE_RECTS) { strokePath(r.pts, off, sc); ctx.fill(); }
+    }
+    if (s.id === 'plan') {
+      ctx.lineWidth = 1.4; ctx.strokeStyle = 'rgba(239,220,184,.9)'; strokePath(travPts, off, sc);
+      for (const b of bases) {
+        const p = proj(b.w[0], b.w[1], b.w[2], off, sc); if (!p) continue;
+        ctx.fillStyle = '#cdb48e'; ctx.beginPath(); ctx.arc(p[0], p[1], 3.4, 0, Math.PI * 2); ctx.fill();
+        ctx.font = '500 10.5px "IBM Plex Sans", system-ui, sans-serif'; ctx.fillStyle = 'rgba(220,217,210,.9)'; ctx.fillText(b.name, p[0] + 7, p[1] - 6);
+      }
+    }
+    // label beside the sheet's right-most corner
+    const rc = cs.reduce((a, c) => c[0] > a[0] ? c : a);
+    const lx = Math.min(rc[0] + 28, W - 210), ly = rc[1];
+    ctx.strokeStyle = 'rgba(220,217,210,.2)'; ctx.beginPath(); ctx.moveTo(rc[0] + 4, ly); ctx.lineTo(lx - 6, ly); ctx.stroke();
+    ctx.fillStyle = s.sw; ctx.beginPath(); ctx.arc(lx + 3, ly - 4, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.font = '600 12px "IBM Plex Sans", system-ui, sans-serif'; ctx.fillStyle = '#dcd9d2';
+    ctx.fillText(s.name + (s.res ? '  ' : ''), lx + 12, ly);
+    if (s.res) { const w = ctx.measureText(s.name + '  ').width; ctx.font = '400 10px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillStyle = '#5b5f67'; ctx.fillText(s.res, lx + 12 + w, ly); }
+    ctx.font = '400 10px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillStyle = '#8a8d95'; ctx.fillText(s.src, lx + 12, ly + 14);
+  }
+}
+
+function drawMapOverlay(t) {
+  if (L.ctx.on) {
+    ctx.setLineDash([4, 5]); ctx.lineWidth = 1; ctx.strokeStyle = `rgba(143,179,196,${0.7 * L.ctx.op})`;
+    for (const r of CTX_RECTS) strokePath(r.pts);
+    ctx.setLineDash([]);
+    label(CTX_RECTS[0].pts[0], 'CTX 20 m', `rgba(143,179,196,${0.9 * L.ctx.op})`, 4, -6);
+  }
+  if (L.hirise.on) {
+    ctx.lineWidth = 1.2; ctx.strokeStyle = `rgba(205,180,142,${0.85 * L.hirise.op})`; ctx.fillStyle = `rgba(205,180,142,${0.07 * L.hirise.op})`;
+    for (const r of HIRISE_RECTS) { strokePath(r.pts); ctx.fill(); }
+    label(HIRISE_RECTS[0].pts[0], 'HiRISE 1 m', `rgba(205,180,142,${L.hirise.op})`, 4, 14);
+  }
+  if (L.craters.on) {
+    ctx.lineWidth = 0.9; ctx.strokeStyle = `rgba(239,230,216,${0.4 * L.craters.op})`;
+    for (const r of ringPts) strokePath(r);
+  }
+  if (L.trav.on) {
+    ctx.lineWidth = 4; ctx.strokeStyle = `rgba(239,220,184,${0.12 * L.trav.op})`; strokePath(travPts);
+    ctx.lineWidth = 1.4; ctx.strokeStyle = `rgba(239,220,184,${0.9 * L.trav.op})`; strokePath(travPts);
+    const s = proj(...travPts[0]); if (s) { ctx.fillStyle = `rgba(239,220,184,${L.trav.op})`; ctx.beginPath(); ctx.arc(s[0], s[1], 2.4, 0, Math.PI * 2); ctx.fill(); }
+  }
+  if (L.names.on) {
+    ctx.textAlign = 'center';
+    for (const p of NAMES) {
+      const s = proj(...p.w); if (!s) continue;
+      const a = L.names.op * clamp(1.6 - s[2] * 0.25, 0.35, 1) * rise;
+      ctx.font = p.big ? 'italic 19px "Instrument Serif", Georgia, serif' : '500 9.5px "IBM Plex Mono", ui-monospace, monospace';
+      ctx.fillStyle = `rgba(220,217,210,${a * (p.big ? 0.95 : 0.7)})`;
+      const txt = p.big ? p.n : p.n.toUpperCase().split('').join(' ');
+      ctx.fillText(txt, s[0], s[1]);
+    }
+    ctx.textAlign = 'left';
+  }
+  // hover marker
+  if (hoverK >= 0 && !pointers.size) {
+    const s = proj(POS[3 * hoverK], POS[3 * hoverK + 1], POS[3 * hoverK + 2]);
+    if (s) { ctx.lineWidth = 1; ctx.strokeStyle = placing ? 'rgba(205,180,142,.9)' : 'rgba(220,217,210,.55)'; ctx.beginPath(); ctx.arc(s[0], s[1], placing ? 9 : 5, 0, Math.PI * 2); ctx.stroke();
+      if (placing) { ctx.beginPath(); ctx.moveTo(s[0] - 14, s[1]); ctx.lineTo(s[0] - 5, s[1]); ctx.moveTo(s[0] + 5, s[1]); ctx.lineTo(s[0] + 14, s[1]); ctx.moveTo(s[0], s[1] - 14); ctx.lineTo(s[0], s[1] - 5); ctx.moveTo(s[0], s[1] + 5); ctx.lineTo(s[0], s[1] + 14); ctx.stroke(); } }
+  }
+  // bases
+  for (const b of bases) {
+    const s = proj(...b.w); if (!s) continue;
+    const sel = b.id === selected;
+    const pulse = reduced ? 0 : Math.sin(t * 1.3 + b.id) * 0.5 + 0.5;
+    ctx.strokeStyle = `rgba(205,180,142,${0.18 + 0.25 * (1 - pulse)})`; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(s[0], s[1], 7 + pulse * 7, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#cdb48e'; ctx.beginPath(); ctx.arc(s[0], s[1], sel ? 3.6 : 3, 0, Math.PI * 2); ctx.fill();
+    const top = s[1] - (sel ? 40 : 30);
+    ctx.strokeStyle = `rgba(205,180,142,${sel ? 0.8 : 0.5})`; ctx.beginPath(); ctx.moveTo(s[0], s[1] - 4); ctx.lineTo(s[0], top); ctx.stroke();
+    ctx.font = '600 12px "IBM Plex Sans", system-ui, sans-serif';
+    const tw = ctx.measureText(b.name).width;
+    ctx.font = '400 9.5px "IBM Plex Mono", ui-monospace, monospace';
+    const sub = TYPES[b.type].label.toUpperCase();
+    const sw = ctx.measureText(sub).width;
+    const bw = Math.max(tw, sw) + 18, bh = 34, bx = s[0] - bw / 2, by = top - bh;
+    ctx.fillStyle = 'rgba(6,7,9,.82)'; ctx.strokeStyle = `rgba(205,180,142,${sel ? 0.6 : 0.28})`;
+    roundRect(bx, by, bw, bh, 8); ctx.fill(); ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#dcd9d2'; ctx.font = '600 12px "IBM Plex Sans", system-ui, sans-serif'; ctx.fillText(b.name, s[0], by + 15);
+    ctx.fillStyle = '#8a8d95'; ctx.font = '400 9.5px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillText(sub, s[0], by + 27);
+    ctx.textAlign = 'left';
+  }
+}
+function label(p, text, color, dx, dy) { const s = proj(...p); if (!s) return; ctx.font = '500 9.5px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillStyle = color; ctx.fillText(text, s[0] + dx, s[1] + dy); }
+function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+/* ---------- boot ---------- */
+buildLayerUI();
+if (gl) initGL();
+layersChanged();
+resize(); addEventListener('resize', resize);
+applyTypeDefaults();
+addBase(nearestK(J.u + 0.012, J.v - 0.016), { name: 'Habitat Alpha', type: 'habitat', foot: 120, maxSlope: 3, rate: 50 }, true);
+fName.value = suggestName();
+document.body.dataset.sheet = 'none';
+requestAnimationFrame(frame);
+})();
+</script>

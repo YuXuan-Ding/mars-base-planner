@@ -1,0 +1,17 @@
+{
+  "source": "USGS Mars HRSC MOLA Blended DEM Global 200m v2",
+  "url": "https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/Mars/HRSC_MOLA_Blend/Mars_HRSC_MOLA_BlendDEM_Global_200mp_v2.tif",
+  "units": "meters",
+  "dtype": "int16 little-endian",
+  "nodata": -32768,
+  "rows": 2015,
+  "cols": 2134,
+  "deg_per_px": 0.003374120830641,
+  "lat_north": 21.9001192751727,
+  "lat_south": 15.101265801431083,
+  "lon_west": 73.39984850196973,
+  "lon_east": 80.60022235455762,
+  "min_m": -4472,
+  "max_m": 1554,
+  "nodata_count": 0
+}
