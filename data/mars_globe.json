@@ -1,0 +1,14 @@
+{
+  "source": "MGS MOLA MEGDR 4 px/deg (MEGT90N000CB), median topography above the areoid",
+  "url": "https://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/meg004/megt90n000cb.img",
+  "units": "meters",
+  "dtype": "int16 little-endian",
+  "rows": 720,
+  "cols": 1440,
+  "lat_north": 90,
+  "lat_south": -90,
+  "lon_west": 0,
+  "lon_east": 360,
+  "min_m": -8068,
+  "max_m": 21134
+}

@@ -3,6 +3,9 @@
 One scenario: fuel the return ship before the launch window closes. The goal is
 `target_propellant_t` in the tanks and a finished launch pad by `deadline_sol`.
 
+The site sits on the real Jezero map (`site`). Accident odds come from the tiles the
+machines work on (see hazmap.py); nothing is scripted.
+
 Every number is a planning assumption, kept here so it can be tuned in one place.
 Power is in kW averaged over a sol, work in crew-hours, distances in metres or km.
 """
@@ -76,9 +79,7 @@ class Params:
     bearing_decay_per_sol: float = 0.05    # health lost per sol once failing (full speed)
     reduced_decay_mult: float = 0.35
     anomaly_cooldown: int = 12
-    access_m: dict = field(default_factory=lambda: {"T1": 650.0, "T2": 800.0})
-    hard_zones_per_km: float = 0.35
-    random_hard_zones: bool = True
+    hard_bands_per_km: float = 0.35        # on a tile with geology index 1 (see hazmap.py)
     hard_zone_len: tuple = (40.0, 160.0)
 
     # repairs: (crew-hours, sols out of service)
@@ -99,17 +100,16 @@ class Params:
     hauler_power_kw: float = 40.0
     plant_buffer_t: float = 800.0          # haulers stop when this much ore waits at the plant
     ore_margin_t: float = 600.0            # TBMs idle once mined ore covers what is left to make, plus this
-    wheel_damage_per_km_pct: float = 0.00005  # per km driven, per % rock cover on the route
-    routes: dict = field(default_factory=lambda: {
-        "shortest": {"km": 5.1, "rock_cover_pct": 3.5},
-        "accessible": {"km": 6.8, "rock_cover_pct": 1.2},
-    })
-    route: str = "shortest"
+    wheel_damage_per_km_pct: float = 0.00005  # per km driven, per % cover of rocks >= 0.25 m on the tile
+    wheel_slope_ref_deg: float = 8.0       # damage odds double on a tile this steep
+    route: str = "shortest"                # haul route: shortest | accessible (both planned on the map)
 
     # landing pad
     pad_fill_m3: float = 15000.0
     dozer_m3_per_sol: float = 300.0
     dozer_power_kw: float = 60.0
+    dozer_damage_per_1000m3_pct: float = 0.03  # per 1000 m3 graded, per % cover of rocks >= 0.5 m
+    dozer_repair: tuple = (8.0, 2)         # track repair, uses a wheel (running-gear) spare
 
     # propellant plant
     plant_build_crew_h: float = 1500.0
@@ -138,6 +138,17 @@ class Params:
     cargo_notice_sols: tuple = (250, 350)
 
     spares: dict = field(default_factory=lambda: {"cutters": 4, "bearing": 1, "wheel": 3})
+
+    # where things are on the Jezero map (lon, lat). TBMs bore from each portal toward the
+    # ore target and on through the ore body; haulers drive from the ore yard (between the
+    # portals) to the plant on routes planned by app/routing.py.
+    site: dict = field(default_factory=lambda: {
+        "ore": [77.392, 18.514],                       # delta clays, west of the landing site
+        "portals": {"T1": [77.398, 18.505], "T2": [77.387, 18.505]},
+        "plant": [77.44, 18.42],                        # crater floor, 3 km south of the M2020 landing site
+        "pad": [77.452, 18.428],
+        "pad_side_m": 400.0,
+    })
     tbms: tuple = (("TBM-1", "T1"), ("TBM-2", "T2"))
     haulers: tuple = ("H1", "H2", "H3")
 
@@ -187,6 +198,12 @@ class Hauler:
 
 
 @dataclass
+class Dozer(Hauler):
+    """Grades the launch pad with tunnel spoil. Shares running-gear (wheel) spares with the haulers."""
+    id: str = "dozer"
+
+
+@dataclass
 class Plant:
     status: str = "building"           # building | commissioning | operating | tripped | restarting
     build_h: float = 0.0
@@ -210,3 +227,4 @@ class Incident:
     findings: list = field(default_factory=list)
     resolved_sol: int | None = None
     truth: dict = field(default_factory=dict)   # hidden until resolved
+    where: dict | None = None                    # tile where it happened, with that tile's odds

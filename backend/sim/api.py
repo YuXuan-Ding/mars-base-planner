@@ -3,9 +3,10 @@
 Run on its own:   backend/.venv/bin/uvicorn sim.api:app --app-dir backend --port 8002
 Or mount it:      app.include_router(sim.api.router)   (in backend/app/main.py)
 
-A run is an in-memory simulation. The planner (a person or the AI) advances it until an
-incident opens, looks at the options and their odds, then acts. Hidden truth is never
-returned until an incident is resolved.
+A run is an in-memory simulation on the real Jezero map. The planner (a person or the AI)
+advances it until an incident opens, looks at the options and their odds, then acts.
+Incidents come from the accident odds on the tiles where machines work; nothing is
+scripted. Hidden truth is never returned until an incident is resolved.
 """
 from __future__ import annotations
 
@@ -18,8 +19,9 @@ from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from . import policy, scenario
+from . import hazmap, policy, scenario
 from .engine import Sim
+from .model import Params
 
 router = APIRouter(prefix="/sim", tags=["simulation"])
 
@@ -48,9 +50,10 @@ ACTIONS = {
 
 
 class NewRun(BaseModel):
-    scenario: Literal["demo", "random"] = "demo"
-    seed: int | str | None = None
-    overrides: dict[str, Any] = Field(default_factory=dict, description="Params fields, random scenario only")
+    seed: int | str = Field(1, description="fixes how the dice fall; same seed and choices give the same run")
+    overrides: dict[str, Any] = Field(default_factory=dict, description="Params fields, e.g. "
+                                      '{"route": "accessible"} or {"site": {"ore": [lon, lat], "portals": {...}, '
+                                      '"plant": [lon, lat], "pad": [lon, lat]}}')
 
 
 class Advance(BaseModel):
@@ -86,6 +89,13 @@ class Scorecard(BaseModel):
 
 
 # helpers
+
+def _overrides(o: dict) -> dict:
+    o = dict(o)
+    if "site" in o:   # partial site edits keep the rest of the default layout
+        o["site"] = {**Params().site, **o["site"]}
+    return o
+
 
 def _new(sim: Sim, parent: str | None = None) -> str:
     rid = f"run{next(_ids)}"
@@ -132,7 +142,7 @@ def actions():
 @router.post("/runs")
 def new_run(req: NewRun):
     try:
-        sim = scenario.build(req.scenario, req.seed, **(req.overrides if req.scenario == "random" else {}))
+        sim = scenario.mission(req.seed, **_overrides(req.overrides))
     except (ValueError, TypeError) as e:
         raise HTTPException(422, str(e))
     rid = _new(sim)
@@ -154,6 +164,29 @@ def advance(rid: str, req: Advance = Advance()):
     sim.advance(req.max_sols)
     _snapshot_open(run)
     return _state(rid, run)
+
+
+@router.get("/hazard-map")
+def hazard_map(lon_west: float = 77.30, lon_east: float = 77.56, lat_south: float = 18.38, lat_north: float = 18.58):
+    """Accident odds on every tile of a window (default: around the default site), for drawing."""
+    try:
+        return hazmap.odds_grid(Params(), lon_west, lat_north, lon_east, lat_south)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+
+
+@router.get("/runs/{rid}/map")
+def run_map(rid: str):
+    """Site layout with per-tile odds, where each machine is, and where incidents happened."""
+    sim = _get(rid)["sim"]
+    out = hazmap.site_view(sim.site)
+    out["route_in_use"] = sim.route
+    out["tbm_faces"] = {t.id: {"tunnel": t.tunnel, "position_m": round(t.position_m),
+                               "lonlat": [round(x, 5) for x in sim.site.tunnel_point(t.tunnel, t.position_m)]}
+                        for t in sim.tbms}
+    out["incidents"] = [{"id": i.id, "kind": i.kind, "sol": i.sol, "target": i.target, "status": i.status, **(i.where or {})}
+                        for i in sim.incidents if i.where]
+    return out
 
 
 @router.get("/runs/{rid}/series")
@@ -251,7 +284,7 @@ def rewind(rid: str, req: Rewind):
 
 def _score_one(args) -> tuple[str, dict]:
     seed, name, n_roll, overrides = args
-    sim = scenario.random_mission(seed, **overrides)
+    sim = scenario.mission(seed, **_overrides(overrides))
     pol = policy.fixed_rule if name == "fixed_rule" else policy.sim_guided(n_roll)
     out = policy.play(sim, pol)
     out["incidents"] = len(sim.incidents)
@@ -267,7 +300,7 @@ def scorecard(req: Scorecard):
     except TypeError as e:
         raise HTTPException(422, str(e))
     out = {}
-    p = scenario.random_mission(0, **req.overrides).p
+    p = Params(**_overrides(req.overrides))
     for name in req.policies:
         rs = [r for nm, r in results if nm == name]
         fin = sorted(r["finish_sol"] for r in rs if r["finish_sol"] is not None)

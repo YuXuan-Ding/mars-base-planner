@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Jezero Base Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -85,6 +87,10 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:1.5px soli
 .icon-btn{font:inherit;font-size:15px;line-height:1;color:var(--faint);background:none;border:0;cursor:pointer;padding:2px 4px;border-radius:6px}
 .icon-btn:hover{color:var(--warn)}
 .base-meta{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);margin:4px 0 8px 15px}
+.base:not(.open) .stats,.base:not(.open) .base-miss{display:none}
+.base:not(.open) .base-meta{margin-bottom:0}
+.base-x{color:var(--muted);font-size:13px;transition:transform .15s}
+.base.open .base-x{transform:rotate(180deg)}
 .stats{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0 0 0 15px;font-size:12px}
 .stats dt{color:var(--faint)}
 .stats dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;display:flex;justify-content:flex-end;gap:6px;align-items:center}
@@ -92,8 +98,35 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:1.5px soli
 .pill.ok{color:var(--ok);background:rgba(159,191,168,.1)}
 .pill.warn{color:var(--warn);background:rgba(212,154,146,.12)}
 
-#base-form{border-top:1px solid var(--line);margin-top:14px;padding-top:14px;display:flex;flex-direction:column;gap:9px}
-#base-form h3{font-family:var(--font-display);font-weight:400;font-size:18px;margin:0}
+.drop{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}
+.drop>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:2px 8px;padding:2px 0}
+.drop>summary::-webkit-details-marker{display:none}
+.drop>summary::after{content:'▾';grid-column:2;grid-row:1;color:var(--muted);font-size:13px;transition:transform .15s}
+.drop[open]>summary::after{transform:rotate(180deg)}
+.drop>summary:hover .drop-t,.drop>summary:focus-visible .drop-t{color:var(--accent)}
+.drop-t{font-family:var(--font-display);font-weight:400;font-size:18px}
+.drop-s{grid-column:1/-1;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drop[open] .drop-s{display:none}
+.drop-body{display:flex;flex-direction:column;gap:9px;margin-top:10px}
+.note.sm{margin:-4px 0 0}
+.fac-list{display:flex;flex-direction:column;gap:4px}
+.fac{display:grid;grid-template-columns:auto 1fr 74px;gap:8px;align-items:center;padding:5px 6px;border-radius:9px;border:1px solid var(--line)}
+.fac.off{opacity:.5}
+.fac .step{display:inline-flex;align-items:center;border:1px solid var(--line-strong);border-radius:999px}
+.fac .step button{font:inherit;font-size:13px;line-height:1;color:var(--muted);background:none;border:0;padding:3px 7px;cursor:pointer}
+.fac .step button:hover{color:var(--fg)}
+.fac .step span{font-family:var(--font-mono);font-size:11px;min-width:14px;text-align:center;font-variant-numeric:tabular-nums}
+.fac .nm{min-width:0;font-size:12px;font-weight:500;line-height:1.25}
+.fac .nm small{display:block;font-weight:400;font-size:10.5px;color:var(--faint);font-family:var(--font-mono)}
+.fac input{padding:4px 6px;font-size:11.5px;font-family:var(--font-mono);text-align:right}
+.fac-total{font-family:var(--font-mono);font-size:10.5px;color:var(--muted)}
+.area-row{display:flex;align-items:center;gap:10px;min-width:0}
+.area-text{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pads{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr auto auto;gap:3px 10px;font-size:11.5px;margin:4px 0 0}
+.pads i{width:8px;height:8px;border-radius:2px;margin-top:4px}
+.pads span{color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+.pads b{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#calc .btn-primary{grid-column:1/-1}
 .field{display:flex;flex-direction:column;gap:4px;min-width:0}
 .field label{font-size:11px;color:var(--muted)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
@@ -109,6 +142,109 @@ select option{background:var(--panel-solid)}
 
 #hint{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 24px);background:var(--panel);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(205,180,142,.35);border-radius:999px;padding:7px 8px 7px 16px;display:flex;align-items:center;gap:12px;font-size:12.5px;white-space:nowrap;max-width:calc(100% - 32px)}
 #hint span{overflow:hidden;text-overflow:ellipsis}
+#hint[hidden],#toast[hidden],#site-bar[hidden]{display:none}
+#site-bar{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 70px);display:flex;align-items:center;gap:10px;background:var(--panel);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(205,180,142,.45);border-radius:999px;padding:6px 6px 6px 16px;font-size:12.5px;max-width:calc(100% - 32px);box-sizing:border-box;white-space:nowrap}
+#site-bar span{overflow:hidden;text-overflow:ellipsis;min-width:0}
+#site-bar .btn-primary{margin:0;padding:6px 14px;border-radius:999px;font-size:12.5px}
+#site-bar button[hidden]{display:none}
+body.overview #site-bar{display:none}
+
+@media (min-width:761px){.topbar{max-width:calc(100% - 40px - 338px - env(safe-area-inset-right,0px))}}
+@media (min-width:761px) and (max-width:1280px){.top-row .chip{display:none}}
+.lock{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:10px;font-size:11px;color:var(--muted);margin:0 0 12px}
+.lock.on select{border-color:rgba(205,180,142,.5);color:var(--accent)}
+.lock select{padding:5px 8px;font-size:12.5px}
+
+/* overview: one label per sheet, positioned every frame next to the sheet's right corner */
+#stack-ui{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.sheet-label{position:absolute;left:0;top:0;width:254px;will-change:transform}
+body.overview .sheet-label{pointer-events:auto}
+.sl-row{display:flex;align-items:center;gap:7px;min-width:0}
+.sl-sw{width:7px;height:7px;border-radius:50%;flex:none}
+.sl-name{font-weight:600;font-size:12px;white-space:nowrap}
+.sl-res{font-family:var(--font-mono);font-size:10px;color:var(--faint);white-space:nowrap}
+.sl-src{font-family:var(--font-mono);font-size:10px;color:var(--muted);margin:2px 0 0 14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl-out{margin-left:auto;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.seg{display:inline-flex;margin-left:auto;flex:none;border:1px solid var(--line-strong);border-radius:999px;padding:1px;background:rgba(9,11,14,.75)}
+.seg button{font:inherit;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);background:none;border:0;border-radius:999px;padding:2px 8px;cursor:pointer}
+.seg button:hover{color:var(--fg)}
+.seg .keep[aria-pressed="true"]{color:#16130e;background:var(--accent)}
+.seg .drop[aria-pressed="true"]{color:var(--fg);background:rgba(214,220,230,.16)}
+.sheet-label .sl-sw,.sheet-label .sl-name,.sheet-label .sl-src{transition:opacity .4s,filter .4s}
+.sheet-label.dropped .sl-sw,.sheet-label.dropped .sl-name,.sheet-label.dropped .sl-src{opacity:.4;filter:grayscale(1)}
+
+.layer.dropped{opacity:.6}
+.layer.dropped .swatch{filter:grayscale(1)}
+.layer-head.static{grid-template-columns:10px 1fr auto auto;cursor:default}
+.btn-mini{font:inherit;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:none;border:1px solid rgba(205,180,142,.4);border-radius:999px;padding:1px 8px;cursor:pointer}
+.btn-mini:hover{background:rgba(205,180,142,.1)}
+.base-miss{font-size:11px;color:var(--faint);margin:7px 0 0 15px}
+
+/* route planning (backend) and the calculation replay */
+.flabel{font-size:11px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chips button{font:inherit;font-size:11.5px;color:var(--muted);background:rgba(214,220,230,.03);border:1px solid var(--line-strong);border-radius:999px;padding:3px 10px;cursor:pointer}
+.chips button[aria-pressed="true"]{color:var(--fg);border-color:rgba(143,179,196,.6);background:rgba(143,179,196,.12)}
+.btn-primary:disabled{filter:grayscale(1) brightness(.6);cursor:not-allowed}
+#api-status{margin:2px 0 0}
+#api-status[data-state="ok"]::before{content:"● ";color:var(--ok)}
+#api-status[data-state="off"]::before{content:"● ";color:var(--warn)}
+#api-status code{font-family:var(--font-mono);font-size:10px;color:var(--muted);word-break:break-all}
+
+#calc{left:calc(env(safe-area-inset-left,0px) + 20px);top:calc(env(safe-area-inset-top,0px) + 132px);width:340px;box-sizing:border-box;max-height:calc(100% - 132px - 76px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:14px 16px 12px}
+body.calc-open #layers{display:none}
+.scrub{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin:0 0 10px;font-family:var(--font-mono);font-size:10px;color:var(--muted)}
+.scrub[hidden]{display:none}
+.scrub input{accent-color:var(--accent);width:100%;margin:0}
+.scrub span{font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
+#calc[hidden]{display:none}
+.calc-sub{font-family:var(--font-mono);font-size:10px;color:var(--faint);letter-spacing:.04em;margin:-6px 0 10px}
+#calc-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.step{display:grid;grid-template-columns:14px 1fr;gap:8px;padding:4px 0;color:var(--faint);transition:color .3s}
+.step i{width:7px;height:7px;border-radius:50%;margin-top:5px;background:var(--line-strong);transition:background .3s,box-shadow .3s}
+.step.active{color:var(--fg)}
+.step.active i{background:var(--accent);box-shadow:0 0 0 4px rgba(205,180,142,.16)}
+.step.done{color:var(--muted)}
+.step.done i{background:var(--ok)}
+.step.skip i{background:transparent;border:1px solid var(--line-strong);width:5px;height:5px}
+.step b{font-weight:500;color:inherit}
+.step.active b{color:var(--fg)}
+.step .d{display:block;font-size:11.5px;color:var(--faint);margin-top:1px}
+.step.active .d,.step.done .d{color:var(--muted)}
+.bar{height:2px;border-radius:2px;background:var(--line);margin-top:5px;overflow:hidden}
+.bar span{display:block;height:100%;width:0;background:var(--accent)}
+.bar.wait span{width:30%;animation:wait 1.1s ease-in-out infinite alternate}
+@keyframes wait{from{transform:translateX(-10%)}to{transform:translateX(250%)}}
+#calc-results{display:grid;grid-template-columns:1fr;gap:6px;margin-top:10px}
+#calc-results:empty{display:none}
+.rc{font:inherit;text-align:left;color:var(--fg);background:rgba(214,220,230,.03);border:1px solid var(--line);border-radius:10px;padding:8px 9px;cursor:pointer;min-width:0}
+.rc:hover{border-color:var(--line-strong)}
+.rc[aria-pressed="true"]{border-color:var(--rc,var(--accent));background:rgba(214,220,230,.06)}
+.rc .k{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.rc .k i{width:12px;height:2px;border-radius:1px;background:var(--rc)}
+.rc .v{font-size:15px;font-weight:600;margin:3px 0 1px;font-variant-numeric:tabular-nums}
+.rc .s{font-size:11px;color:var(--muted);line-height:1.35}
+.rc.none .v{color:var(--muted);font-weight:500;font-size:13px}
+.rc .rec{color:var(--accent);margin-left:auto}
+#steep{display:flex;flex-direction:column;gap:8px;margin-top:2px}
+#steep h4{margin:4px 0 0;font-family:var(--font-mono);font-size:9.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.st{border:1px solid var(--line);border-radius:10px;padding:7px 8px;display:flex;flex-direction:column;gap:6px}
+.st-head{font-size:11.5px;display:flex;gap:6px;align-items:baseline}
+.st-head span{color:var(--muted);font-size:10.5px}
+.st-opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.st-opt{font:inherit;text-align:left;color:var(--fg);background:none;border:1px solid var(--line);border-radius:8px;padding:5px 7px;cursor:pointer;min-width:0}
+.st-opt b{display:block;font-size:11px;font-weight:600}
+.st-opt small{display:block;font-size:10px;color:var(--muted);line-height:1.35;margin-top:1px}
+.st-opt[aria-pressed="true"]{border-color:var(--oc);background:rgba(214,220,230,.06)}
+.st-opt:disabled{opacity:.5;cursor:default}
+.st-opt .tag{font-family:var(--font-mono);font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-left:4px;font-weight:500}
+#calc-profile{grid-column:1/-1;margin-top:2px}
+#calc-profile svg{display:block;width:100%;height:74px}
+#calc-profile .cap{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9.5px;color:var(--faint);margin-top:2px}
+#calc-note{grid-column:1/-1;font-size:11.5px;color:var(--muted);margin:2px 0 0}
+
+#toast{position:absolute;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 20px);background:var(--panel);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(205,180,142,.35);border-radius:12px;padding:8px 14px;font-size:12.5px;max-width:min(440px,calc(100% - 32px));box-sizing:border-box;text-align:center}
+#toast b{font-weight:600;color:var(--accent)}
 
 .tabbar{display:none}
 #nogl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);padding:0 24px;text-align:center}
@@ -124,15 +260,26 @@ select option{background:var(--panel-solid)}
   .tabbar button{font:inherit;font-size:12.5px;color:var(--muted);background:none;border:0;border-radius:999px;padding:6px 16px;cursor:pointer}
   .tabbar button[aria-pressed="true"]{color:#16130e;background:var(--accent)}
   #hint{bottom:calc(env(safe-area-inset-bottom,0px) + 70px)}
+  #toast{top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 70px)}
+  #site-bar{bottom:calc(env(safe-area-inset-bottom,0px) + 64px);font-size:11.5px}
+  #site-bar #site-bar-text{display:none}
+  .top-row .chip{display:none}
+  #readout{top:calc(env(safe-area-inset-top,0px) + 124px)!important}
+  .sheet-label{width:200px;box-sizing:border-box;padding:4px 6px;border-radius:8px;background:rgba(9,11,14,.72)}
+  .sl-res{display:none}
   body.placing .panel{display:none!important}
+  body.calc-open #calc{display:block}
+  body.calc-open #calc[hidden]{display:none}
+  #calc{max-height:46%!important}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
 <div id="stage">
-  <canvas id="gl" aria-label="Particle elevation map of the Jezero region. Drag to orbit, scroll to zoom."></canvas>
+  <canvas id="gl" aria-label="Particle elevation map of the Jezero region of Mars. Drag to orbit, right-drag to pan, scroll to zoom."></canvas>
   <canvas id="ov" aria-hidden="true"></canvas>
   <div class="vignette"></div>
+  <div id="stack-ui" aria-label="Overview layers: keep or drop each one" inert></div>
 </div>
 
 <header class="topbar">
@@ -141,9 +288,23 @@ select option{background:var(--panel-solid)}
   <div class="top-row">
     <span class="chip">Real terrain: USGS HRSC + MOLA 200 m · some layers are placeholders</span>
     <button class="btn-ghost" id="overview-btn" type="button" aria-pressed="false">Overview</button>
+    <button class="btn-ghost" id="planner-btn" type="button" title="Layers the planner computes from. Change them in Overview."></button>
+    <button class="btn-ghost" id="add-base-btn" type="button">+ Add a base</button>
+    <button class="btn-ghost" id="clear-all" type="button" title="Remove every base, search outline, route and site result">Clear all</button>
     <button class="btn-ghost" id="reset-view" type="button">Reset view</button>
   </div>
 </header>
+<div id="toast" role="status" hidden></div>
+<div id="site-bar" role="group" aria-label="Base site" hidden><span id="site-bar-text"></span><button class="btn-ghost" type="button" id="site-bar-alt"></button><button class="btn-primary" type="button" id="site-bar-go"></button></div>
+
+<section id="calc" class="panel" hidden aria-label="Route calculation" aria-live="polite">
+  <div class="panel-head"><h2 id="calc-title">Calculation</h2>
+    <span><button class="icon-btn" type="button" id="calc-replay" aria-label="Replay the calculation" title="Replay">↻</button><button class="icon-btn" type="button" id="calc-close" aria-label="Close">×</button></span></div>
+  <div class="calc-sub" id="calc-sub"></div>
+  <div class="scrub" id="calc-scrubber" hidden><button class="icon-btn" type="button" id="calc-play" aria-label="Pause">❚❚</button><input type="range" id="calc-scrub" min="0" max="1000" value="0" aria-label="Calculation timeline"><span id="calc-time">0.0 s</span></div>
+  <ol id="calc-steps"></ol>
+  <div id="calc-results"></div>
+</section>
 
 <aside id="layers" class="panel" aria-label="Map layers">
   <div class="panel-head"><h2>Layers</h2><span class="panel-sub" id="layer-count"></span></div>
@@ -152,32 +313,44 @@ select option{background:var(--panel-solid)}
 
 <aside id="bases" class="panel" aria-label="Bases">
   <div class="panel-head"><h2>Bases</h2><span class="count" id="base-count"></span></div>
+  <label class="lock" id="lock-wrap">Center view on<select id="lock-sel"></select></label>
   <ul id="base-list"></ul>
-  <form id="base-form" autocomplete="off">
-    <h3>Add a facility</h3>
-    <div class="field"><label for="base-name">Name</label><input type="text" id="base-name" maxlength="40"></div>
-    <div class="field"><label for="base-type">Facility type</label>
-      <select id="base-type">
-        <option value="habitat">Habitat</option>
-        <option value="pad">Landing pad</option>
-        <option value="solar">Solar farm</option>
-        <option value="isru">ISRU plant</option>
-        <option value="depot">Storage depot</option>
-      </select>
-    </div>
+  <details id="route-sec" class="drop">
+    <summary><span class="drop-t">Connect two sites</span><span class="drop-s" id="route-sum"></span></summary>
+    <div class="drop-body">
     <div class="row2">
-      <div class="field"><label for="base-foot">Footprint side (m)</label><input type="number" id="base-foot" min="20" max="2000" step="10"></div>
-      <div class="field"><label for="base-slope">Max slope (°)</label><input type="number" id="base-slope" min="0.5" max="30" step="0.5"></div>
+      <div class="field"><label for="route-from">From</label><select id="route-from"></select></div>
+      <div class="field"><label for="route-to">To</label><select id="route-to"></select></div>
     </div>
-    <div class="field"><label for="base-rate">Grading rate, m³ per sol (assumed)</label><input type="number" id="base-rate" min="1" max="10000" step="1" value="50"></div>
-    <button class="btn-primary" type="submit" id="place-btn">Place on map</button>
-  </form>
-  <p class="note">Slope comes from 200 m elevation data, averaged into 1.8 km cells. At a chosen site, the 1 m HiRISE elevation data would refine the grading volume.</p>
+    <div class="field"><span class="flabel">Fleet · held to its strictest vehicle</span><div class="chips" id="fleet"></div></div>
+    <div class="row2">
+      <div class="field"><label for="route-tput">Haul, t per sol</label><input type="number" id="route-tput" min="0" max="5000" step="10" value="200"></div>
+      <div class="field"><label for="route-tbm">Boring machines</label><input type="number" id="route-tbm" min="1" max="50" step="1" value="2"></div>
+    </div>
+    <button class="btn-primary" type="button" id="route-btn">Compute routes</button>
+    <p class="note" id="api-status">Connecting to the planner backend…</p>
+    </div>
+  </details>
+  <details id="site-sec" class="drop">
+    <summary><span class="drop-t">Plan a base</span><span class="drop-s" id="site-sum"></span></summary>
+    <div class="drop-body">
+    <p class="note sm">Choose what the base needs, mark an area on the map, and the planner finds where it all fits with the least ground to flatten.</p>
+    <div class="fac-list" id="fac-list"></div>
+    <div class="fac-total" id="fac-total"></div>
+    <div class="row2">
+      <div class="field"><label for="site-spread">Max spread, km</label><input type="number" id="site-spread" min="0.5" max="20" step="0.5" value="3"></div>
+      <div class="field"><label for="site-rate">Grading, m³ per sol</label><input type="number" id="site-rate" min="1" max="100000" step="10" value="400"></div>
+    </div>
+    <div class="area-row"><button class="btn-ghost" type="button" id="area-btn">Mark search area</button><span class="area-text" id="area-text">No area marked</span></div>
+    <button class="btn-primary" type="button" id="site-btn" disabled>Find the best site</button>
+    </div>
+  </details>
+  <p class="note">Slope comes from 200 m elevation data, averaged into <span id="cell-km"></span> cells. At a chosen site, the 1 m HiRISE elevation data would refine the grading volume.</p>
 </aside>
 
 <div id="readout">
-  <div class="hover" id="hover-text">Drag to orbit · scroll to zoom</div>
-  <div class="scale">404 × 403 km · vertical exaggeration ×20</div>
+  <div class="hover" id="hover-text">Drag to orbit · right-drag to pan · scroll to zoom</div>
+  <div class="scale">404 × 403 km planning area · backdrop continues for thousands of km, coarse elevation only · ×20 vertical</div>
 </div>
 <script src="terrain.js"></script>
 
@@ -224,9 +397,33 @@ const fmtInt = n => Math.round(n).toLocaleString('en-US');
 
 /* ---------- real terrain: USGS HRSC+MOLA blended DEM (200 m), averaged into N x N cells ---------- */
 function unpack(b64, Type) { const bin = atob(b64); const u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); return new Type(u8.buffer); }
-const NP = N * N;
+const NC = N * N;
 const GH = unpack(T.H, Int16Array), GS = unpack(T.S, Uint16Array), GSM = unpack(T.SM, Uint16Array), GRO = unpack(T.RO, Uint16Array);
 function gridH(i, j) { i = i < 0 ? 0 : i >= N ? N - 1 : i; j = j < 0 ? 0 : j >= N ? N - 1 : j; return GH[j * N + i] / 1000; }
+
+// Particles are spread evenly over the displayed 3D surface, not its 2D footprint: a cell gets
+// DENS particles per unit of flat area times its surface-area factor sqrt(1 + |exaggerated gradient|^2),
+// so crater walls and mountains get as many particles per square of surface as the plains.
+// The first NC particles are one per cell (an even 2D grid); the overview sheets draw only those.
+const DENS = 1.6;   // about 20% sparser than before; the solid surface carries the close-up detail
+// colors are bytes: rgb stored as value / CMAX so hillshaded highlights above 1 survive, alpha as-is
+const CMAX = 1.6, CK = 255 / CMAX;
+const CELL_KM = SPAN_KM / N;
+const CGX = new Float32Array(NC), CGY = new Float32Array(NC), CCNT = new Uint8Array(NC);
+let NP = 0;
+(() => {
+  const rnd = mulberry32(7331);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const c = j * N + i;
+    CGX[c] = (gridH(i + 1, j) - gridH(i - 1, j)) / (2 * CELL_KM);
+    CGY[c] = (gridH(i, j + 1) - gridH(i, j - 1)) / (2 * CELL_KM);
+    const area = Math.sqrt(1 + EXAG * EXAG * (CGX[c] * CGX[c] + CGY[c] * CGY[c]));
+    CCNT[c] = Math.min(255, Math.floor(DENS * area + rnd()));
+    NP += CCNT[c];
+  }
+})();
+const DOT = Math.min(1, Math.sqrt(220 / N) * 1.1);                 // overview sheets: one dot per cell
+const DOT_MAP = Math.min(1, Math.sqrt(220 / (N * Math.sqrt(2))) * 1.1);   // map: denser, so smaller dots
 function height(u, v) { // km, bilinear between cell centres
   const x = u * N - 0.5, y = v * N - 0.5, i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j;
   const a = gridH(i, j), b = gridH(i + 1, j), c = gridH(i, j + 1), d = gridH(i + 1, j + 1);
@@ -263,18 +460,28 @@ const UNITS = [
 const GEO_HALF = 0.075; // 60 km box around Jezero
 
 (function build() {
-  const rnd = mulberry32(20261017), cell = SPAN_KM / N;
-  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
-    const k = j * N + i;
-    const u = (i + 0.5 + (rnd() - 0.5) * 0.5) / N, v = (j + 0.5 + (rnd() - 0.5) * 0.5) / N;
+  const rnd = mulberry32(20261017);
+  // craters bucketed on a coarse grid so each particle only checks the few that can reach it
+  const CBN = 64, CB = Array.from({ length: CBN * CBN }, () => []);
+  const bi = x => Math.min(CBN - 1, Math.max(0, Math.floor(x * CBN)));
+  for (const c of craters) { const ex = c.r * 2; for (let y = bi(c.v - ex); y <= bi(c.v + ex); y++) for (let x = bi(c.u - ex); x <= bi(c.u + ex); x++) CB[y * CBN + x].push(c); }
+  // particle order: pass 0 puts one particle in every cell, pass 1 adds the extras on sloped cells
+  const order = [];
+  for (let c = 0; c < NC; c++) order.push([c, 0]);
+  for (let c = 0; c < NC; c++) for (let t = 1; t < CCNT[c]; t++) order.push([c, t]);
+  const so = new Float32Array(NC * 2); for (let i = 0; i < so.length; i++) so[i] = rnd();
+  let k = 0;
+  for (const [cell, t] of order) {
+    const i = cell % N, j = (cell - i) / N;
+    // R2 low-discrepancy points inside the cell: even coverage without grid lines or clumps
+    const u = (i + (so[2 * cell] + t * 0.7548776662) % 1) / N, v = (j + (so[2 * cell + 1] + t * 0.5698402910) % 1) / N;
     U[k] = u; V[k] = v; RAND[k] = rnd();
-    H[k] = GH[k] / 1000;
-    GX[k] = (gridH(i + 1, j) - gridH(i - 1, j)) / (2 * cell);
-    GY[k] = (gridH(i, j + 1) - gridH(i, j - 1)) / (2 * cell);
-    SL[k] = GS[k] / 10; SMX[k] = GSM[k] / 10; RO[k] = GRO[k] / 10;
+    H[k] = height(u, v);                      // on the interpolated surface, so extra particles cover the slope
+    GX[k] = CGX[cell]; GY[k] = CGY[cell];
+    SL[k] = GS[cell] / 10; SMX[k] = GSM[cell] / 10; RO[k] = GRO[cell] / 10;
     // crater-rim proximity (real craters)
     let prox = 0;
-    for (const c of craters) {
+    for (const c of CB[bi(v) * CBN + bi(u)]) {
       const ex = c.r * 2, dx = u - c.u, dy = v - c.v;
       if (dx > ex || dx < -ex || dy > ex || dy < -ex) continue;
       const cq = Math.hypot(dx, dy) / c.r; if (cq < 2) prox = Math.max(prox, Math.exp(-(((cq - 1) / 0.3) ** 2)));
@@ -297,6 +504,7 @@ const GEO_HALF = 0.075; // 60 km box around Jezero
       const cd = Math.min(segDist(u, v, ...CH1), segDist(u, v, ...CH2));
       GU[k] = (deltaQ(u, v) < 1 && q < 1) ? 1 : q < 0.9 ? 0 : q < 1.22 ? 2 : cd < 0.007 ? 3 : 4;
     } else GU[k] = -1;
+    k++;
   }
 })();
 
@@ -305,14 +513,61 @@ const hLo = sortedH[Math.floor(NP * 0.01)], hHi = sortedH[Math.floor(NP * 0.995)
 const hMid = (hLo + hHi) / 2;
 const sortedR = Float32Array.from(RO).sort();
 const roughP95 = sortedR[Math.floor(NP * 0.95)] || 1;
-for (let k = 0; k < NP; k++) {
-  HZ[k] = clamp(0.35 * clamp(SL[k] / 15) + 0.15 * clamp(SMX[k] / 30) + 0.2 * clamp(RO[k] / roughP95) + 0.2 * PX[k] + 0.1 * (1 - TI[k]));
+
+/* ---------- planner inputs: which overview sheets are kept (used) or dropped ---------- */
+const KEEP_KEY = 'jezero-planner-keep', KEEP = {};
+try { const s = JSON.parse(localStorage.getItem(KEEP_KEY) || '{}'); for (const k in s) if (typeof s[k] === 'boolean') KEEP[k] = s[k]; } catch (e) { /* storage unavailable */ }
+const keptSheet = id => KEEP[id] !== false;
+const SHEET_OF = { elev: 'elev', slope: 'slope', ti: 'ti', hazard: 'hazard', min: 'min', geo: 'geo', craters: 'craters', ctx: 'coverage', hirise: 'coverage' };
+const used = layerId => !SHEET_OF[layerId] || keptSheet(SHEET_OF[layerId]);
+
+// Hazard is a weighted sum of whichever inputs are kept, renormalized so it stays 0-1.
+const HAZ_TERMS = [
+  { sheet: 'slope', name: 'slope, roughness', w: 0.7, f: k => (0.35 * clamp(SL[k] / 15) + 0.15 * clamp(SMX[k] / 30) + 0.2 * clamp(RO[k] / roughP95)) / 0.7 },
+  { sheet: 'craters', name: 'crater rims', w: 0.2, f: k => PX[k] },
+  { sheet: 'ti', name: 'soft ground', w: 0.1, f: k => 1 - TI[k] },
+];
+let hazTerms = [], hazW = 0;
+function computeHazard() {
+  hazTerms = HAZ_TERMS.filter(t => keptSheet(t.sheet)); hazW = hazTerms.reduce((a, t) => a + t.w, 0);
+  for (let k = 0; k < NP; k++) { let s = 0; for (const t of hazTerms) s += t.w * t.f(k); HZ[k] = hazW ? clamp(s / hazW) : 0; }
 }
 
 const worldY = h => (h - hMid) / SPAN_KM * 2 * EXAG;
 const world = (u, v, h) => [(u - 0.5) * 2, worldY(h), -(v - 0.5) * 2];
 const POS = new Float32Array(NP * 3);
 for (let k = 0; k < NP; k++) { const w = world(U[k], V[k], H[k]); POS[3 * k] = w[0]; POS[3 * k + 1] = w[1]; POS[3 * k + 2] = w[2]; }
+
+/* ---------- the map on the planet ---------- */
+// World space is the box's tangent frame (x east, y up, z south; 1 unit = half the box). The map is drawn flat
+// (CURVE = 0): the terrain carries on in every direction and the camera never sees a horizon. The bend code is
+// kept for the overlays and picking, which all pass through it.
+// The planet's centre is straight below the box centre at (0, -RW, 0).
+const RW = 3396.19 / (SPAN_KM / 2);
+const D2R = Math.PI / 180, LATC = (LAT0 + LAT1) / 2, LONC = (LON0 + LON1) / 2;
+const SINC = Math.sin(LATC * D2R), COSC = Math.cos(LATC * D2R);
+const wrap180 = d => ((d + 540) % 360) - 180;
+function llDir(lon, lat) {   // unit vector from the planet centre, in world axes
+  const lo = wrap180(lon - LONC) * D2R, la = lat * D2R, cl = Math.cos(la), sl = Math.sin(la), cc = cl * Math.cos(lo);
+  return [cl * Math.sin(lo), cc * COSC + sl * SINC, cc * SINC - sl * COSC];
+}
+let YK = 0, CURVE = 1;   // vertical scale now (intro rise x relief flattening when far out); how far the map is bent
+function bend(x, y, z) {   // y already scaled by YK
+  if (CURVE <= 0) return [x, y, z];
+  const d = llDir(lonOf(x / 2 + 0.5), latOf(0.5 - z / 2)), r = RW + y;
+  const bx = d[0] * r, by = d[1] * r - RW, bz = d[2] * r;
+  return CURVE >= 1 ? [bx, by, bz] : [x + (bx - x) * CURVE, y + (by - y) * CURVE, z + (bz - z) * CURVE];
+}
+const bendW = w => bend(w[0], w[1] * YK, w[2]);   // a flat world point (unscaled height) where it is drawn now
+const llPt = (lon, lat, hkm) => { const d = llDir(lon, lat), r = RW + worldY(hkm) * YK; return [d[0] * r, d[1] * r - RW, d[2] * r]; };
+function unbend(p) {   // a drawn point -> [u, v] on the map
+  if (CURVE < 0.5) return [p[0] / 2 + 0.5, 0.5 - p[2] / 2];
+  const dx = p[0], dy = p[1] + RW, dz = p[2], l = Math.hypot(dx, dy, dz), a = dx / l, b = dy / l, c = dz / l;
+  return [uOf(LONC + Math.atan2(a, b * COSC + c * SINC) / D2R), vOf(Math.asin(clamp(b * SINC - c * COSC, -1, 1)) / D2R)];
+}
+// per-particle direction from the planet centre, so picking can bend points without trig
+const PDIR = new Float32Array(NP * 3);
+for (let k = 0; k < NP; k++) { const d = llDir(lonOf(U[k]), latOf(V[k])); PDIR[3 * k] = d[0]; PDIR[3 * k + 1] = d[1]; PDIR[3 * k + 2] = d[2]; }
 
 /* ---------- layers ---------- */
 const ELEV = ['#1f3448', '#2c4357', '#4f606c', '#8b8678', '#c6ae8a', '#f0e6d4'];
@@ -323,10 +578,48 @@ const rgb = a => a.map(hx);
 const ELEVc = rgb(ELEV), SLOPEc = rgb(SLOPE), HAZc = rgb(HAZ), TIc = rgb(TIR);
 const MINc = MINERALS.map(m => hx(m.color)), UNITc = UNITS.map(m => hx(m.color));
 
+/* ---------- backdrop: coarse elevation around the box, display only (scripts/fetch_context.py) ---------- */
+// Deliberately lower quality than the planning grid: ~7 km cells on a strict grid, posterized and desaturated,
+// fading out with distance, so the 200 m data box reads as the area we actually have.
+const BG = (() => {
+  const C = T.context; if (!C) return null;
+  const cn = C.N, cm = C.meta, g = unpack(C.H, Int16Array);
+  const u0 = uOf(cm.lon_west), u1 = uOf(cm.lon_east), v0 = vOf(cm.lat_south), v1 = vOf(cm.lat_north);
+  const at = (i, j) => g[(j < 0 ? 0 : j >= cn ? cn - 1 : j) * cn + (i < 0 ? 0 : i >= cn ? cn - 1 : i)] / 1000;
+  const cellKm = (u1 - u0) * SPAN_KM / cn;
+  const pos = [], col = [], rnd = [], r = mulberry32(5);
+  for (let j = 0; j < cn; j++) for (let i = 0; i < cn; i++) {
+    const u = u0 + (i + 0.5) / cn * (u1 - u0), v = v0 + (j + 0.5) / cn * (v1 - v0);
+    const out = Math.max(-u, u - 1, -v, v - 1);            // distance outside the box, in box widths
+    if (out < 0.004) continue;                              // the detailed grid covers this
+    const a = 0.95 * (1 - ss(0.5, 2, out)); if (a < 0.03) continue;
+    const h = at(i, j), gx = (at(i + 1, j) - at(i - 1, j)) / (2 * cellKm), gy = (at(i, j + 1) - at(i, j - 1)) / (2 * cellKm);
+    const shade = clamp(0.82 - (gx * -0.7071 + gy * 0.7071) * 14, 0.45, 1.3);
+    const c = ramp(ELEVc, Math.round(clamp((h - hLo) / (hHi - hLo)) * 5) / 5);
+    const lum = c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11;
+    pos.push(...world(u, v, h)); rnd.push(r());
+    for (let q = 0; q < 3; q++) col.push((lum + (c[q] - lum) * 0.45) * shade * 1.05);
+    col.push(a);
+  }
+  const height = (u, v) => at(Math.floor((u - u0) / (u1 - u0) * cn), Math.floor((v - v0) / (v1 - v0) * cn));
+  // the same grid as a coarse surface for the solid close-up view; alpha thins it out into the far field
+  const mesh = { pos: new Float32Array(cn * cn * 3), nrm: new Float32Array(cn * cn * 3), col: new Uint8ClampedArray(cn * cn * 4), cn };
+  for (let j = 0; j < cn; j++) for (let i = 0; i < cn; i++) {
+    const k = j * cn + i, u = u0 + (i + 0.5) / cn * (u1 - u0), v = v0 + (j + 0.5) / cn * (v1 - v0), h = at(i, j);
+    const gx = (at(i + 1, j) - at(i - 1, j)) / (2 * cellKm), gy = (at(i, j + 1) - at(i, j - 1)) / (2 * cellKm);
+    const w = world(u, v, h), nx = -EXAG * gx, nz = EXAG * gy, l = Math.hypot(nx, 1, nz);
+    mesh.pos.set(w, 3 * k); mesh.nrm.set([nx / l, 1 / l, nz / l], 3 * k);
+    const c = ramp(ELEVc, Math.round(clamp((h - hLo) / (hHi - hLo)) * 5) / 5), lum = c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11;
+    for (let q = 0; q < 3; q++) mesh.col[4 * k + q] = (lum + (c[q] - lum) * 0.45) * 1.05 * CK;
+    mesh.col[4 * k + 3] = 255 * (1 - ss(0.5, 2, Math.max(-u, u - 1, -v, v - 1)));
+  }
+  return { mesh, du: (u1 - u0) / cn, n: rnd.length, pos: new Float32Array(pos), col: Uint8ClampedArray.from(col, (x, i) => i % 4 === 3 ? x * 255 : x * CK), rnd: new Float32Array(rnd), height };
+})();
+
 const LAYERS = [
   { id: 'elev', group: 'Terrain', name: 'Elevation', src: 'USGS HRSC + MOLA blended model · real', res: '200 m', on: true, op: 1, sw: ELEV[4], legend: { ramp: ELEV, labels: [fmtKm(hLo), fmtKm(hHi)] } },
   { id: 'slope', group: 'Terrain', name: 'Slope', src: 'Computed from the 200 m elevation · real', res: 'cell mean', on: false, op: .85, sw: SLOPE[2], legend: { ramp: SLOPE, labels: ['0°', '15°+'] } },
-  { id: 'hazard', group: 'Hazard', name: 'Hazard score', src: 'Slope, roughness, crater rims, soft ground', res: 'composite', on: false, op: .8, sw: HAZ[1], legend: { ramp: ['#00000000', ...HAZ], labels: ['Safe', 'Hazardous'] } },
+  { id: 'hazard', group: 'Hazard', name: 'Hazard score', src: 'From slope, roughness, crater rims, soft ground', res: 'composite', on: false, op: .8, sw: HAZ[1], legend: { ramp: ['#00000000', ...HAZ], labels: ['Safe', 'Hazardous'] } },
   { id: 'craters', group: 'Hazard', name: 'Craters', src: `Robbins database (USGS) · ${craters.length} craters, real`, res: '≥ 1 km', on: true, op: .55, sw: '#efe6d8', legend: null },
   { id: 'ti', group: 'Hazard', name: 'Thermal inertia', src: 'THEMIS · placeholder until loaded', res: '100 m', on: false, op: .8, sw: TIR[3], legend: { ramp: TIR, labels: ['Dust, loose soil', 'Rock'] } },
   { id: 'min', group: 'Resources & geology', name: 'Minerals', src: 'CRISM · placeholder until loaded', res: '18 m, patches', on: false, op: .85, sw: MINERALS[2].color, legend: { sw: MINERALS } },
@@ -338,44 +631,67 @@ const LAYERS = [
 ];
 const L = Object.fromEntries(LAYERS.map(l => [l.id, l]));
 
-function buildLayerUI() {
-  const host = document.getElementById('layer-list');
+// Kept layers sit in their groups; layers dropped in the overview sink to a greyed group at the bottom.
+function renderLayers() {
+  const host = document.getElementById('layer-list'); host.replaceChildren();
+  const groupLabel = t => { const g = document.createElement('div'); g.className = 'group-label'; g.textContent = t; host.appendChild(g); };
   let group = '';
-  for (const l of LAYERS) {
-    if (l.group !== group) { group = l.group; const g = document.createElement('div'); g.className = 'group-label'; g.textContent = group; host.appendChild(g); }
-    const row = document.createElement('div'); row.className = 'layer' + (l.on ? ' on' : '');
-    const head = document.createElement('label'); head.className = 'layer-head';
-    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'layer-' + l.id; cb.checked = l.on;
+  for (const l of LAYERS.filter(l => used(l.id))) {
+    if (l.group !== group) { group = l.group; groupLabel(group); }
+    host.appendChild(layerRow(l));
+  }
+  const dropped = LAYERS.filter(l => !used(l.id));
+  if (dropped.length) groupLabel('Dropped · not used by the planner');
+  for (const l of dropped) {
+    const row = document.createElement('div'); row.className = 'layer dropped';
+    const head = document.createElement('div'); head.className = 'layer-head static';
     const sw = document.createElement('span'); sw.className = 'swatch'; sw.style.background = l.sw;
     const nm = document.createElement('span'); nm.className = 'layer-name'; nm.textContent = l.name;
     const rs = document.createElement('span'); rs.className = 'layer-res'; rs.textContent = l.res;
-    head.append(cb, sw, nm, rs);
-    const src = document.createElement('div'); src.className = 'layer-src'; src.textContent = l.src;
-    const det = document.createElement('div'); det.className = 'layer-detail'; det.hidden = !l.on;
-    if (l.legend && l.legend.ramp) {
-      const wrap = document.createElement('div');
-      const bar = document.createElement('div'); bar.className = 'legend-ramp'; bar.style.background = `linear-gradient(90deg, ${l.legend.ramp.join(',')})`;
-      const lab = document.createElement('div'); lab.className = 'legend-labels';
-      const a = document.createElement('span'); a.textContent = l.legend.labels[0];
-      const b = document.createElement('span'); b.textContent = l.legend.labels[1];
-      lab.append(a, b); wrap.append(bar, lab); det.appendChild(wrap);
-    } else if (l.legend && l.legend.sw) {
-      const s = document.createElement('div'); s.className = 'legend-sw';
-      for (const it of l.legend.sw) { const sp = document.createElement('span'); const i = document.createElement('i'); i.style.background = it.color; sp.append(i, document.createTextNode(it.name)); s.appendChild(sp); }
-      det.appendChild(s);
-    }
-    const op = document.createElement('div'); op.className = 'op-row';
-    const opl = document.createElement('label'); opl.htmlFor = 'op-' + l.id; opl.textContent = 'OPACITY';
-    const rng = document.createElement('input'); rng.type = 'range'; rng.id = 'op-' + l.id; rng.min = 0; rng.max = 100; rng.value = Math.round(l.op * 100);
-    const val = document.createElement('span'); val.className = 'op-val'; val.textContent = rng.value + '%';
-    op.append(opl, rng, val); det.appendChild(op);
-    row.append(head, src, det); host.appendChild(row);
-    cb.addEventListener('change', () => { l.on = cb.checked; row.classList.toggle('on', l.on); det.hidden = !l.on; layersChanged(); });
-    rng.addEventListener('input', () => { l.op = rng.value / 100; val.textContent = rng.value + '%'; layersChanged(); });
+    const kb = document.createElement('button'); kb.type = 'button'; kb.className = 'btn-mini'; kb.textContent = 'Keep'; kb.setAttribute('aria-label', 'Keep ' + l.name);
+    kb.addEventListener('click', () => setKeep(SHEET_OF[l.id], true));
+    head.append(sw, nm, rs, kb);
+    const src = document.createElement('div'); src.className = 'layer-src'; src.style.marginLeft = '18px'; src.textContent = l.src;
+    row.append(head, src); host.appendChild(row);
   }
+  layersChanged();
 }
+function layerRow(l) {
+  const row = document.createElement('div'); row.className = 'layer' + (l.on ? ' on' : '');
+  const head = document.createElement('label'); head.className = 'layer-head';
+  const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'layer-' + l.id; cb.checked = l.on;
+  const sw = document.createElement('span'); sw.className = 'swatch'; sw.style.background = l.sw;
+  const nm = document.createElement('span'); nm.className = 'layer-name'; nm.textContent = l.name;
+  const rs = document.createElement('span'); rs.className = 'layer-res'; rs.textContent = l.res;
+  head.append(cb, sw, nm, rs);
+  const src = document.createElement('div'); src.className = 'layer-src'; src.textContent = l.src;
+  const det = document.createElement('div'); det.className = 'layer-detail'; det.hidden = !l.on;
+  if (l.legend && l.legend.ramp) {
+    const wrap = document.createElement('div');
+    const bar = document.createElement('div'); bar.className = 'legend-ramp'; bar.style.background = `linear-gradient(90deg, ${l.legend.ramp.join(',')})`;
+    const lab = document.createElement('div'); lab.className = 'legend-labels';
+    const a = document.createElement('span'); a.textContent = l.legend.labels[0];
+    const b = document.createElement('span'); b.textContent = l.legend.labels[1];
+    lab.append(a, b); wrap.append(bar, lab); det.appendChild(wrap);
+  } else if (l.legend && l.legend.sw) {
+    const s = document.createElement('div'); s.className = 'legend-sw';
+    for (const it of l.legend.sw) { const sp = document.createElement('span'); const i = document.createElement('i'); i.style.background = it.color; sp.append(i, document.createTextNode(it.name)); s.appendChild(sp); }
+    det.appendChild(s);
+  }
+  const op = document.createElement('div'); op.className = 'op-row';
+  const opl = document.createElement('label'); opl.htmlFor = 'op-' + l.id; opl.textContent = 'OPACITY';
+  const rng = document.createElement('input'); rng.type = 'range'; rng.id = 'op-' + l.id; rng.min = 0; rng.max = 100; rng.value = Math.round(l.op * 100);
+  const val = document.createElement('span'); val.className = 'op-val'; val.textContent = rng.value + '%';
+  op.append(opl, rng, val); det.appendChild(op);
+  row.append(head, src, det);
+  cb.addEventListener('change', () => { l.on = cb.checked; row.classList.toggle('on', l.on); det.hidden = !l.on; layersChanged(); });
+  rng.addEventListener('input', () => { l.op = rng.value / 100; val.textContent = rng.value + '%'; layersChanged(); });
+  return row;
+}
+const vis = l => l.on && used(l.id);
 function layersChanged() {
-  document.getElementById('layer-count').textContent = LAYERS.filter(l => l.on).length + ' of ' + LAYERS.length + ' on';
+  const kept = LAYERS.filter(l => used(l.id)), nd = LAYERS.length - kept.length;
+  document.getElementById('layer-count').textContent = kept.filter(l => l.on).length + ' of ' + kept.length + ' on' + (nd ? ` · ${nd} dropped` : '');
   computeColors();
 }
 
@@ -387,8 +703,8 @@ if (!gl) {
   const m = document.createElement('div'); m.id = 'nogl'; m.textContent = 'This map needs WebGL, which this browser has turned off.';
   document.getElementById('stage').appendChild(m);
 }
-const COL = new Float32Array(NP * 4);
-let colBuf, prog, loc = {};
+const COL = new Uint8ClampedArray(NP * 4);
+let colBuf, prog, loc = {}, SOLID = null, BGMESH = null;
 
 function computeColors() {
   const dim = [0.2, 0.21, 0.235];
@@ -396,26 +712,29 @@ function computeColors() {
   const e = L.elev, s = L.slope, z = L.hazard, t = L.ti, m = L.min, g = L.geo;
   for (let k = 0; k < NP; k++) {
     const shade = clamp(0.82 - (GX[k] * lx + GY[k] * ly) * 7, 0.42, 1.4);
-    let c = e.on ? ramp(ELEVc, (H[k] - hLo) / (hHi - hLo)) : dim;
-    if (e.on && e.op < 1) c = [dim[0] + (c[0] - dim[0]) * e.op, dim[1] + (c[1] - dim[1]) * e.op, dim[2] + (c[2] - dim[2]) * e.op];
+    let c = vis(e) ? ramp(ELEVc, (H[k] - hLo) / (hHi - hLo)) : dim;
+    if (vis(e) && e.op < 1) c = [dim[0] + (c[0] - dim[0]) * e.op, dim[1] + (c[1] - dim[1]) * e.op, dim[2] + (c[2] - dim[2]) * e.op];
     let r = c[0] * shade, gg = c[1] * shade, b = c[2] * shade;
     const mix = (col, a) => { r += (col[0] - r) * a; gg += (col[1] - gg) * a; b += (col[2] - b) * a; };
-    if (s.on) { const sv = SL[k] / 15; mix(ramp(SLOPEc, sv), clamp(0.25 + sv) * s.op); }
-    if (t.on) mix(ramp(TIc, TI[k]), t.op);
-    if (z.on) { const a = ss(0.2, 0.75, HZ[k]); if (a > 0) mix(ramp(HAZc, (HZ[k] - 0.2) / 0.6), a * z.op); }
-    if (m.on && MT[k] >= 0) mix(MINc[MT[k]], clamp(MS[k] * 1.3) * m.op);
-    if (g.on && GU[k] >= 0) mix(UNITc[GU[k]], g.op * 0.85);
-    COL[4 * k] = r; COL[4 * k + 1] = gg; COL[4 * k + 2] = b; COL[4 * k + 3] = 1;
+    if (vis(s)) { const sv = SL[k] / 15; mix(ramp(SLOPEc, sv), clamp(0.25 + sv) * s.op); }
+    if (vis(t)) mix(ramp(TIc, TI[k]), t.op);
+    if (vis(z)) { const a = ss(0.2, 0.75, HZ[k]); if (a > 0) mix(ramp(HAZc, (HZ[k] - 0.2) / 0.6), a * z.op); }
+    if (vis(m) && MT[k] >= 0) mix(MINc[MT[k]], clamp(MS[k] * 1.3) * m.op);
+    if (vis(g) && GU[k] >= 0) mix(UNITc[GU[k]], g.op * 0.85);
+    COL[4 * k] = r * CK; COL[4 * k + 1] = gg * CK; COL[4 * k + 2] = b * CK; COL[4 * k + 3] = 255;
   }
   if (gl && colBuf) { gl.bindBuffer(gl.ARRAY_BUFFER, colBuf); gl.bufferSubData(gl.ARRAY_BUFFER, 0, COL); }
+  if (SOLID) solidColors();
+  if (detail.n) recolorDetail();
 }
 
 const RASTER_SHEETS = ['elev', 'slope', 'ti', 'hazard', 'min', 'geo'];
-let sheetBufs = {}, locCol = -1;
+let sheetBufs = {}, locCol = -1, locPos = -1, locRnd = -1, MAIN = null, BGSET = null, bgCol = null;
 // Colors for one dataset on its own sheet (overview mode); alpha marks where the layer has data.
+// Sheets draw only the first NC particles (one per cell), which keeps the stacked view light.
 function sheetColors(id) {
-  const out = new Float32Array(NP * 4), lx = -0.7071, ly = 0.7071, grey = [0.5, 0.52, 0.56];
-  for (let k = 0; k < NP; k++) {
+  const out = new Uint8ClampedArray(NC * 4), lx = -0.7071, ly = 0.7071, grey = [0.5, 0.52, 0.56];
+  for (let k = 0; k < NC; k++) {
     const shade = clamp(0.82 - (GX[k] * lx + GY[k] * ly) * 7, 0.42, 1.4);
     let c, a;
     if (id === 'elev') { c = ramp(ELEVc, (H[k] - hLo) / (hHi - hLo)); a = 1; }
@@ -424,33 +743,165 @@ function sheetColors(id) {
     else if (id === 'hazard') { c = ramp(HAZc, (HZ[k] - 0.2) / 0.6); a = Math.max(0.12, ss(0.2, 0.75, HZ[k])); }
     else if (id === 'min') { if (MT[k] >= 0) { c = MINc[MT[k]]; a = clamp(MS[k] * 1.3); } else { c = grey; a = 0.07; } }
     else { if (GU[k] >= 0) { c = UNITc[GU[k]]; a = 0.9; } else { c = grey; a = 0.06; } }
-    out[4 * k] = c[0] * shade; out[4 * k + 1] = c[1] * shade; out[4 * k + 2] = c[2] * shade; out[4 * k + 3] = a;
+    out[4 * k] = c[0] * shade * CK; out[4 * k + 1] = c[1] * shade * CK; out[4 * k + 2] = c[2] * shade * CK; out[4 * k + 3] = a * 255;
   }
   return out;
 }
+// Shared by every program: bends a flat world point (height already scaled) onto the sphere.
+const GLSL_BEND = `uniform float uCurve;uniform vec4 uLL;uniform vec3 uGeo;
+vec3 bend(vec3 p){if(uCurve<=0.0)return p;float lo=uLL.x+(p.x*0.5+0.5)*uLL.y;float la=uLL.z+(0.5-p.z*0.5)*uLL.w;
+float cl=cos(la);float sl=sin(la);float cc=cl*cos(lo);vec3 d=vec3(cl*sin(lo),cc*uGeo.z+sl*uGeo.y,cc*uGeo.y-sl*uGeo.z);
+float r=uGeo.x+p.y;return mix(p,vec3(d.x*r,d.y*r-uGeo.x,d.z*r),uCurve);}`;
+let PP = null, MP = null, curProg = null, EXT_UINT = null;
+function mkProg(vs, fs, attrs, unis) {
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+  const p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const P = { p, a: {}, u: {} };
+  for (const n of attrs) P.a[n] = gl.getAttribLocation(p, n);
+  for (const n of unis) P.u[n] = gl.getUniformLocation(p, n);
+  return P;
+}
+function useProg(P) {
+  if (curProg === P) return;
+  if (curProg) for (const l of Object.values(curProg.a)) if (l >= 0) gl.disableVertexAttribArray(l);
+  gl.useProgram(P.p); for (const l of Object.values(P.a)) if (l >= 0) gl.enableVertexAttribArray(l);
+  curProg = P;
+}
+function attr(P, name, b, size, type, norm) { const l = P.a[name]; if (l < 0) return; gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.vertexAttribPointer(l, size, type || gl.FLOAT, !!norm, 0, 0); }
+const glBuf = (data, usage) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, usage || gl.STATIC_DRAW); return b; };
+const glIdx = data => { const b = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, b); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data, gl.STATIC_DRAW); return b; };
+const BEND_UNIS = ['uCurve', 'uLL', 'uGeo'];
 function initGL() {
+  EXT_UINT = gl.getExtension('OES_element_index_uint');
+  const deriv = !!gl.getExtension('OES_standard_derivatives');
+  // particles
   const vs = `attribute vec3 aPos;attribute vec4 aCol;attribute float aRnd;
   uniform mat4 uMVP;uniform float uTime;uniform float uRise;uniform float uSize;
-  uniform float uOff;uniform float uScale;uniform float uAlpha;uniform float uDist;
-  varying vec4 vCol;varying float vA;
-  void main(){vec3 p=aPos;p.y=p.y*uRise*uScale+uOff+0.0035*sin(uTime*0.5+aRnd*6.2831);
+  uniform float uOff;uniform float uScale;uniform float uAlpha;uniform float uDist;uniform float uGray;
+  uniform float uMaxPt;uniform vec4 uHole;uniform float uHoleF;uniform float uHoleMode;uniform float uHoleA;
+  uniform vec3 uEye;uniform float uOccR;uniform vec4 uSC;uniform float uSZ;uniform vec2 uFog;
+  varying vec4 vCol;varying float vA;varying float vHard;
+  ${GLSL_BEND}
+  void main(){vec3 p=aPos;p.y=p.y*uRise*uScale+uOff+0.0035*sin(uTime*0.5+aRnd*6.2831);p=bend(p);
   vec4 c=uMVP*vec4(p,1.0);gl_Position=c;
   float tw=0.84+0.16*sin(uTime*(0.35+aRnd*0.5)+aRnd*40.0);
-  vCol=vec4(aCol.rgb*tw,aCol.a);gl_PointSize=max(1.0,uSize*2.6/c.w);
-  vA=clamp(1.0-(c.w-uDist)*0.25,0.45,1.0)*uAlpha*aCol.a;}`;
-  const fs = `precision mediump float;varying vec4 vCol;varying float vA;
-  void main(){vec2 d=gl_PointCoord-vec2(0.5);float r=length(d);float a=smoothstep(0.5,0.1,r)*vA;if(a<0.01)discard;gl_FragColor=vec4(vCol.rgb*a,a);}`;
-  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
-  prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(prog); gl.useProgram(prog);
-  const buf = (data, name, size, usage) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, usage); const l = gl.getAttribLocation(prog, name); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, size, gl.FLOAT, false, 0, 0); return b; };
-  buf(POS, 'aPos', 3, gl.STATIC_DRAW);
-  buf(RAND, 'aRnd', 1, gl.STATIC_DRAW);
-  colBuf = buf(COL, 'aCol', 4, gl.DYNAMIC_DRAW);
-  locCol = gl.getAttribLocation(prog, 'aCol');
-  for (const n of ['uMVP', 'uTime', 'uRise', 'uSize', 'uOff', 'uScale', 'uAlpha', 'uDist']) loc[n] = gl.getUniformLocation(prog, n);
-  for (const id of RASTER_SHEETS) { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, sheetColors(id), gl.STATIC_DRAW); sheetBufs[id] = b; }
+  vec3 rgb=aCol.rgb*(${CMAX.toFixed(2)}*tw);rgb=mix(rgb,vec3(dot(rgb,vec3(0.3,0.59,0.11))*0.75),uGray);
+  vCol=vec4(rgb,aCol.a);float ps=uSize*2.6/c.w;gl_PointSize=clamp(ps,1.0,uMaxPt);vHard=smoothstep(3.0,9.0,ps);
+  float inside=(1.0-smoothstep(uHole.z-uHoleF,uHole.z,abs(aPos.x-uHole.x)))*(1.0-smoothstep(uHole.w-uHoleF,uHole.w,abs(aPos.z-uHole.y)));
+  float hm=uHoleMode>0.5?1.0-inside*uHoleA:(uHoleMode<-0.5?inside*uHoleA:1.0);
+  float seen=1.0;if(uOccR>0.0){vec3 cc=vec3(0.0,-uGeo.x,0.0);vec3 dv=p-uEye;float t=clamp(dot(cc-uEye,dv)/dot(dv,dv),0.0,1.0);seen=step(uOccR,length(uEye+dv*t-cc));}
+  // dots smaller than a pixel are drawn at one pixel, so dim them by the area they would cover
+  vA=clamp(1.0-(c.w-uDist)*0.25,0.45,1.0)*uAlpha*aCol.a*(1.0-0.6*uGray)*hm*seen*clamp(ps*ps*1.6,0.08,1.0)
+    *(1.0-0.35*uSZ*(1.0-smoothstep(uSC.z,uSC.w,length(aPos.xz-uSC.xy))))   // dimmed a little under the solid
+    *(1.0-smoothstep(uFog.x,uFog.y,c.w));}`;   // far ground fades into the dark, so there is never a horizon
+  const fs = `precision mediump float;varying vec4 vCol;varying float vA;varying float vHard;
+  void main(){vec2 d=gl_PointCoord-vec2(0.5);float r=length(d);float a=smoothstep(0.5,mix(0.1,0.4,vHard),r)*vA;if(a<0.01)discard;gl_FragColor=vec4(vCol.rgb*a,a);}`;
+  PP = mkProg(vs, fs, ['aPos', 'aCol', 'aRnd'], ['uMVP', 'uTime', 'uRise', 'uSize', 'uOff', 'uScale', 'uAlpha', 'uDist', 'uGray', 'uMaxPt', 'uHole', 'uHoleF', 'uHoleMode', 'uHoleA', 'uEye', 'uOccR', 'uSC', 'uSZ', 'uFog', ...BEND_UNIS]);
+  prog = PP.p; loc = PP.u; locPos = PP.a.aPos; locCol = PP.a.aCol; locRnd = PP.a.aRnd;
+  // solid terrain: lit triangles, faded in with an ordered dither so it needs no sorting
+  // Solid amount falls off with distance from the view's focus (uSC: centre xz, inner and outer radius) and
+  // with zoom (uSZ), so the ground turns solid from the middle outward and dissolves back into particles.
+  // The 200 m patch carries the coarse surface's height and normal (aM.x, aN0) and an edge weight (aM.y): its
+  // edges match the coarse surface exactly and its detail ramps in toward the middle, and over time (uMorph).
+  const mvs = `attribute vec3 aPos;attribute vec3 aNrm;attribute vec4 aCol;attribute vec2 aM;attribute vec3 aN0;
+  uniform mat4 uMVP;uniform float uRise;uniform vec4 uHole;uniform float uHoleF;uniform vec4 uSC;uniform float uSZ;uniform float uMorph;
+  varying vec3 vCol;varying vec3 vN;varying vec2 vXZ;varying float vY;varying float vA;varying float vS;varying float vW;
+  ${GLSL_BEND}
+  void main(){vec3 p=aPos;float m=uMorph<0.0?0.0:1.0-aM.y*uMorph;p.y=mix(p.y,aM.x,m);vY=p.y;p.y*=uRise;
+  gl_Position=uMVP*vec4(bend(p),1.0);vW=gl_Position.w;vCol=aCol.rgb*${(CMAX * 0.92).toFixed(3)};vA=aCol.a;vN=m>0.0?mix(aNrm,aN0,m):aNrm;
+  vS=uSZ*(1.0-smoothstep(uSC.z,uSC.w,length(aPos.xz-uSC.xy)));vXZ=aPos.xz;}`;
+  const mfs = `${deriv ? '#extension GL_OES_standard_derivatives : enable\n#define CONTOURS 1\n' : ''}precision highp float;
+  uniform float uHoleA;uniform float uHoleMode;uniform vec4 uCt;uniform vec2 uLoc;uniform vec4 uHole;uniform float uHoleF;uniform vec2 uFog;
+  varying vec3 vCol;varying vec3 vN;varying vec2 vXZ;varying float vY;varying float vA;varying float vS;varying float vW;
+  void main(){
+  // the coarse surface is cut out just inside the 200 m patch (per pixel); the patch draws to its rim, where the
+  // two surfaces coincide, so the overlap hides any crack
+  float inner=step(abs(vXZ.x-uHole.x),uHole.z-uHoleF)*step(abs(vXZ.y-uHole.y),uHole.w-uHoleF);
+  if(uHoleMode>0.0&&inner*uHoleA>0.5)discard;
+  float al=vS*vA*(1.0-smoothstep(uFog.x,uFog.y,vW));if(al<0.004)discard;
+  vec3 n=normalize(vN);float sh=0.3+0.9*max(dot(n,vec3(-0.468,0.749,-0.468)),0.0);
+  float h=vY*uCt.x+uCt.y;float tl=clamp((h-uLoc.x)/max(uLoc.y-uLoc.x,0.002),0.0,1.0);
+  vec3 col=vCol*sh*mix(0.75,1.9,tl);   // height within the view: low ground darker, high ground lighter
+  #ifdef CONTOURS
+  float q=(vY*uCt.x+uCt.y)/uCt.z;float w=fwidth(q);float f=abs(fract(q+0.5)-0.5)/max(w,1e-5);
+  float line=(1.0-clamp(f,0.0,1.0))*clamp(1.6-w*3.0,0.0,1.0);float major=step(mod(floor(q+0.5),5.0),0.5);
+  col*=1.0-uCt.w*line*(0.5+0.5*major);
+  #endif
+  gl_FragColor=vec4(col*al,al);}`;   // premultiplied: the surface fades in over the particles
+  MP = mkProg(mvs, mfs, ['aPos', 'aNrm', 'aCol', 'aM', 'aN0'], ['uMVP', 'uRise', 'uHole', 'uHoleF', 'uSZ', 'uSC', 'uMorph', 'uHoleA', 'uHoleMode', 'uCt', 'uLoc', 'uFog', ...BEND_UNIS]);
+
+  useProg(PP);
+  MAIN = { pos: glBuf(POS), rnd: glBuf(RAND), n: NP };
+  colBuf = glBuf(COL, gl.DYNAMIC_DRAW);
+  if (BG) { BGSET = { pos: glBuf(BG.pos), rnd: glBuf(BG.rnd), n: BG.n }; bgCol = glBuf(BG.col); }
+  for (const id of RASTER_SHEETS) sheetBufs[id] = glBuf(sheetColors(id), id === 'hazard' ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);
+  SOLID = buildSolid();
+  if (BG && EXT_UINT) {   // backdrop surface
+    const cn = BG.mesh.cn, idx = new Uint32Array((cn - 1) * (cn - 1) * 6); let q = 0;
+    for (let j = 0; j < cn - 1; j++) for (let i = 0; i < cn - 1; i++) { const a = j * cn + i, b = a + 1, c = a + cn, d = c + 1; idx[q++] = a; idx[q++] = b; idx[q++] = c; idx[q++] = b; idx[q++] = d; idx[q++] = c; }
+    BGMESH = { pos: glBuf(BG.mesh.pos), nrm: glBuf(BG.mesh.nrm), col: glBuf(BG.mesh.col), idx: glIdx(idx), n: idx.length, type: gl.UNSIGNED_INT };
+  }
   gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-  gl.clearColor(0.016, 0.02, 0.024, 1);
+  gl.clearColor(...BG_RGB, 1);
+}
+const BG_RGB = [0.016, 0.02, 0.024];
+// The planning grid as one lit surface (cell centres as vertices), shown instead of particles up close.
+function buildSolid() {
+  if (!EXT_UINT) return null;
+  const pos = new Float32Array(NC * 3), nrm = new Float32Array(NC * 3);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const c = j * N + i, w = world((i + 0.5) / N, (j + 0.5) / N, gridH(i, j));
+    pos[3 * c] = w[0]; pos[3 * c + 1] = w[1]; pos[3 * c + 2] = w[2];
+    const nx = -EXAG * CGX[c], nz = EXAG * CGY[c], l = Math.hypot(nx, 1, nz);
+    nrm[3 * c] = nx / l; nrm[3 * c + 1] = 1 / l; nrm[3 * c + 2] = nz / l;
+  }
+  const idx = new Uint32Array((N - 1) * (N - 1) * 6); let q = 0;
+  for (let j = 0; j < N - 1; j++) for (let i = 0; i < N - 1; i++) { const a = j * N + i, b = a + 1, c = a + N, d = c + 1; idx[q++] = a; idx[q++] = b; idx[q++] = c; idx[q++] = b; idx[q++] = d; idx[q++] = c; }
+  return { pos: glBuf(pos), nrm: glBuf(nrm), col: glBuf(new Uint8Array(NC * 4), gl.DYNAMIC_DRAW), idx: glIdx(idx), n: idx.length, type: gl.UNSIGNED_INT };
+}
+// surface colour without the baked-in hillshade (the mesh is lit by its normals instead)
+const albedo = (out, o, b) => { const s = shadeOf(CGX[b], CGY[b]); out[o] = COL[4 * b] / s; out[o + 1] = COL[4 * b + 1] / s; out[o + 2] = COL[4 * b + 2] / s; out[o + 3] = 255; };
+function solidColors() {
+  const out = new Uint8ClampedArray(NC * 4);
+  for (let c = 0; c < NC; c++) albedo(out, 4 * c, c);
+  gl.bindBuffer(gl.ARRAY_BUFFER, SOLID.col); gl.bufferSubData(gl.ARRAY_BUFFER, 0, out);
+}
+
+/* ---------- far field: MOLA 1/4 degree elevation (scripts/fetch_globe.py), loaded after the map ---------- */
+// Past the ~2,000 km backdrop the ground carries on, coarser still (0.5 degree, ~30 km dots), laid flat around the
+// box for thousands of km, and fades out where the eye's distance haze has already hidden it.
+const GLOBE = { h: null, cols: 1440, rows: 720 };
+const FAR = { set: null, col: null, n: 0, du: 0 };
+const globeH = (lon, lat) => {   // km, nearest MOLA cell
+  if (!GLOBE.h) return null;
+  const i = Math.floor(((lon % 360) + 360) % 360 * 4) % GLOBE.cols, j = clamp(Math.floor((90 - lat) * 4), 0, GLOBE.rows - 1);
+  return GLOBE.h[j * GLOBE.cols + i] / 1000;
+};
+async function loadGlobe() {
+  if (!gl) return;
+  let buf;
+  try { const r = await fetch('mars_globe.bin'); if (!r.ok) return; buf = await r.arrayBuffer(); } catch (e) { return; }
+  const C = GLOBE.cols, R = GLOBE.rows, h = new Int16Array(buf); if (h.length !== C * R) return;
+  GLOBE.h = h;
+  const at = (i, j) => h[clamp(j, 0, R - 1) * C + ((i % C) + C) % C] / 1000;
+  const bil = (lon, lat) => { const x = lon * 4 - 0.5, y = (90 - lat) * 4 - 0.5, i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j; return at(i, j) * (1 - fx) * (1 - fy) + at(i + 1, j) * fx * (1 - fy) + at(i, j + 1) * (1 - fx) * fy + at(i + 1, j + 1) * fx * fy; };
+  const STEP = 0.5, LON_R = 60, LAT_R = 55, r = mulberry32(99);
+  const pos = [], col = [], rnd = [];
+  for (let la0 = LATC - LAT_R; la0 <= LATC + LAT_R; la0 += STEP) for (let lo0 = LONC - LON_R; lo0 <= LONC + LON_R; lo0 += STEP) {
+    const lo = lo0 + (r() - 0.5) * STEP * 0.8, la = la0 + (r() - 0.5) * STEP * 0.8;   // jittered, so no grid lines
+    const u = uOf(lo), v = vOf(la), out = Math.max(-u, u - 1, -v, v - 1);   // box widths outside the planning box
+    // fades in as the backdrop fades out, and out again at its own far edge (well inside the haze)
+    const a = 0.95 * ss(0.5, 2, out) * (1 - ss(6.4, 7.5, out)); if (a < 0.03) continue;
+    const e = bil(lo, la), gx = (bil(lo + STEP, la) - bil(lo - STEP, la)) / (2 * STEP * DEG_KM * Math.cos(la * D2R)), gy = (bil(lo, la + STEP) - bil(lo, la - STEP)) / (2 * STEP * DEG_KM);
+    const shade = clamp(0.82 - (gx * -0.7071 + gy * 0.7071) * 14, 0.45, 1.3);
+    const c = ramp(ELEVc, Math.round(clamp((e - hLo) / (hHi - hLo)) * 5) / 5), lum = c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11;
+    pos.push(...world(u, v, e)); rnd.push(r());
+    for (let q = 0; q < 3; q++) col.push((lum + (c[q] - lum) * 0.45) * shade * 1.05 * CK);
+    col.push(a * 255);
+  }
+  FAR.set = { pos: glBuf(new Float32Array(pos)), rnd: glBuf(new Float32Array(rnd)), n: rnd.length };
+  FAR.col = glBuf(Uint8ClampedArray.from(col)); FAR.n = rnd.length; FAR.du = STEP / (LON1 - LON0);
 }
 
 /* ---------- camera ---------- */
@@ -465,17 +916,47 @@ function lookAt(e, t, up) {
 function mul(a, b) { const o = new Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k]; o[c * 4 + r] = s; } return o; }
 
 const narrow = () => innerWidth < 760;
-const HOME = () => ({ yaw: -0.22, pitch: 0.92, dist: narrow() ? 3.7 : 2.75, target: [0.04, 0, 0.02] });
+const HOME = () => ({ yaw: -0.22, pitch: 0.92, dist: narrow() ? 4.1 : 3.05, target: [0.04, 0, 0.02] });
+const MIN_DIST = 0.02;   // close enough to see single 100 m pads
+const MIN_PITCH = 0.56;  // 32 degrees down; the view is 40 degrees tall
+const maxDist = () => narrow() ? 6 : 4.5;   // a little past the whole planning region
 const cam = HOME();
-let goal = null, overview = false, sep = 0, savedCam = null;
-const OVERVIEW_POSE = () => ({ target: [0, GAP * (SHEETS.length - 1) / 2, 0], dist: narrow() ? 8.6 : 6.3, yaw: cam.yaw, pitch: 0.4 });
+let goal = null, overview = false, sep = 0, savedCam = null, lock = null, keepAtEntry = '';
+const OVERVIEW_POSE = () => ({ target: [0, GAP * (SHEETS.length - 0.4) / 2, 0], dist: narrow() ? 8.6 : 6.3, yaw: cam.yaw, pitch: 0.4 });
+// Pose that centres the orbit on a base; drag, zoom and the idle drift then pivot around it.
+const basePose = b => ({ target: bendW(b.w), dist: Math.min(cam.dist, 1.15) });
 function setOverview(on) {
   if (on === overview) return;
   overview = on; document.body.classList.toggle('overview', on);
+  document.getElementById('stack-ui').inert = !on;
   const btn = document.getElementById('overview-btn'); btn.setAttribute('aria-pressed', String(on)); btn.textContent = on ? 'Back to map' : 'Overview';
-  if (on) { if (placing) stopPlacing(); savedCam = { yaw: cam.yaw, pitch: cam.pitch, dist: cam.dist, target: [...cam.target] }; hoverK = -1; goal = OVERVIEW_POSE(); }
-  else { const h = savedCam || HOME(); goal = { target: h.target, dist: h.dist, yaw: h.yaw, pitch: h.pitch }; }
+  if (on) { if (placing) stopPlacing(); savedCam = { yaw: cam.yaw, pitch: cam.pitch, dist: cam.dist, target: [...cam.target] }; hoverK = -1; goal = OVERVIEW_POSE(); keepAtEntry = keepSig(); }
+  else {
+    const h = savedCam || HOME(); goal = { target: h.target, dist: h.dist, yaw: h.yaw, pitch: h.pitch };
+    if (keepSig() !== keepAtEntry) showPlannerToast();
+  }
   setHover();
+}
+function lockOn(id) {
+  const b = bases.find(x => x.id === id); if (!b) return unlock();
+  lock = id; selected = id;
+  const p = basePose(b);
+  if (overview) savedCam = { ...savedCam, ...p, dist: 1.15 }; else goal = p;
+  renderBases();
+}
+function unlock() {
+  lock = null;
+  const h = HOME();
+  if (overview) savedCam = h; else goal = { target: h.target, dist: h.dist, yaw: h.yaw, pitch: h.pitch };
+  renderLockSel();
+}
+function renderLockSel() {
+  const sel = document.getElementById('lock-sel'); sel.replaceChildren();
+  const opt = (v, t) => { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); };
+  opt('', 'Whole region');
+  for (const b of bases) opt(String(b.id), b.name);
+  sel.value = lock ? String(lock) : '';
+  document.getElementById('lock-wrap').classList.toggle('on', !!lock);
 }
 let MVP = null, W = 0, Hh = 0, dpr = 1, rise = reduced ? 1 : 0;
 
@@ -486,22 +967,82 @@ function resize() {
   if (gl) gl.viewport(0, 0, glc.width, glc.height);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
-function updateMVP() {
-  const cp = Math.cos(cam.pitch);
-  const eye = [cam.target[0] + cam.dist * cp * Math.sin(cam.yaw), cam.target[1] + cam.dist * Math.sin(cam.pitch), cam.target[2] + cam.dist * cp * Math.cos(cam.yaw)];
-  MVP = mul(perspective(40 * Math.PI / 180, W / Hh, 0.03, 30), lookAt(eye, cam.target, [0, 1, 0]));
+// How far the view has gone from "over the map" to "around the planet" (0..1). As it rises the orbit pivot
+// moves to the planet's centre, the camera's up turns to Mars' north pole, and relief is flattened.
+const globeT = () => 0;   // the planet view is off: the camera always stays over the flat map
+let camG = 0, NEAR = 0.002;
+const VIEW = { eye: [0, 0, 0], fwd: [0, 0, -1], right: [1, 0, 0], up: [0, 1, 0] };
+function frameRot(g) { const th = g * (LATC * D2R - Math.PI / 2); return [Math.cos(th), Math.sin(th)]; }
+function camDir(yaw, pitch, g) {   // unit vector from the look target to the eye
+  const cp = Math.cos(pitch), lx = cp * Math.sin(yaw), ly = Math.sin(pitch), lz = cp * Math.cos(yaw), [c, s] = frameRot(g);
+  return [lx, ly * c - lz * s, ly * s + lz * c];
 }
-function proj(x, y, z, off = 0, sc = 1) {
-  const m = MVP; y = y * rise * sc + off;
-  const w = m[3] * x + m[7] * y + m[11] * z + m[15];
-  if (w <= 0.02) return null;
+function dirYP(d, g, yawNear) {
+  const [c, s] = frameRot(g), ly = d[1] * c + d[2] * s, lz = -d[1] * s + d[2] * c;
+  let yaw = Math.atan2(d[0], lz); yaw += Math.round((yawNear - yaw) / (2 * Math.PI)) * 2 * Math.PI;
+  return [yaw, Math.asin(clamp(ly, -1, 1))];
+}
+// Re-express yaw/pitch when the orbit frame changes so the view direction does not jump. Zooming out, the
+// camera rises over the box so Jezero stays in the middle of the planet; zooming back in from anywhere on
+// the globe, it swings back over the box (quickly, so it never passes through the planet).
+function syncCamFrame() {
+  const g = globeT();
+  if (g !== camG) {
+    let d = camDir(cam.yaw, cam.pitch, camG), [yl, pl] = dirYP(d, 0, cam.yaw);
+    if (g > camG && camG < 1) pl += (Math.max(pl, 1.3) - pl) * (g - camG) / (1 - camG);
+    else if (g < camG && camG > 0.12 && pl < 0.6) pl += (0.9 - pl) * (1 - (g / camG) ** 3);
+    d = camDir(yl, pl, 0);
+    [cam.yaw, cam.pitch] = dirYP(d, g, cam.yaw); camG = g;
+  }
+  // never tilted up far enough to see a horizon: the top of the view still looks down ~12 degrees
+  cam.pitch = clamp(cam.pitch, overview || sep > 0.01 ? 0.04 : MIN_PITCH, 1.52);
+  if (g < 0.05 && !overview) keepAboveGround();
+}
+// Up close the camera never dips into a hill: tilt it up until the eye clears the ground below it.
+function keepAboveGround() {
+  for (let it = 0; it < 16; it++) {
+    const d = camDir(cam.yaw, cam.pitch, camG), T = cam.target, e = [T[0] + d[0] * cam.dist, T[1] + d[1] * cam.dist, T[2] + d[2] * cam.dist];
+    const [u, v] = unbend(e); if (u < -1.9 || u > 2.9 || v < -1.9 || v > 2.9) return;
+    const sp = surfPt(u, v), clear = Math.hypot(e[0], e[1] + RW, e[2]) - Math.hypot(sp[0], sp[1] + RW, sp[2]);
+    if (clear >= Math.max(0.003, cam.dist * 0.12) || cam.pitch >= 1.5) return;
+    cam.pitch = Math.min(1.52, cam.pitch + 0.03);
+  }
+}
+// How far outside the 200 m box the look target may go: none up close (the backdrop is coarse), more when far.
+const roam = () => clamp((cam.dist - 0.6) * 0.8, 0, 1.8);
+function updateMVP() {
+  const g = camG, d = camDir(cam.yaw, cam.pitch, g), [c, s] = frameRot(g);
+  const T = [cam.target[0] * (1 - g), cam.target[1] + (-RW - cam.target[1]) * g, cam.target[2] * (1 - g)];
+  const ed = cam.dist + g * RW, eye = [T[0] + d[0] * ed, T[1] + d[1] * ed, T[2] + d[2] * ed], up = [0, c, s];
+  NEAR = clamp(cam.dist * 0.02, 0.0003, 0.5);
+  MVP = mul(perspective(40 * Math.PI / 180, W / Hh, NEAR, Math.max(30, ed + 2.3 * RW)), lookAt(eye, T, up));
+  const nrm = v => { const l = Math.hypot(...v); return v.map(x => x / l); };
+  const f = nrm([-d[0], -d[1], -d[2]]), r = nrm([f[1] * up[2] - f[2] * up[1], f[2] * up[0] - f[0] * up[2], f[0] * up[1] - f[1] * up[0]]);
+  VIEW.eye = eye; VIEW.fwd = f; VIEW.right = r; VIEW.up = [r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0]];
+}
+// The planet hides what is behind it: a point is hidden when the line from the eye to it passes inside the sphere.
+const OCC_R = RW - 0.5;
+function hiddenByPlanet(x, y, z) {
+  const e = VIEW.eye, dx = x - e[0], dy = y - e[1], dz = z - e[2], cy = -RW;
+  const t = clamp((-e[0] * dx + (cy - e[1]) * dy - e[2] * dz) / (dx * dx + dy * dy + dz * dz));
+  return Math.hypot(e[0] + dx * t, e[1] + dy * t - cy, e[2] + dz * t) < OCC_R;
+}
+function projRaw(x, y, z) {
+  const m = MVP, w = m[3] * x + m[7] * y + m[11] * z + m[15];
+  if (w <= NEAR) return null;
   return [((m[0] * x + m[4] * y + m[8] * z + m[12]) / w * 0.5 + 0.5) * W, (1 - ((m[1] * x + m[5] * y + m[9] * z + m[13]) / w * 0.5 + 0.5)) * Hh, w];
 }
-function pick(mx, my) {
+function proj(x, y, z, off = 0, sc = 1) {
+  y = y * YK * sc + off;
+  if (CURVE > 0) { [x, y, z] = bend(x, y, z); if (CURVE > 0.5 && camG > 0.01 && hiddenByPlanet(x, y, z)) return null; }
+  return projRaw(x, y, z);
+}
+function pick(mx, my, lim = NP) {
   const m = MVP; let best = -1, bw = 1e9, near = -1, bd = 1e9;
-  for (let k = 0; k < NP; k++) {
-    const x = POS[3 * k], y = POS[3 * k + 1] * rise, z = POS[3 * k + 2];
-    const w = m[3] * x + m[7] * y + m[11] * z + m[15]; if (w <= 0.02) continue;
+  for (let k = 0; k < lim; k++) {
+    let x = POS[3 * k], y = POS[3 * k + 1] * YK, z = POS[3 * k + 2];
+    if (CURVE > 0) { const r = RW + y, bx = PDIR[3 * k] * r, by = PDIR[3 * k + 1] * r - RW, bz = PDIR[3 * k + 2] * r; x += (bx - x) * CURVE; y += (by - y) * CURVE; z += (bz - z) * CURVE; }
+    const w = m[3] * x + m[7] * y + m[11] * z + m[15]; if (w <= NEAR) continue;
     const sx = ((m[0] * x + m[4] * y + m[8] * z + m[12]) / w * 0.5 + 0.5) * W;
     const sy = (1 - ((m[1] * x + m[5] * y + m[9] * z + m[13]) / w * 0.5 + 0.5)) * Hh;
     const d = (sx - mx) ** 2 + (sy - my) ** 2;
@@ -509,6 +1050,21 @@ function pick(mx, my) {
     if (d < bd) { bd = d; near = k; }
   }
   return best >= 0 ? best : (bd < 900 ? near : -1);
+}
+const pickPt = k => { const r = RW + POS[3 * k + 1] * YK; return CURVE >= 1 ? [PDIR[3 * k] * r, PDIR[3 * k + 1] * r - RW, PDIR[3 * k + 2] * r] : bendW([POS[3 * k], POS[3 * k + 1], POS[3 * k + 2]]); };
+// the ray through a screen point
+function rayAt(mx, my) {
+  const th = Math.tan(20 * D2R), x = (mx / W * 2 - 1) * th * W / Hh, y = (1 - my / Hh * 2) * th, F = VIEW.fwd, R = VIEW.right, U = VIEW.up;
+  const d = [0, 1, 2].map(i => F[i] + R[i] * x + U[i] * y), l = Math.hypot(...d);
+  return d.map(v => v / l);
+}
+function globeHit(mx, my) {   // [lon, lat] on the planet under the cursor, or null
+  const d = rayAt(mx, my), e = VIEW.eye, oc = [e[0], e[1] + RW, e[2]];
+  const b = oc[0] * d[0] + oc[1] * d[1] + oc[2] * d[2], c = oc[0] ** 2 + oc[1] ** 2 + oc[2] ** 2 - RW * RW, disc = b * b - c;
+  if (disc < 0) return null;
+  const t = -b - Math.sqrt(disc); if (t < 0) return null;
+  const p = [e[0] + d[0] * t, e[1] + d[1] * t, e[2] + d[2] * t], [u, v] = unbend(p);
+  return [wrap180(lonOf(u)), latOf(v)];
 }
 
 /* ---------- vector overlays (precomputed in world space) ---------- */
@@ -526,8 +1082,12 @@ const travPts = T.traverse.map(([lon, lat]) => { const u = uOf(lon), v = vOf(lat
 const NAMES = [
   { n: 'Jezero', u: J.u, v: J.v + J.R * 1.35, big: true },
   { n: 'Nili Fossae', u: 0.26, v: 0.9 }, { n: 'NE Syrtis', u: 0.51, v: 0.4 }, { n: 'Midway', u: 0.5, v: 0.465 },
-  { n: 'Isidis Planitia', u: 0.85, v: 0.18 }, { n: 'Syrtis Major', u: 0.12, v: 0.1 }, { n: 'Nili Planum', u: 0.62, v: 0.64 },
-].map(p => ({ ...p, w: world(p.u, p.v, height(p.u, p.v) + 0.35) }));
+  { n: 'Nili Planum', u: 0.62, v: 0.64 },
+  // backdrop features, at their approximate centres outside the box
+  { n: 'Isidis Planitia', u: uOf(87.0), v: vOf(12.9), bg: true }, { n: 'Syrtis Major Planum', u: uOf(69.5), v: vOf(8.4), bg: true },
+].filter(p => !p.bg || BG).map(p => ({ ...p, w: world(p.u, p.v, (p.bg ? BG.height(p.u, p.v) : height(p.u, p.v)) + 0.35) }));
+// outline of the planning box, where the 200 m data and every layer exist
+const boxPts = (() => { const pts = [], seg = 60, edge = (ua, va, ub, vb) => { for (let i = 0; i < seg; i++) { const t = i / seg, u = ua + (ub - ua) * t, v = va + (vb - va) * t; pts.push(world(u, v, height(u, v) + 0.02)); } }; edge(0, 0, 1, 0); edge(1, 0, 1, 1); edge(1, 1, 0, 1); edge(0, 1, 0, 0); pts.push(pts[0]); return pts; })();
 
 function strokePath(pts, off = 0, sc = 1) {
   ctx.beginPath(); let on = false;
@@ -542,76 +1102,149 @@ const TYPES = {
   solar: { label: 'Solar farm', foot: 400, slope: 8 },
   isru: { label: 'ISRU plant', foot: 150, slope: 5 },
   depot: { label: 'Storage depot', foot: 80, slope: 5 },
+  propellant: { label: 'Propellant plant', foot: 100, slope: 3 },
+  ice: { label: 'Ice extraction', foot: 50, slope: 10 },
 };
+const TYPE_OF_FACILITY = { 'landing-pad': 'pad', habitat: 'habitat', 'propellant-plant': 'propellant', 'solar-farm': 'solar', 'ice-mine': 'ice', depot: 'depot' };
 const bases = [];
-let nextId = 1, selected = null, placing = null, hoverK = -1, nameEdited = false, letter = 1;
+let nextId = 1, selected = null, placing = null, hoverK = -1, areaMode = false;
 
 function nearestK(u, v) { let b = 0, bd = 1e9; for (let k = 0; k < NP; k++) { const d = (U[k] - u) ** 2 + (V[k] - v) ** 2; if (d < bd) { bd = d; b = k; } } return b; }
+const inRect = (u, v, r) => u >= r[0] && u <= r[2] && v >= r[1] && v <= r[3];
+// Only kept layers feed a base's numbers; anything that needs a dropped layer is listed as missing.
 function stats(k, cfg) {
-  const s = SL[k], rN = clamp(RO[k] / roughP95), foot = cfg.foot;
-  const cut = Math.pow(foot, 3) * Math.tan(s * Math.PI / 180) / 8 + foot * foot * rN * 1.2;
-  let near = null;
-  for (let q = 0; q < NP; q++) if (MS[q] > 0.45) { const d = Math.hypot(U[q] - U[k], V[q] - V[k]) * SPAN_KM; if (!near || d < near.d) near = { d, t: MT[q] }; }
-  return { h: H[k], slope: s, haz: HZ[k], cut, sols: cut / cfg.rate, pressure: 610 * Math.exp(-H[k] / 11.1), near };
+  const out = { h: null, slope: null, haz: null, cut: null, sols: null, pressure: null, near: null, unit: null, dem: null, missing: [] };
+  if (keptSheet('elev')) { out.h = H[k]; out.pressure = 610 * Math.exp(-H[k] / 11.1); } else out.missing.push('elevation, air pressure');
+  if (keptSheet('slope')) {
+    const s = SL[k], rN = clamp(RO[k] / roughP95), foot = cfg.foot;
+    out.slope = s; out.cut = Math.pow(foot, 3) * Math.tan(s * Math.PI / 180) / 8 + foot * foot * rN * 1.2; out.sols = out.cut / cfg.rate;
+  } else out.missing.push('slope, cut and fill, grading time');
+  if (keptSheet('hazard') && hazTerms.length) out.haz = HZ[k]; else out.missing.push('hazard');
+  if (keptSheet('min')) { for (let q = 0; q < NP; q++) if (MS[q] > 0.45) { const d = Math.hypot(U[q] - U[k], V[q] - V[k]) * SPAN_KM; if (!out.near || d < out.near.d) out.near = { d, t: MT[q] }; } }
+  else out.missing.push('nearest mineral');
+  if (!keptSheet('geo')) out.missing.push('geologic unit'); else if (GU[k] >= 0) out.unit = UNITS[GU[k]].name;
+  if (keptSheet('coverage')) out.dem = HIRISE_RECTS.some(r => inRect(U[k], V[k], r.r)) ? 'HiRISE 1 m' : CTX_RECTS.some(r => inRect(U[k], V[k], r.r)) ? 'CTX 20 m' : 'HRSC 200 m only';
+  else out.missing.push('best elevation data');
+  return out;
 }
 function addBase(k, cfg, example) {
   const b = { id: nextId++, k, ...cfg, example: !!example, w: [POS[3 * k], POS[3 * k + 1], POS[3 * k + 2]] };
-  b.s = stats(k, cfg); bases.push(b); selected = b.id; renderBases(); return b;
+  b.s = stats(k, cfg); bases.push(b); selected = b.id; renderBases(); notifyPlanner(); return b;
 }
+const openBases = new Set();   // base cards showing their full details
 function renderBases() {
+  renderLockSel(); updateRouteForm();
   const list = document.getElementById('base-list'); list.replaceChildren();
   document.getElementById('base-count').textContent = bases.length + (bases.length === 1 ? ' facility' : ' facilities');
   for (const b of bases) {
-    const li = document.createElement('li'); li.className = 'base' + (b.id === selected ? ' sel' : ''); li.tabIndex = 0;
+    const li = document.createElement('li'); li.className = 'base' + (b.id === selected ? ' sel' : '') + (openBases.has(b.id) ? ' open' : ''); li.tabIndex = 0;
     const top = document.createElement('div'); top.className = 'base-top';
     const dot = document.createElement('span'); dot.className = 'base-dot';
     const nm = document.createElement('span'); nm.className = 'base-name'; nm.textContent = b.name;
     top.append(dot, nm);
     if (b.example) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = 'Example'; top.appendChild(t); }
     const rm = document.createElement('button'); rm.className = 'icon-btn'; rm.type = 'button'; rm.textContent = '×'; rm.setAttribute('aria-label', 'Remove ' + b.name);
-    rm.addEventListener('click', e => { e.stopPropagation(); bases.splice(bases.indexOf(b), 1); if (selected === b.id) selected = null; renderBases(); });
-    top.appendChild(rm);
+    rm.addEventListener('click', e => {
+      e.stopPropagation(); bases.splice(bases.indexOf(b), 1); openBases.delete(b.id); if (selected === b.id) selected = null;
+      if (lock === b.id) unlock(); renderBases(); notifyPlanner();
+    });
+    const ex = document.createElement('button'); ex.className = 'icon-btn base-x'; ex.type = 'button'; ex.textContent = '▾';
+    ex.setAttribute('aria-expanded', String(openBases.has(b.id))); ex.setAttribute('aria-label', (openBases.has(b.id) ? 'Hide details of ' : 'Show details of ') + b.name);
+    ex.addEventListener('click', e => { e.stopPropagation(); openBases.has(b.id) ? openBases.delete(b.id) : openBases.add(b.id); renderBases(); });
+    top.append(ex, rm);
     const meta = document.createElement('div'); meta.className = 'base-meta'; meta.textContent = `${TYPES[b.type].label} · ${b.foot} m · ${fmtLL(U[b.k], V[b.k])}`;
     const dl = document.createElement('dl'); dl.className = 'stats';
     const row = (k, v, pill) => { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); if (pill) { const p = document.createElement('span'); p.className = 'pill ' + pill[1]; p.textContent = pill[0]; dd.appendChild(p); } dd.appendChild(document.createTextNode(v)); dl.append(dt, dd); };
     const s = b.s;
-    row('Elevation', fmtKm(s.h));
-    row('Slope', s.slope.toFixed(1) + '°', s.slope <= b.maxSlope ? ['within ' + b.maxSlope + '°', 'ok'] : ['over ' + b.maxSlope + '°', 'warn']);
-    const hz = s.haz < 0.3 ? ['low', 'ok'] : s.haz < 0.55 ? ['moderate', 'warn'] : ['high', 'warn'];
-    row('Hazard', s.haz.toFixed(2), hz);
-    row('Cut and fill', '≈ ' + fmtInt(s.cut) + ' m³');
-    row('Grading time', s.sols < 1 ? 'under 1 sol' : '≈ ' + fmtInt(s.sols) + ' sols');
-    row('Air pressure', '≈ ' + fmtInt(s.pressure) + ' Pa');
+    if (s.h !== null) row('Elevation', fmtKm(s.h));
+    if (s.slope !== null) row('Slope', s.slope.toFixed(1) + '°', s.slope <= b.maxSlope ? ['within ' + b.maxSlope + '°', 'ok'] : ['over ' + b.maxSlope + '°', 'warn']);
+    if (s.haz !== null) row('Hazard', s.haz.toFixed(2), s.haz < 0.3 ? ['low', 'ok'] : s.haz < 0.55 ? ['moderate', 'warn'] : ['high', 'warn']);
+    if (s.cut !== null) row('Cut and fill', '≈ ' + fmtInt(s.cut) + ' m³');
+    if (s.sols !== null) row('Grading time', s.sols < 1 ? 'under 1 sol' : '≈ ' + fmtInt(s.sols) + ' sols');
+    if (s.pressure !== null) row('Air pressure', '≈ ' + fmtInt(s.pressure) + ' Pa');
     if (s.near) row('Nearest ' + MINERALS[s.near.t].name.toLowerCase(), Math.round(s.near.d) + ' km');
+    if (s.unit) row('Geologic unit', s.unit);
+    if (s.dem) row('Best elevation data', s.dem);
+    if (b.pad) { row('Site search earthwork', '≈ ' + fmtInt(b.pad.earthwork_m3) + ' m³'); row('Pad level', fmtInt(b.pad.pad_elevation_m) + ' m'); }
     li.append(top, meta, dl);
-    const focus = () => { selected = b.id; goal = { target: [b.w[0], b.w[1] * rise, b.w[2]], dist: 1.05 }; renderBases(); };
+    if (s.missing.length) { const m = document.createElement('div'); m.className = 'base-miss'; m.textContent = 'Not computed (layer dropped): ' + s.missing.join('; '); li.appendChild(m); }
+    if (b.id === lock) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = 'Centered'; t.style.color = 'var(--accent)'; top.insertBefore(t, ex); }
+    const focus = () => { openBases.add(b.id); lockOn(b.id); };
     li.addEventListener('click', focus);
     li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); focus(); } });
     list.appendChild(li);
   }
 }
 
-/* form */
-const fName = document.getElementById('base-name'), fType = document.getElementById('base-type'), fFoot = document.getElementById('base-foot'), fSlope = document.getElementById('base-slope'), fRate = document.getElementById('base-rate');
-const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-function suggestName() { return TYPES[fType.value].label + ' ' + LETTERS[letter % 26]; }
-function applyTypeDefaults() { const t = TYPES[fType.value]; fFoot.value = t.foot; fSlope.value = t.slope; if (!nameEdited) fName.value = suggestName(); }
-fName.addEventListener('input', () => { nameEdited = fName.value.trim() !== ''; });
-fType.addEventListener('change', applyTypeDefaults);
-document.getElementById('base-form').addEventListener('submit', e => {
-  e.preventDefault();
-  const cfg = { name: fName.value.trim() || suggestName(), type: fType.value, foot: clamp(+fFoot.value || TYPES[fType.value].foot, 20, 2000), maxSlope: clamp(+fSlope.value || TYPES[fType.value].slope, 0.5, 30), rate: Math.max(1, +fRate.value || 50) };
-  if (overview) setOverview(false);
-  startPlacing(cfg);
-});
 function startPlacing(cfg) {
   placing = cfg; document.body.classList.add('placing');
-  document.getElementById('hint-text').textContent = `Click the map to place ${cfg.name}. Press Esc to cancel.`;
+  document.getElementById('hint-text').textContent = 'Click the map where the route should end. Press Esc to cancel.';
   document.getElementById('hint').hidden = false;
 }
-function stopPlacing() { placing = null; document.body.classList.remove('placing'); document.getElementById('hint').hidden = true; }
+function startArea() {
+  if (overview) setOverview(false);
+  areaMode = true; SITE.drag = null; document.body.classList.add('placing');
+  document.getElementById('hint-text').textContent = 'Draw around the ground the base could use: drag freehand, or click corner by corner and click the first point (or Enter) to close. Backspace undoes a corner, Esc cancels.';
+  document.getElementById('hint').hidden = false;
+  if (narrow()) document.body.dataset.sheet = 'none';
+}
+function stopPlacing() { placing = null; areaMode = false; SITE.drag = null; SITE.hover = null; document.body.classList.remove('placing'); document.getElementById('hint').hidden = true; updateRouteForm(); renderSiteBar(); }
 document.getElementById('cancel-place').addEventListener('click', stopPlacing);
-addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (placing) stopPlacing(); else if (overview) setOverview(false); });
+addEventListener('keydown', e => {
+  if (areaMode && SITE.drag && !typing(e)) {
+    if (e.key === 'Enter') { finishArea(); e.preventDefault(); return; }
+    if (e.key === 'Backspace') { SITE.drag.pts.pop(); if (!SITE.drag.pts.length) SITE.drag = null; e.preventDefault(); return; }
+  }
+  if (e.key !== 'Escape') return; if (placing || areaMode) stopPlacing(); else if (overview) setOverview(false);
+});
+/* search outline: freehand drag or click-by-click polygon, in map (u, v) */
+const ptUV = (mx, my) => { const k = pick(mx, my, NC); return k >= 0 ? [U[k], V[k]] : null; };
+const polyKm2 = P => { let a = 0; for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length]; a += p[0] * q[1] - q[0] * p[1]; } return Math.abs(a) / 2 * SPAN_KM * SPAN_KM; };
+function outlinePts(P, closed, lift = 0.05) {   // draped on the terrain, ~0.5 km steps
+  const pts = [], n = closed ? P.length : P.length - 1;
+  for (let i = 0; i < n; i++) {
+    const a = P[i], b = P[(i + 1) % P.length], k = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) * SPAN_KM / 0.5));
+    for (let j = 0; j < k; j++) { const u = a[0] + (b[0] - a[0]) * j / k, v = a[1] + (b[1] - a[1]) * j / k; pts.push(world(u, v, height(clamp(u), clamp(v)) + lift)); }
+  }
+  const e = closed ? P[0] : P[P.length - 1]; pts.push(world(e[0], e[1], height(clamp(e[0]), clamp(e[1])) + lift));
+  return pts;
+}
+function finishArea() {
+  const d = SITE.drag; if (!d) return;
+  const P = [];   // drop points closer than 250 m to the last kept one
+  for (const p of d.pts) if (!P.length || Math.hypot(p[0] - P[P.length - 1][0], p[1] - P[P.length - 1][1]) * SPAN_KM > 0.25) P.push(p);
+  while (P.length > 3 && Math.hypot(P[0][0] - P[P.length - 1][0], P[0][1] - P[P.length - 1][1]) * SPAN_KM < 0.25) P.pop();
+  const km2 = P.length >= 3 ? polyKm2(P) : 0;
+  if (km2 < 2) { document.getElementById('hint-text').textContent = 'That outline is too small (under 2 km²). Draw a larger one, or Esc to cancel.'; SITE.drag = null; return; }
+  const us = P.map(p => p[0]), vs = P.map(p => p[1]);
+  SITE.area = { poly: P, km2, u0: Math.min(...us), v0: Math.min(...vs), u1: Math.max(...us), v1: Math.max(...vs) };
+  stopPlacing(); updateSiteForm();
+}
+// keyboard flying: WASD / arrows pan, Q E turn, R F tilt, + - zoom (ignored while typing in a field)
+const KEYS = new Set(), FLY = { w: [0, -1], arrowup: [0, -1], s: [0, 1], arrowdown: [0, 1], a: [-1, 0], arrowleft: [-1, 0], d: [1, 0], arrowright: [1, 0] };
+const typing = e => { const t = e.target; return !!t && (t.isContentEditable || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || (t.tagName === 'INPUT' && t.type !== 'range' && t.type !== 'checkbox')); };
+addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (typing(e) || e.ctrlKey || e.metaKey || e.altKey || overview) return;
+  if (k in FLY || 'qerf+=-_'.includes(k) && k.length === 1) { KEYS.add(k); e.preventDefault(); lastInteract = performance.now(); }
+});
+addEventListener('keyup', e => KEYS.delete(e.key.toLowerCase()));
+addEventListener('blur', () => KEYS.clear());
+function flyKeys(dt) {
+  if (!KEYS.size) return;
+  let px = 0, py = 0;
+  for (const k of KEYS) if (FLY[k]) { px += FLY[k][0]; py += FLY[k][1]; }
+  const sp = 520 * dt;
+  if (camG >= 0.3) { cam.yaw -= px * dt * 1.2; cam.pitch -= py * dt * 0.9; }   // around the planet, the arrows spin it
+  else if (px || py) panBy(-px * sp, -py * sp);
+  if (KEYS.has('q')) cam.yaw += dt * 1.1;
+  if (KEYS.has('e')) cam.yaw -= dt * 1.1;
+  if (KEYS.has('r')) cam.pitch += dt * 0.8;
+  if (KEYS.has('f')) cam.pitch -= dt * 0.8;
+  if (KEYS.has('+') || KEYS.has('=')) zoomAt(W / 2, Hh / 2, Math.exp(-dt * 1.6));
+  if (KEYS.has('-') || KEYS.has('_')) zoomAt(W / 2, Hh / 2, Math.exp(dt * 1.6));
+  goal = null; syncCamFrame(); lastInteract = performance.now();
+}
 
 /* tabs (phone) */
 document.querySelectorAll('.tabbar button').forEach(btn => btn.addEventListener('click', () => {
@@ -619,15 +1252,26 @@ document.querySelectorAll('.tabbar button').forEach(btn => btn.addEventListener(
   document.body.dataset.sheet = cur === s ? 'none' : s;
   document.querySelectorAll('.tabbar button').forEach(b => b.setAttribute('aria-pressed', String(document.body.dataset.sheet === b.dataset.sheet)));
 }));
-document.getElementById('reset-view').addEventListener('click', () => { const h = overview ? OVERVIEW_POSE() : HOME(); goal = { target: h.target, dist: h.dist, yaw: h.yaw, pitch: h.pitch }; });
+document.getElementById('reset-view').addEventListener('click', () => {
+  if (overview) { const h = OVERVIEW_POSE(); goal = { target: h.target, dist: h.dist, yaw: h.yaw, pitch: h.pitch }; } else unlock();
+  renderBases();
+});
 document.getElementById('overview-btn').addEventListener('click', () => setOverview(!overview));
+document.getElementById('planner-btn').addEventListener('click', () => setOverview(true));
+document.getElementById('lock-sel').addEventListener('change', e => { if (e.target.value) lockOn(+e.target.value); else { unlock(); renderBases(); } });
 
 /* ---------- interaction ---------- */
 const pointers = new Map();
 let down = null, lastInteract = performance.now(), pinch0 = 0, hoverPending = null;
 glc.addEventListener('pointerdown', e => {
   glc.setPointerCapture(e.pointerId); pointers.set(e.pointerId, [e.clientX, e.clientY]);
-  if (pointers.size === 1) down = { x: e.clientX, y: e.clientY, moved: 0 };
+  if (pointers.size === 1) down = { x: e.clientX, y: e.clientY, moved: 0, pan: e.button === 2 || e.button === 1 || e.shiftKey };
+  if (areaMode && pointers.size === 1) {
+    const r = glc.getBoundingClientRect(), p = ptUV(e.clientX - r.left, e.clientY - r.top);
+    if (!SITE.drag && p) SITE.drag = { pts: [p], fresh: true };
+    else if (SITE.drag) SITE.drag.fresh = false;
+    if (SITE.drag) SITE.drag.n0 = SITE.drag.pts.length;
+  }
   if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch0 = Math.hypot(a[0] - b[0], a[1] - b[1]); }
   lastInteract = performance.now();
 });
@@ -637,44 +1281,134 @@ glc.addEventListener('pointermove', e => {
   const prev = pointers.get(e.pointerId); pointers.set(e.pointerId, [e.clientX, e.clientY]);
   if (pointers.size === 2) {
     const [a, b] = [...pointers.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]);
-    if (pinch0 > 0) cam.dist = clamp(cam.dist * pinch0 / d, 0.55, overview ? 12 : 4.5); pinch0 = d; goal = null; if (down) down.moved = 99; return;
+    const r0 = glc.getBoundingClientRect();
+    if (pinch0 > 0) zoomAt((a[0] + b[0]) / 2 - r0.left, (a[1] + b[1]) / 2 - r0.top, pinch0 / d); pinch0 = d; if (down) down.moved = 99;
+    panBy((e.clientX - prev[0]) / 2, (e.clientY - prev[1]) / 2);   // two fingers moving together pan
+    return;
   }
   const dx = e.clientX - prev[0], dy = e.clientY - prev[1];
   if (down) down.moved += Math.abs(dx) + Math.abs(dy);
+  if (areaMode) {   // dragging out the search area instead of orbiting
+    if (SITE.drag && down && down.moved > 6) {   // freehand: lay a point every few pixels
+      const mx = e.clientX - r.left, my = e.clientY - r.top, l = SITE.drag.scr;
+      if (!l || Math.hypot(mx - l[0], my - l[1]) > 4) { const p = ptUV(mx, my); if (p) { SITE.drag.pts.push(p); SITE.drag.scr = [mx, my]; } }
+      SITE.hover = null;
+    }
+    lastInteract = performance.now(); return;
+  }
   if (down && down.moved > 4) {
     document.body.classList.add('dragging'); goal = null;
-    cam.yaw -= dx * 0.005; cam.pitch = clamp(cam.pitch + dy * 0.004, 0.3, 1.45);
+    if (down.pan && camG < 0.3) panBy(dx, dy);
+    else { cam.yaw -= dx * 0.005; cam.pitch += dy * 0.004; syncCamFrame(); }   // orbit: turn and tilt
   }
   lastInteract = performance.now();
 });
 const endPointer = e => {
   if (!pointers.has(e.pointerId)) return;
   pointers.delete(e.pointerId); document.body.classList.remove('dragging');
+  if (areaMode && SITE.drag && pointers.size === 0) {
+    const d = SITE.drag, r = glc.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    d.scr = null;
+    if (down && down.moved > 6) { if (d.pts.length - d.n0 > 2 || d.pts.length >= 3) finishArea(); }   // a lasso closes itself
+    else if (!d.fresh) {
+      const f = d.pts[0], s0 = f && proj(...world(f[0], f[1], height(clamp(f[0]), clamp(f[1])) + 0.05));
+      if (d.pts.length >= 3 && s0 && Math.hypot(mx - s0[0], my - s0[1]) < 12) finishArea();   // clicked the first corner
+      else { const p = ptUV(mx, my), l = d.pts[d.pts.length - 1]; if (p && (!l || Math.hypot(p[0] - l[0], p[1] - l[1]) * SPAN_KM > 0.05)) d.pts.push(p); }
+    }
+    down = null; return;
+  }
   if (down && down.moved <= 4 && pointers.size === 0 && e.type === 'pointerup') {
-    const r = glc.getBoundingClientRect(); const k = pick(e.clientX - r.left, e.clientY - r.top);
-    if (k >= 0 && placing) {
-      const cfg = placing; stopPlacing(); addBase(k, cfg); letter++; nameEdited = false; fName.value = suggestName();
-      if (narrow()) { document.body.dataset.sheet = 'bases'; document.querySelectorAll('.tabbar button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.sheet === 'bases'))); }
+    const r = glc.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    const hit = !placing && !overview && bases.find(b => b.hit && (Math.hypot(mx - b.hit[0], my - b.hit[1]) < 12 || (mx >= b.hit[2] && mx <= b.hit[2] + b.hit[4] && my >= b.hit[3] && my <= b.hit[3] + b.hit[5])));
+    if (hit) lockOn(hit.id);
+    const k = placing ? pick(mx, my) : -1;
+    if (k >= 0 && placing && placing.pick) {
+      routePt = { lon: lonOf(U[k]), lat: latOf(V[k]) }; stopPlacing(); rTo.value = 'pt'; updateRouteForm();
     }
   }
   if (pointers.size === 0) down = null;
   lastInteract = performance.now();
 };
+// any pointer movement (including over the overview labels and panels) holds off the idle drift, so controls stay put
+addEventListener('pointermove', () => { lastInteract = performance.now(); }, { passive: true });
 glc.addEventListener('pointerup', endPointer);
+glc.addEventListener('contextmenu', e => e.preventDefault());   // right-drag pans
 glc.addEventListener('pointercancel', endPointer);
 glc.addEventListener('pointerleave', () => { if (!pointers.size) { hoverK = -1; setHover(); } });
-glc.addEventListener('wheel', e => { e.preventDefault(); goal = null; cam.dist = clamp(cam.dist * Math.exp(e.deltaY * 0.001), 0.55, overview ? 12 : 4.5); lastInteract = performance.now(); }, { passive: false });
+glc.addEventListener('wheel', e => { e.preventDefault(); const r = glc.getBoundingClientRect(); zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(e.deltaY * 0.001)); lastInteract = performance.now(); }, { passive: false });
+glc.addEventListener('dblclick', e => { if (areaMode && SITE.drag && SITE.drag.pts.length >= 3) { finishArea(); return; } if (areaMode || placing) return; const r = glc.getBoundingClientRect(); zoomAt(e.clientX - r.left, e.clientY - r.top, 0.45); });
+// The ground point under the cursor: the terrain particle there, else where the ray meets the mean ground level.
+function groundAt(mx, my) {
+  const k = pick(mx, my, NC); if (k >= 0) return pickPt(k);
+  const d = rayAt(mx, my), e = VIEW.eye; if (d[1] > -1e-4) return null;
+  const tt = -e[1] / d[1], u = (e[0] + d[0] * tt) / 2 + 0.5, v = 0.5 - (e[2] + d[2] * tt) / 2;
+  return u > -1.9 && u < 2.9 && v > -1.9 && v < 2.9 ? surfPt(u, v) : null;
+}
+// Move the look target over the ground by a screen drag; it stays on the surface and inside the backdrop.
+function panBy(dx, dy) {
+  if (camG >= 0.3 || overview || (!dx && !dy)) return;
+  goal = null;
+  const s = cam.dist * 2 * Math.tan(20 * D2R) / Hh, fy = 1 / Math.max(0.35, Math.sin(cam.pitch));
+  const sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
+  const mx = -cy * dx * s - sy * dy * s * fy, mz = sy * dx * s - cy * dy * s * fy;   // right = (cos, 0, -sin), ahead = (-sin, 0, -cos)
+  const [u, v] = unbend(cam.target);
+  const m = roam(); setTarget(clamp(u + mx / 2, -m, 1 + m), clamp(v - mz / 2, -m, 1 + m));
+  if (lock) { lock = null; renderBases(); }
+}
+const surfH = (u, v) => u >= 0 && u <= 1 && v >= 0 && v <= 1 ? hAt(u, v) : BG ? BG.height(u, v) : hMid;
+const surfPt = (u, v) => bendW(world(u, v, surfH(u, v)));
+function setTarget(u, v) { const p = surfPt(u, v); cam.target = p; }
+// Zoom by `factor`, keeping the point under (mx, my) under the cursor, so any spot can be zoomed into.
+function zoomAt(mx, my, factor) {
+  goal = null;
+  const old = cam.dist, nd = clamp(old * factor, overview ? 0.55 : MIN_DIST, overview ? 12 : maxDist());
+  if (!overview && nd !== old && camG < 0.3) {
+    const p = groundAt(mx, my);
+    if (p) {
+      const f = 1 - nd / old;
+      for (let i = 0; i < 3; i++) cam.target[i] += (p[i] - cam.target[i]) * f;
+      const [u, v] = unbend(cam.target), m = clamp((nd - 0.6) * 0.8, 0, 1.8); setTarget(clamp(u, -m, 1 + m), clamp(v, -m, 1 + m));
+      if (lock) { lock = null; renderBases(); }
+    }
+  }
+  cam.dist = nd; syncCamFrame();
+}
 
-const hoverEl = document.getElementById('hover-text');
+const HINT = 'Drag to orbit · right-drag or Shift-drag to pan · WASD to move · scroll to zoom where you point';
+const hoverEl = document.getElementById('hover-text'), scaleEl = document.querySelector('#readout .scale'), BASE_SCALE = scaleEl.textContent;
 function setHover() {
-  if (overview) { hoverEl.textContent = 'Overview · each dataset on its own sheet over the same 405 km box · Esc to return'; return; }
-  if (hoverK < 0) { hoverEl.textContent = placing ? 'Click the terrain to place the facility' : 'Drag to orbit · scroll to zoom'; return; }
-  const k = hoverK;
-  hoverEl.textContent = `${fmtLL(U[k], V[k])}   ${fmtKm(H[k])}   slope ${SL[k].toFixed(1)}°   hazard ${HZ[k].toFixed(2)}`;
+  if (overview) { hoverEl.textContent = 'Overview · keep or drop each sheet · dropped sheets sink to the bottom and leave the planner · Esc to return'; return; }
+  if (hoverK < 0 && hoverLL && !placing) {
+    const [lo, la] = hoverLL, hk = globeH(lo, la);
+    hoverEl.textContent = `${Math.abs(la).toFixed(1)}° ${la < 0 ? 'S' : 'N'}  ${Math.abs(lo).toFixed(1)}° ${lo < 0 ? 'W' : 'E'}` + (hk === null ? '' : `   ${fmtKm(hk)} (MOLA)`);
+    return;
+  }
+  if (hoverK < 0) { hoverEl.textContent = placing ? 'Click the terrain where the route should end' : HINT; return; }
+  const k = hoverK, parts = [fmtLL(U[k], V[k])];
+  if (keptSheet('elev')) parts.push(fmtKm(H[k]));
+  if (keptSheet('slope')) parts.push(`slope ${SL[k].toFixed(1)}°`);
+  if (keptSheet('hazard') && hazTerms.length) parts.push(`hazard ${HZ[k].toFixed(2)}`);
+  hoverEl.textContent = parts.join('   ');
 }
 
 /* ---------- frame ---------- */
-let t0 = performance.now(), last = t0;
+let t0 = performance.now(), last = t0, hoverLL = null;
+const wrapPi = a => a - Math.round(a / (2 * Math.PI)) * 2 * Math.PI;
+// contour spacing follows the zoom: 20 m when very close, up to 100 m
+const contourKm = () => cam.dist < 0.09 ? 0.02 : cam.dist < 0.25 ? 0.05 : 0.1;
+const fmtCt = km => Math.round(km * 1000) + ' m';
+// Height range of the ground around the view (5th to 95th percentile), eased so the tint does not pop.
+const LOCAL = { lo: hLo, hi: hHi, tlo: hLo, thi: hHi, at: 0 };
+function localRelief(now) {
+  if (now - LOCAL.at > 300) {
+    LOCAL.at = now;
+    const [u, v] = unbend(cam.target), r = clamp(cam.dist * 0.7, 0.01, 1) / 2, hs = [];
+    const st = Math.max(1 / N, r / 40);
+    for (let y = v - r; y <= v + r; y += st) for (let x = u - r; x <= u + r; x += st) if (x >= 0 && x <= 1 && y >= 0 && y <= 1) hs.push(hAt(x, y));
+    if (hs.length > 8) { hs.sort((a, b) => a - b); LOCAL.tlo = hs[Math.floor(hs.length * 0.05)]; LOCAL.thi = hs[Math.floor(hs.length * 0.95)]; }
+  }
+  LOCAL.lo += (LOCAL.tlo - LOCAL.lo) * 0.08; LOCAL.hi += (LOCAL.thi - LOCAL.hi) * 0.08;
+}
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   const t = (now - t0) / 1000;
@@ -683,32 +1417,115 @@ function frame(now) {
     const f = 1 - Math.exp(-dt * 3.2);
     for (let i = 0; i < 3; i++) cam.target[i] += (goal.target[i] - cam.target[i]) * f;
     cam.dist += (goal.dist - cam.dist) * f;
-    let err = Math.abs(goal.dist - cam.dist) + Math.abs(goal.target[1] - cam.target[1]);
-    if (goal.yaw !== undefined) { cam.yaw += (goal.yaw - cam.yaw) * f; cam.pitch += (goal.pitch - cam.pitch) * f; err += Math.abs(goal.pitch - cam.pitch); }
-    if (err < 0.002) goal = null;
+    let err = Math.abs(goal.dist - cam.dist) + Math.hypot(goal.target[0] - cam.target[0], goal.target[1] - cam.target[1], goal.target[2] - cam.target[2]);
+    if (goal.yaw !== undefined) {
+      const dy = wrapPi(goal.yaw - cam.yaw);   // the short way round
+      cam.yaw += dy * f; cam.pitch += (goal.pitch - cam.pitch) * f; err += Math.abs(goal.pitch - cam.pitch) + Math.abs(dy);
+    }
+    if (err < 0.002) { cam.target = [...goal.target]; cam.dist = goal.dist; goal = null; }
   }
   const st = overview ? 1 : 0;
   sep = reduced ? st : sep + (st - sep) * (1 - Math.exp(-dt * 2.6));
   if (Math.abs(st - sep) < 0.001) sep = st;
-  if (!reduced && !pointers.size && now - lastInteract > 5000) cam.yaw += dt * (overview ? 0.03 : 0.012);
+  flyKeys(dt);
+  if (!reduced && !pointers.size && !KEYS.size && now - lastInteract > 5000) cam.yaw += dt * (overview ? 0.03 : camG > 0.5 ? 0.05 : 0.012);
+  syncCamFrame();
+  // zoom-dependent drawing state
+  CURVE = 0;
+  YK = rise;
+  // solid surface up close: it starts in the middle of the view around dist 2.2 and fills out by 0.7; in space it
+  // is solid within SC[2] of the focus and back to particles by SC[3], both growing with the view (never under ~50 km)
+  const S = (1 - ss(0.7, 2.2, cam.dist)) * (1 - sep) * (SOLID ? 1 : 0);
+  const [fu, fv] = unbend(cam.target), rin = Math.max(0.9 * cam.dist, 0.25);
+  const SC = [2 * fu - 1, 1 - 2 * fv, rin, rin + Math.max(2.2 * cam.dist, 0.5)];
+  updateDetail(now, dt);
+  renderSiteBar();
+  const dtxt = S > 0.5 ? (detail.n && detail.a > 0.5 && detail.src === '200 m' ? `Solid surface · full 200 m elevation around the view · contours every ${fmtCt(contourKm())}` : detail.n && detail.a > 0.5 ? 'Solid surface · start the backend for full 200 m detail' : `Solid surface · 0.84 km grid · contours every ${fmtCt(contourKm())}`)
+    : BASE_SCALE;
+  if (scaleEl.textContent !== dtxt) scaleEl.textContent = dtxt;
+  // sheets slide to their slots (dropped ones sink to the bottom) and fade to grey
+  const fs = reduced ? 1 : 1 - Math.exp(-dt * 3.4);
+  for (const s of SHEETS) {
+    const gt = keptSheet(s.id) || s.fixed ? 0 : 1;
+    s.pos = Math.abs(s.slot - s.pos) < 0.002 ? s.slot : s.pos + (s.slot - s.pos) * fs;
+    s.gray = Math.abs(gt - s.gray) < 0.004 ? gt : s.gray + (gt - s.gray) * fs;
+  }
   updateMVP();
-  if (hoverPending && !pointers.size && !overview) { hoverK = pick(hoverPending[0], hoverPending[1]); hoverPending = null; setHover(); }
+  if (hoverPending && !pointers.size && !overview) {
+    hoverK = pick(hoverPending[0], hoverPending[1]);
+    if (areaMode && SITE.drag) SITE.hover = hoverK >= 0 && hoverK < NC ? [U[hoverK], V[hoverK]] : ptUV(...hoverPending);   // rubber band to the cursor
+    hoverLL = null;
+    hoverPending = null; setHover();
+  }
 
   if (gl) {
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.uniformMatrix4fv(loc.uMVP, false, new Float32Array(MVP));
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    const mvp = new Float32Array(MVP), E = VIEW.eye;
+    const bendUnis = P => { gl.uniform1f(P.u.uCurve, CURVE); gl.uniform4f(P.u.uLL, (LON0 - LONC) * D2R, (LON1 - LON0) * D2R, LAT0 * D2R, (LAT1 - LAT0) * D2R); gl.uniform3f(P.u.uGeo, RW, SINC, COSC); };
+    const D = detail, dA = D.n ? D.a : 0;
+    // 2. particles
+    useProg(PP);
+    gl.uniformMatrix4fv(loc.uMVP, false, mvp);
     gl.uniform1f(loc.uTime, reduced ? 0 : t);
-    gl.uniform1f(loc.uRise, rise);
+    gl.uniform1f(loc.uRise, YK);
     gl.uniform1f(loc.uDist, cam.dist);
-    gl.uniform1f(loc.uSize, 2.3 * dpr * clamp(Hh / 900, 0.75, 1.4) * (1 + 0.7 * sep));
-    const draw = (b, off, sc, a) => {
+    bendUnis(PP); gl.uniform3f(loc.uEye, E[0], E[1], E[2]); gl.uniform1f(loc.uOccR, CURVE > 0.5 ? OCC_R : 0);
+    gl.uniform1f(loc.uSZ, S); gl.uniform4f(loc.uSC, SC[0], SC[1], SC[2], SC[3]);
+    // distance haze: starts past the look target and is total where the lowest allowed tilt meets the ground
+    const fogK = 1 + 60 * sep, FOG = [1.4 * cam.dist * fogK, 2.3 * cam.dist * fogK];
+    gl.uniform2f(loc.uFog, FOG[0], FOG[1]);
+    const base = 2.3 * dpr * clamp(Hh / 900, 0.75, 1.4), size = base * DOT_MAP;
+    const draw = (set, cb, off, sc, a, gray, sz, n, hole = 0, maxPt = 1e3, first = 0) => {
       if (a < 0.01) return;
-      gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.vertexAttribPointer(locCol, 4, gl.FLOAT, false, 0, 0);
+      gl.uniform1f(loc.uHoleMode, hole); gl.uniform1f(loc.uMaxPt, maxPt);
+      attr(PP, 'aPos', set.pos, 3); attr(PP, 'aRnd', set.rnd, 1); attr(PP, 'aCol', cb, 4, gl.UNSIGNED_BYTE, true);
       gl.uniform1f(loc.uOff, off); gl.uniform1f(loc.uScale, sc); gl.uniform1f(loc.uAlpha, a);
-      gl.drawArrays(gl.POINTS, 0, NP);
+      gl.uniform1f(loc.uGray, gray); gl.uniform1f(loc.uSize, sz);
+      gl.drawArrays(gl.POINTS, first, n ?? set.n);
     };
-    draw(colBuf, 0, 1, 1 - sep);
-    for (const s of SHEETS) if (!s.vec) draw(sheetBufs[s.id], sheetOff(s.i), sheetSc(s.i), sep);
+    // up close the dots get hard edges and stop growing past the cap, so close-ups stay sharp instead of blurring
+    const cap = 12 * dpr;
+    if (D.n) { gl.uniform4f(loc.uHole, D.hole[0], D.hole[1], D.hole[2], D.hole[3]); gl.uniform1f(loc.uHoleF, D.hole[4]); }
+    gl.uniform1f(loc.uHoleA, dA);
+    const mapA = 1 - sep;
+    if (FAR.n && BG) draw(FAR.set, FAR.col, 0, 1, mapA, 0, base * 2.4 * FAR.du / BG.du, undefined, 0, cap * 4);
+    if (BGSET) draw(BGSET, bgCol, 0, 1, mapA, 0, base * 2.4, undefined, 0, cap * 1.5);
+    // level of detail: one particle per cell always; the extra slope particles only while the box is big on screen
+    const mainA = mapA;   // the shader fades particles where the ground is solid
+    draw(MAIN, colBuf, 0, 1, mainA, 0, size, NC, 1, cap);
+    draw(MAIN, colBuf, 0, 1, mainA * (1 - ss(4, 8, cam.dist)), 0, size, NP - NC, 1, cap, NC);
+    gl.uniform1f(loc.uSZ, 0);
+    for (const s of SHEETS) if (!s.vec) draw(MAIN, sheetBufs[s.id], sheetOff(s.pos), sheetSc(), sep, s.gray, base * DOT * (1 + 0.7 * sep), NC);
+    // 3. solid terrain up close, blended over the particles (it fades in from the middle of the view outward):
+    //    the planning grid, and the 200 m patch where it has loaded
+    if (S > 0.002) {
+      useProg(MP); gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.depthMask(true);
+      gl.uniformMatrix4fv(MP.u.uMVP, false, mvp); gl.uniform1f(MP.u.uRise, YK); bendUnis(MP); gl.uniform2f(MP.u.uFog, FOG[0], FOG[1]);
+      gl.uniform1f(MP.u.uSZ, S); gl.uniform4f(MP.u.uSC, SC[0], SC[1], SC[2], SC[3]);
+      gl.uniform4f(MP.u.uCt, SPAN_KM / (2 * EXAG), hMid, contourKm(), 0.42);
+      localRelief(now); gl.uniform2f(MP.u.uLoc, LOCAL.lo, LOCAL.hi);
+      if (D.n) { gl.uniform4f(MP.u.uHole, D.hole[0], D.hole[1], D.hole[2], D.hole[3]); gl.uniform1f(MP.u.uHoleF, D.hole[4]); }
+      gl.uniform1f(MP.u.uHoleA, dA);
+      const mesh = (m, mode) => {
+        gl.uniform1f(MP.u.uHoleMode, mode);
+        attr(MP, 'aPos', m.pos, 3); attr(MP, 'aNrm', m.nrm, 3); attr(MP, 'aCol', m.col, 4, gl.UNSIGNED_BYTE, true);
+        for (const [k, n, b] of [['aM', 2, m.aux], ['aN0', 3, m.nrm0]]) {   // only the 200 m patch has morph data
+          const l = MP.a[k]; if (l < 0) continue;
+          if (b) { gl.enableVertexAttribArray(l); attr(MP, k, b, n); } else { gl.disableVertexAttribArray(l); gl.vertexAttrib4f(l, 0, 0, 0, 0); }
+        }
+        gl.uniform1f(MP.u.uMorph, m.aux ? detail.morph : -1);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, m.idx); gl.drawElements(gl.TRIANGLES, m.n, m.type, 0);
+      };
+      if (BGMESH) {   // coarse backdrop surface around the box (its alpha fades it out into particles)
+        gl.uniform4f(MP.u.uHole, 0, 0, 1, 1); gl.uniform1f(MP.u.uHoleF, 0.01); gl.uniform1f(MP.u.uHoleA, 1);
+        mesh(BGMESH, 1);
+        if (D.n) { gl.uniform4f(MP.u.uHole, D.hole[0], D.hole[1], D.hole[2], D.hole[3]); gl.uniform1f(MP.u.uHoleF, D.hole[4]); }
+        gl.uniform1f(MP.u.uHoleA, dA);
+      }
+      mesh(SOLID, 1);
+      if (D.n && dA > 0.01) mesh(D.mesh, -1);
+    }
+    gl.disable(gl.DEPTH_TEST); gl.depthMask(true);
   }
   drawOverlay(t);
   requestAnimationFrame(frame);
@@ -717,8 +1534,11 @@ function frame(now) {
 function drawOverlay(t) {
   ctx.clearRect(0, 0, W, Hh);
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  for (const b of bases) b.hit = null;
   if (sep < 0.99) { ctx.globalAlpha = 1 - sep; drawMapOverlay(t); }
+  stackUI.style.opacity = sep.toFixed(3);
   if (sep > 0.01) { ctx.globalAlpha = sep; drawStackOverlay(); }
+  else for (const s of SHEETS) s.el.style.visibility = 'hidden';
   ctx.globalAlpha = 1;
 }
 
@@ -728,67 +1548,160 @@ const SHEETS = [
   { id: 'elev' }, { id: 'slope' }, { id: 'ti' }, { id: 'hazard' }, { id: 'min' }, { id: 'geo' },
   { id: 'craters', vec: true },
   { id: 'coverage', vec: true, name: 'CTX + HiRISE coverage', src: 'USGS mosaics · outlines approximate', res: '20 m / 1 m', sw: '#8fb3c4' },
-  { id: 'plan', vec: true, name: 'Your plan', src: 'Bases and the Perseverance traverse', res: '', sw: '#cdb48e' },
-].map((s, i) => ({ ...s, i, name: s.name || L[s.id].name, src: s.src || L[s.id].src, res: s.res ?? L[s.id].res, sw: s.sw || L[s.id].sw }));
-const sheetOff = i => sep * GAP * i;
-const sheetSc = i => i === 0 ? 1 : 1 - 0.45 * sep;
+  { id: 'plan', vec: true, fixed: true, name: 'Your plan', src: 'Bases and the Perseverance traverse', res: '', sw: '#cdb48e' },
+].map((s, i) => ({ ...s, i, name: s.name || L[s.id].name, src: s.src || L[s.id].src, res: s.res ?? L[s.id].res, sw: s.sw || L[s.id].sw, slot: i, pos: i, gray: 0 }));
+const sheetOff = pos => sep * GAP * pos;
+const sheetSc = () => 1 - 0.45 * sep;
+// Dropped sheets take the bottom slots, then a small gap, then kept sheets in their usual order, "Your plan" on top.
+function assignSlots() {
+  const dropped = SHEETS.filter(s => !s.fixed && !keptSheet(s.id));
+  let p = 0;
+  for (const s of dropped) s.slot = p++;
+  if (dropped.length) p += 0.6;
+  for (const s of SHEETS) if (s.fixed || keptSheet(s.id)) s.slot = p++;
+}
+
+/* sheet labels: name, source and a Keep / Drop switch, placed next to each sheet every frame */
+const stackUI = document.getElementById('stack-ui');
+function buildStackUI() {
+  for (const s of SHEETS) {
+    const el = document.createElement('div'); el.className = 'sheet-label';
+    const row = document.createElement('div'); row.className = 'sl-row';
+    const sw = document.createElement('i'); sw.className = 'sl-sw'; sw.style.background = s.sw;
+    const nm = document.createElement('span'); nm.className = 'sl-name'; nm.textContent = s.name;
+    const rs = document.createElement('span'); rs.className = 'sl-res'; rs.textContent = s.res;
+    row.append(sw, nm, rs);
+    if (s.fixed) { const o = document.createElement('span'); o.className = 'sl-out'; o.textContent = 'Output'; row.appendChild(o); }
+    else {
+      const seg = document.createElement('span'); seg.className = 'seg'; seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', s.name);
+      const mk = (cls, text, keep) => { const b = document.createElement('button'); b.type = 'button'; b.className = cls; b.textContent = text; b.addEventListener('click', () => setKeep(s.id, keep)); seg.appendChild(b); return b; };
+      s.btns = [mk('keep', 'Keep', true), mk('drop', 'Drop', false)];
+      row.appendChild(seg);
+    }
+    const src = document.createElement('div'); src.className = 'sl-src';
+    el.append(row, src); stackUI.appendChild(el);
+    s.el = el; s.srcEl = src;
+  }
+}
+function updateStackUI() {
+  for (const s of SHEETS) {
+    const kept = s.fixed || keptSheet(s.id);
+    s.el.classList.toggle('dropped', !kept);
+    s.srcEl.textContent = kept ? (s.id === 'hazard' ? L.hazard.src : s.src) : 'Dropped · not used by the planner';
+    if (s.btns) { s.btns[0].setAttribute('aria-pressed', String(kept)); s.btns[1].setAttribute('aria-pressed', String(!kept)); }
+  }
+}
+
+/* ---------- planner state: what the backend and agent compute from ---------- */
+const keepSig = () => SHEETS.filter(s => !s.fixed && !keptSheet(s.id)).map(s => s.id).join(',');
+function setKeep(id, keep) {
+  if (keptSheet(id) === keep) return;
+  KEEP[id] = keep;
+  try { localStorage.setItem(KEEP_KEY, JSON.stringify(KEEP)); } catch (e) { /* storage unavailable */ }
+  plannerChanged();
+}
+function plannerChanged() {
+  computeHazard();
+  L.hazard.src = hazTerms.length ? 'From ' + hazTerms.map(t => t.name).join(', ') : 'No inputs kept: needs slope, craters or thermal inertia';
+  if (gl && sheetBufs.hazard) { gl.bindBuffer(gl.ARRAY_BUFFER, sheetBufs.hazard); gl.bufferSubData(gl.ARRAY_BUFFER, 0, sheetColors('hazard')); }
+  for (const b of bases) b.s = stats(b.k, b);
+  assignSlots(); updateStackUI(); renderLayers(); renderBases(); setHover();
+  const ins = SHEETS.filter(s => !s.fixed && keptSheet(s.id)).length, all = SHEETS.filter(s => !s.fixed).length;
+  document.getElementById('planner-btn').textContent = `Planner inputs · ${ins} of ${all}`;
+  notifyPlanner();
+}
+// A plain snapshot for the backend / agent: the kept inputs, hazard weights and every base with its numbers.
+function plannerConfig() {
+  return {
+    region: { lat: [LAT0, LAT1], lon: [LON0, LON1] },
+    inputs: SHEETS.filter(s => !s.fixed && keptSheet(s.id)).map(s => s.id),
+    dropped: SHEETS.filter(s => !s.fixed && !keptSheet(s.id)).map(s => s.id),
+    hazard: hazTerms.map(t => ({ input: t.sheet, term: t.name, weight: +(t.w / hazW).toFixed(3) })),
+    bases: bases.map(b => ({ id: b.id, name: b.name, type: b.type, footprint_m: b.foot, max_slope_deg: b.maxSlope, grading_rate_m3_per_sol: b.rate, lat: latOf(V[b.k]), lon: lonOf(U[b.k]), stats: { ...b.s } })),
+  };
+}
+function notifyPlanner() { dispatchEvent(new CustomEvent('planner:change', { detail: plannerConfig() })); }
+window.PLANNER = { config: plannerConfig, keep: setKeep };
+
+let toastTimer = 0;
+function showPlannerToast() {
+  const el = document.getElementById('toast'), cfg = plannerConfig();
+  const names = id => SHEETS.find(s => s.id === id).name;
+  el.replaceChildren();
+  const b = document.createElement('b'); b.textContent = 'Planner updated. ';
+  el.append(b, document.createTextNode(`Computing from ${cfg.inputs.length} layers` + (cfg.dropped.length ? `; dropped ${cfg.dropped.map(names).join(', ')}.` : '; nothing dropped.')));
+  el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 6000);
+}
 
 function drawStackOverlay() {
-  const yb = worldY(hLo), top = SHEETS.length - 1;
+  const yb = worldY(hLo), sc = sheetSc();
+  let lo = Infinity, hi = -Infinity; for (const s of SHEETS) { lo = Math.min(lo, s.pos); hi = Math.max(hi, s.pos); }
   // dashed guides show that every sheet covers the same ground
   ctx.setLineDash([2, 4]); ctx.lineWidth = 1;
   const guide = (w, color) => {
-    const a = proj(w[0], w[1], w[2], sheetOff(0), 1), b = proj(w[0], w[1], w[2], sheetOff(top), sheetSc(top));
+    const a = proj(w[0], w[1], w[2], sheetOff(lo), sc), b = proj(w[0], w[1], w[2], sheetOff(hi), sc);
     if (!a || !b) return; ctx.strokeStyle = color; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
   };
   guide(world(J.u, J.v, height(J.u, J.v)), 'rgba(220,217,210,.25)');
   for (const b of bases) guide(b.w, 'rgba(205,180,142,.4)');
   ctx.setLineDash([]);
   for (const s of SHEETS) {
-    const off = sheetOff(s.i), sc = sheetSc(s.i);
+    const off = sheetOff(s.pos), g = s.gray > 0.5;
+    ctx.globalAlpha = sep * (1 - 0.55 * s.gray);
     const cs = [[-1, yb, -1], [1, yb, -1], [1, yb, 1], [-1, yb, 1]].map(c => proj(c[0], c[1], c[2], off, sc));
-    if (cs.some(c => !c)) continue;
+    if (cs.some(c => !c)) { s.el.style.visibility = 'hidden'; continue; }
     ctx.strokeStyle = 'rgba(220,217,210,.14)'; ctx.lineWidth = 1;
     ctx.beginPath(); cs.forEach((c, i) => i ? ctx.lineTo(c[0], c[1]) : ctx.moveTo(c[0], c[1])); ctx.closePath(); ctx.stroke();
     if (s.vec) { ctx.fillStyle = 'rgba(220,217,210,.025)'; ctx.fill(); }
-    if (s.id === 'craters') { ctx.lineWidth = 0.9; ctx.strokeStyle = 'rgba(239,230,216,.45)'; for (const r of ringPts) strokePath(r, off, sc); }
+    if (s.id === 'craters') { ctx.lineWidth = 0.9; ctx.strokeStyle = g ? 'rgba(160,160,160,.4)' : 'rgba(239,230,216,.45)'; for (const r of ringPts) strokePath(r, off, sc); }
     if (s.id === 'coverage') {
-      ctx.lineWidth = 1; ctx.setLineDash([4, 5]); ctx.strokeStyle = 'rgba(143,179,196,.8)'; for (const r of CTX_RECTS) strokePath(r.pts, off, sc); ctx.setLineDash([]);
-      ctx.strokeStyle = 'rgba(205,180,142,.9)'; ctx.fillStyle = 'rgba(205,180,142,.1)'; for (const r of HIRISE_RECTS) { strokePath(r.pts, off, sc); ctx.fill(); }
+      ctx.lineWidth = 1; ctx.setLineDash([4, 5]); ctx.strokeStyle = g ? 'rgba(160,160,160,.6)' : 'rgba(143,179,196,.8)'; for (const r of CTX_RECTS) strokePath(r.pts, off, sc); ctx.setLineDash([]);
+      ctx.strokeStyle = g ? 'rgba(170,170,170,.7)' : 'rgba(205,180,142,.9)'; ctx.fillStyle = g ? 'rgba(160,160,160,.08)' : 'rgba(205,180,142,.1)'; for (const r of HIRISE_RECTS) { strokePath(r.pts, off, sc); ctx.fill(); }
     }
     if (s.id === 'plan') {
       ctx.lineWidth = 1.4; ctx.strokeStyle = 'rgba(239,220,184,.9)'; strokePath(travPts, off, sc);
+      drawRoutes(null, off, sc);
       for (const b of bases) {
         const p = proj(b.w[0], b.w[1], b.w[2], off, sc); if (!p) continue;
         ctx.fillStyle = '#cdb48e'; ctx.beginPath(); ctx.arc(p[0], p[1], 3.4, 0, Math.PI * 2); ctx.fill();
         ctx.font = '500 10.5px "IBM Plex Sans", system-ui, sans-serif'; ctx.fillStyle = 'rgba(220,217,210,.9)'; ctx.fillText(b.name, p[0] + 7, p[1] - 6);
       }
     }
-    // label beside the sheet's right-most corner
+    // leader line from the sheet's right-most corner to its label
     const rc = cs.reduce((a, c) => c[0] > a[0] ? c : a);
-    const lx = Math.min(rc[0] + 28, W - 210), ly = rc[1];
+    const lw = narrow() ? 200 : 254, lx = Math.min(rc[0] + 28, W - lw - 8), ly = rc[1];
     ctx.strokeStyle = 'rgba(220,217,210,.2)'; ctx.beginPath(); ctx.moveTo(rc[0] + 4, ly); ctx.lineTo(lx - 6, ly); ctx.stroke();
-    ctx.fillStyle = s.sw; ctx.beginPath(); ctx.arc(lx + 3, ly - 4, 3, 0, Math.PI * 2); ctx.fill();
-    ctx.font = '600 12px "IBM Plex Sans", system-ui, sans-serif'; ctx.fillStyle = '#dcd9d2';
-    ctx.fillText(s.name + (s.res ? '  ' : ''), lx + 12, ly);
-    if (s.res) { const w = ctx.measureText(s.name + '  ').width; ctx.font = '400 10px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillStyle = '#5b5f67'; ctx.fillText(s.res, lx + 12 + w, ly); }
-    ctx.font = '400 10px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillStyle = '#8a8d95'; ctx.fillText(s.src, lx + 12, ly + 14);
+    s.el.style.visibility = 'visible';
+    s.el.style.transform = `translate(${Math.round(lx)}px, ${Math.round(ly - 10)}px)`;
   }
+  ctx.globalAlpha = sep;
 }
 
 function drawMapOverlay(t) {
-  if (L.ctx.on) {
+  if (BG) {
+    // edge of the planning data; outside it is the coarse backdrop
+    const ga = ctx.globalAlpha;
+    ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(220,217,210,.32)'; ctx.globalAlpha = ga * rise; strokePath(boxPts);
+    const c0 = proj(...boxPts[0]);
+    if (c0) {
+      ctx.font = '500 9.5px "IBM Plex Mono", ui-monospace, monospace';
+      ctx.fillStyle = 'rgba(220,217,210,.6)'; ctx.fillText('PLANNING AREA · 200 M DATA, ALL LAYERS', c0[0] + 6, c0[1] - 7);
+      ctx.fillStyle = 'rgba(138,141,149,.7)'; ctx.fillText('BACKDROP · ~7 KM, ELEVATION ONLY', c0[0] + 6, c0[1] + 15);
+    }
+    ctx.globalAlpha = ga;
+  }
+  if (vis(L.ctx)) {
     ctx.setLineDash([4, 5]); ctx.lineWidth = 1; ctx.strokeStyle = `rgba(143,179,196,${0.7 * L.ctx.op})`;
     for (const r of CTX_RECTS) strokePath(r.pts);
     ctx.setLineDash([]);
     label(CTX_RECTS[0].pts[0], 'CTX 20 m', `rgba(143,179,196,${0.9 * L.ctx.op})`, 4, -6);
   }
-  if (L.hirise.on) {
+  if (vis(L.hirise)) {
     ctx.lineWidth = 1.2; ctx.strokeStyle = `rgba(205,180,142,${0.85 * L.hirise.op})`; ctx.fillStyle = `rgba(205,180,142,${0.07 * L.hirise.op})`;
     for (const r of HIRISE_RECTS) { strokePath(r.pts); ctx.fill(); }
     label(HIRISE_RECTS[0].pts[0], 'HiRISE 1 m', `rgba(205,180,142,${L.hirise.op})`, 4, 14);
   }
-  if (L.craters.on) {
+  if (vis(L.craters)) {
     ctx.lineWidth = 0.9; ctx.strokeStyle = `rgba(239,230,216,${0.4 * L.craters.op})`;
     for (const r of ringPts) strokePath(r);
   }
@@ -803,7 +1716,7 @@ function drawMapOverlay(t) {
       const s = proj(...p.w); if (!s) continue;
       const a = L.names.op * clamp(1.6 - s[2] * 0.25, 0.35, 1) * rise;
       ctx.font = p.big ? 'italic 19px "Instrument Serif", Georgia, serif' : '500 9.5px "IBM Plex Mono", ui-monospace, monospace';
-      ctx.fillStyle = `rgba(220,217,210,${a * (p.big ? 0.95 : 0.7)})`;
+      ctx.fillStyle = p.bg ? `rgba(138,141,149,${a * 0.75})` : `rgba(220,217,210,${a * (p.big ? 0.95 : 0.7)})`;
       const txt = p.big ? p.n : p.n.toUpperCase().split('').join(' ');
       ctx.fillText(txt, s[0], s[1]);
     }
@@ -815,7 +1728,10 @@ function drawMapOverlay(t) {
     if (s) { ctx.lineWidth = 1; ctx.strokeStyle = placing ? 'rgba(205,180,142,.9)' : 'rgba(220,217,210,.55)'; ctx.beginPath(); ctx.arc(s[0], s[1], placing ? 9 : 5, 0, Math.PI * 2); ctx.stroke();
       if (placing) { ctx.beginPath(); ctx.moveTo(s[0] - 14, s[1]); ctx.lineTo(s[0] - 5, s[1]); ctx.moveTo(s[0] + 5, s[1]); ctx.lineTo(s[0] + 14, s[1]); ctx.moveTo(s[0], s[1] - 14); ctx.lineTo(s[0], s[1] - 5); ctx.moveTo(s[0], s[1] + 5); ctx.lineTo(s[0], s[1] + 14); ctx.stroke(); } }
   }
-  // bases
+  drawAreaSelection();
+  drawCalc(performance.now());
+  // bases (a label is skipped when it would cover one already drawn; the dot stays)
+  const taken = [];
   for (const b of bases) {
     const s = proj(...b.w); if (!s) continue;
     const sel = b.id === selected;
@@ -824,14 +1740,17 @@ function drawMapOverlay(t) {
     ctx.beginPath(); ctx.arc(s[0], s[1], 7 + pulse * 7, 0, Math.PI * 2); ctx.stroke();
     ctx.fillStyle = '#cdb48e'; ctx.beginPath(); ctx.arc(s[0], s[1], sel ? 3.6 : 3, 0, Math.PI * 2); ctx.fill();
     const top = s[1] - (sel ? 40 : 30);
-    ctx.strokeStyle = `rgba(205,180,142,${sel ? 0.8 : 0.5})`; ctx.beginPath(); ctx.moveTo(s[0], s[1] - 4); ctx.lineTo(s[0], top); ctx.stroke();
     ctx.font = '600 12px "IBM Plex Sans", system-ui, sans-serif';
     const tw = ctx.measureText(b.name).width;
     ctx.font = '400 9.5px "IBM Plex Mono", ui-monospace, monospace';
     const sub = TYPES[b.type].label.toUpperCase();
     const sw = ctx.measureText(sub).width;
     const bw = Math.max(tw, sw) + 18, bh = 34, bx = s[0] - bw / 2, by = top - bh;
-    ctx.fillStyle = 'rgba(6,7,9,.82)'; ctx.strokeStyle = `rgba(205,180,142,${sel ? 0.6 : 0.28})`;
+    b.hit = [s[0], s[1], bx, by, bw, bh];
+    if (!sel && taken.some(t => bx < t[0] + t[2] && bx + bw > t[0] && by < t[1] + t[3] && by + bh > t[1])) continue;
+    taken.push([bx, by, bw, bh]);
+    ctx.strokeStyle = `rgba(205,180,142,${sel ? 0.8 : 0.5})`; ctx.beginPath(); ctx.moveTo(s[0], s[1] - 4); ctx.lineTo(s[0], top); ctx.stroke();
+    ctx.fillStyle = 'rgba(6,7,9,.82)'; ctx.strokeStyle = `rgba(205,180,142,${b.id === lock ? 0.9 : sel ? 0.6 : 0.28})`;
     roundRect(bx, by, bw, bh, 8); ctx.fill(); ctx.stroke();
     ctx.textAlign = 'center';
     ctx.fillStyle = '#dcd9d2'; ctx.font = '600 12px "IBM Plex Sans", system-ui, sans-serif'; ctx.fillText(b.name, s[0], by + 15);
@@ -842,14 +1761,929 @@ function drawMapOverlay(t) {
 function label(p, text, color, dx, dy) { const s = proj(...p); if (!s) return; ctx.font = '500 9.5px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillStyle = color; ctx.fillText(text, s[0] + dx, s[1] + dy); }
 function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 
+/* ---------- routes: the planner backend computes them, the map replays how ---------- */
+// Backend URL: ?api=http://host:port overrides the default (see docs/backend.md for running it).
+const API = (new URLSearchParams(location.search).get('api') || 'http://localhost:8001').replace(/\/$/, '');
+const rFrom = document.getElementById('route-from'), rTo = document.getElementById('route-to'), rBtn = document.getElementById('route-btn');
+const apiStatus = document.getElementById('api-status');
+let EQUIP = [], TBM_ID = 'tbm-4m', apiOk = false, routePt = null, calc = null;
+const fleetSel = new Set(['hauler']);
+const ROUTE_STYLE = {
+  accessible: { label: 'Drivable', color: '#9fbfa8' },
+  shortest: { label: 'Shortest + earthwork', color: '#cdb48e' },
+  tunnel: { label: 'With TBM tunnel', color: '#8fb3c4' },
+};
+const BLOCK_COLOR = { 1: '212,154,146', 2: '239,230,216', 3: '185,163,220' };   // rocks, crater rim, slope
+
+async function loadCatalog() {
+  try {
+    const [eq, tbms] = await Promise.all(['/catalog/equipment', '/catalog/machines'].map(p => fetch(API + p).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })));
+    EQUIP = eq; if (tbms.length) TBM_ID = tbms[0].id; apiOk = true;
+    if (!EQUIP.some(v => fleetSel.has(v.id)) && EQUIP.length) fleetSel.add(EQUIP[0].id);
+    apiStatus.dataset.state = 'ok'; apiStatus.textContent = `Planner backend connected · ${API.replace(/^https?:\/\//, '')}`;
+  } catch (e) {
+    apiOk = false; apiStatus.dataset.state = 'off';
+    apiStatus.replaceChildren(document.createTextNode(`Planner backend not reachable at ${API}. Start it, then reload: `));
+    const c = document.createElement('code'); c.textContent = 'backend/.venv/bin/uvicorn app.main:app --app-dir backend --port 8001'; apiStatus.appendChild(c);
+  }
+  renderFleet(); updateRouteForm();
+}
+function renderFleet() {
+  const host = document.getElementById('fleet'); host.replaceChildren();
+  for (const v of EQUIP) {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = v.name.replace(/^(Pressurized|Regolith \/ ore|Light|Mobile) /i, '');
+    const l = v.limits; b.title = `${v.name}: grade ≤ ${l.max_grade_deg}°, side slope ≤ ${l.max_cross_slope_deg}°, rocks ≤ ${l.max_rock_m} m, ${l.min_crater_rim_clearance_m} m from crater rims, ${v.payload_t} t payload`;
+    b.setAttribute('aria-pressed', String(fleetSel.has(v.id)));
+    b.addEventListener('click', () => { fleetSel.has(v.id) ? fleetSel.delete(v.id) : fleetSel.add(v.id); renderFleet(); updateRouteForm(); });
+    host.appendChild(b);
+  }
+}
+function updateRouteForm() {
+  const keep = [rFrom.value, rTo.value];
+  const fill = (sel, extra) => {
+    sel.replaceChildren();
+    for (const b of bases) { const o = document.createElement('option'); o.value = 'b' + b.id; o.textContent = b.name; sel.appendChild(o); }
+    for (const [v, t] of extra) { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); }
+  };
+  fill(rFrom, []);
+  fill(rTo, [...(routePt ? [['pt', `Map point ${routePt.lat.toFixed(2)}° N ${routePt.lon.toFixed(2)}° E`]] : []), ['pick', 'Pick a point on the map…']]);
+  const has = (sel, v) => [...sel.options].some(o => o.value === v);
+  rFrom.value = has(rFrom, keep[0]) ? keep[0] : (bases[0] ? 'b' + bases[0].id : '');
+  rTo.value = has(rTo, keep[1]) && keep[1] !== 'pick' ? keep[1] : (bases.find(b => 'b' + b.id !== rFrom.value) ? 'b' + bases.find(b => 'b' + b.id !== rFrom.value).id : routePt ? 'pt' : 'pick');
+  rBtn.disabled = !apiOk || !fleetSel.size || !bases.length || rTo.value === 'pick' || rFrom.value === rTo.value;
+  const nm = sel => sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : '';
+  document.getElementById('route-sum').textContent = !bases.length ? 'Add a base first' : rTo.value === 'pick' ? `From ${nm(rFrom)} · pick an end point` : `${nm(rFrom)} → ${nm(rTo)} · ${fleetSel.size} vehicle type${fleetSel.size === 1 ? '' : 's'}`;
+}
+function endpointOf(val) {
+  if (val === 'pt') return routePt && { ...routePt, name: 'map point' };
+  const b = bases.find(x => 'b' + x.id === val);
+  return b && { lon: lonOf(U[b.k]), lat: latOf(V[b.k]), name: b.name };
+}
+rFrom.addEventListener('change', updateRouteForm);
+rTo.addEventListener('change', () => { if (rTo.value === 'pick') { if (overview) setOverview(false); startPlacing({ pick: true, name: 'the route end' }); } updateRouteForm(); });
+rBtn.addEventListener('click', runRoute);
+
+async function runRoute() {
+  const a = endpointOf(rFrom.value), b = endpointOf(rTo.value);
+  if (!a || !b) return;
+  const body = {
+    from: [a.lon, a.lat], to: [b.lon, b.lat], equipment: [...fleetSel],
+    throughput_t_per_sol: Math.max(0, +document.getElementById('route-tput').value || 0),
+    tbm: { model: TBM_ID, count: clamp(Math.round(+document.getElementById('route-tbm').value || 1), 1, 50) },
+    // the overview's keep/drop choices decide which hazard terms the backend weighs
+    hazard_weights: { slope: keptSheet('slope') ? 1 : 0, roughness: keptSheet('slope') ? 0.5 : 0, crater: keptSheet('craters') ? 0.5 : 0, rock: 1 },
+    trace: true,
+  };
+  startCalc(a, b, body);
+  const my = calc, t0 = performance.now();
+  try {
+    const r = await fetch(API + '/routes', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail));
+    if (calc === my) calcLoaded(j, performance.now() - t0);
+  } catch (e) { if (calc === my) calcFailed(e); }
+}
+
+/* calculation replay: each backend stage gets a step in the panel and an animation on the map */
+const calcEl = document.getElementById('calc'), stepsEl = document.getElementById('calc-steps'), resEl = document.getElementById('calc-results');
+const wp = (lon, lat, lift = 0.03) => { const u = uOf(lon), v = vOf(lat); return world(u, v, height(clamp(u), clamp(v)) + lift); };
+const line = coords => coords.map(([lon, lat]) => wp(lon, lat));
+function startCalc(a, b, body) {
+  calc = { kind: 'route', a, b, body, res: null, t0: 0, steps: [], sel: null, err: null };
+  document.getElementById('calc-title').textContent = `${a.name} → ${b.name}`;
+  document.getElementById('calc-sub').textContent = `POST ${API.replace(/^https?:\/\//, '')}/routes`;
+  calcEl.hidden = false; document.body.classList.add('calc-open'); document.getElementById('calc-scrubber').hidden = true;
+  if (narrow()) document.body.dataset.sheet = 'none';
+  resEl.replaceChildren();
+  const fl = [...fleetSel].map(id => (EQUIP.find(v => v.id === id) || { name: id }).name.toLowerCase()).join(', ');
+  calc.steps = [{ id: 'req', title: 'Sending the plan to the backend', d: `Fleet: ${fl} · ${body.throughput_t_per_sol} t per sol · ${body.tbm.count} boring machine${body.tbm.count > 1 ? 's' : ''}`, dur: 0, wait: true }];
+  renderSteps(true);
+  // frame both ends
+  const wa = wp(a.lon, a.lat), wb = wp(b.lon, b.lat);
+  lock = null; renderLockSel();
+  goal = { target: bendW([(wa[0] + wb[0]) / 2, (wa[1] + wb[1]) / 2, (wa[2] + wb[2]) / 2]), dist: clamp(Math.hypot(wa[0] - wb[0], wa[2] - wb[2]) * 2.2, 0.9, 3.2) };
+}
+function calcFailed(e) {
+  calc.err = e; const s = calc.steps[0];
+  s.title = 'The backend could not plan this'; s.d = String(e.message || e); s.wait = false; s.fail = true;
+  renderSteps(true);
+}
+function calcLoaded(j, ms) {
+  const tr = j.trace, f = j.fleet, lim = f.limits, n = fmtInt;
+  calc.res = j;
+  const S = calc.steps;
+  S[0] = { id: 'req', title: 'Backend answered', d: `${(ms / 1000).toFixed(1)} s on a ${j.grid_resolution_m} m grid · binding limits: grade ${lim.max_grade_deg}° (${f.binding_vehicle.max_grade_deg}), rocks ${lim.max_rock_m} m (${f.binding_vehicle.max_rock_m}), crater rims ${lim.min_crater_rim_clearance_m} m (${f.binding_vehicle.min_crater_rim_clearance_m})`, dur: 0.5 };
+  const g = calc.geo = {};
+  if (tr) {
+    const [[w0, n0], [w1, s1]] = tr.window;
+    g.window = rectPts([uOf(Math.min(w0, w1)), vOf(Math.min(n0, s1)), uOf(Math.max(w0, w1)), vOf(Math.max(n0, s1))]);
+    g.blocked = tr.blocked.map(([lon, lat, why]) => [wp(lon, lat, 0.01), why]);
+    g.explored = tr.explored.map(([lon, lat, fr]) => [wp(lon, lat, 0.015), fr]);
+    g.start = wp(...tr.start); g.goal = wp(...tr.goal);
+    const bb = tr.blocked_by;
+    S.push({ id: 'window', title: 'Cut the search window', d: `${n(tr.grid_cells)} cells${j.searched_full_map ? ' · widened to the whole map after the 40 km window found no drivable route' : ''} · ${n(tr.graph_moves)} possible moves (16 directions per cell)`, dur: 1 });
+    S.push({ id: 'limits', title: 'Close ground the fleet cannot cross', d: `${n(tr.blocked_cells)} cells closed (rocks ${n(bb.rocks)}, slope ${n(bb.slope)}, crater rims ${n(bb.crater_rim)}) · ${n(tr.drivable_moves)} drivable moves left`, dur: 1.7 });
+    S.push({ id: 'search', title: 'Dijkstra search outward from the start', d: tr.reached_goal ? `${n(tr.settled_cells)} cells settled, in order of travel cost, before the goal` : `All ${n(tr.settled_cells)} reachable cells settled; the goal is not among them`, dur: 3.4 });
+  } else {
+    S.push({ id: 'notrace', title: 'Search steps not available', d: 'This backend predates the trace option. Restart it to see the window, blocked ground and search.', dur: 0, skip: true });
+  }
+  const acc = j.accessible, sh = j.shortest, tu = j.tunnel;
+  if (acc) {
+    if (acc.status === 'ok') { g.accessible = line(acc.geometry.coordinates); S.push({ id: 'accessible', title: 'Drivable route', d: `${acc.length_km} km, ${acc.travel_h} h · steepest ${acc.max_grade_deg}°, side ${acc.max_cross_slope_deg}°`, dur: 1.2 }); }
+    else {
+      if (acc.gap) g.gap = line(acc.gap.geometry.coordinates);
+      S.push({ id: 'accessible', title: 'No drivable route today', d: acc.gap ? `Closest gap ${acc.gap.width_km} km: ${Object.values(acc.gap.blocked_by).join('; ') || 'blocked'}` : acc.reason, dur: 1.2 });
+    }
+  }
+  if (sh) {
+    if (sh.status === 'ok') {
+      g.shortest = line(sh.geometry.coordinates); g.work = sh.segments.map(s => line(s.coordinates));
+      g.steep = (sh.steep || []).map(st => ({ line: line(st.coordinates), zig: switchbacks(st), bore3d: st.bore.status === 'ok' ? tunnel3d({ geometry: { coordinates: [st.bore.path3d[0], st.bore.path3d[st.bore.path3d.length - 1]] }, profile: st.bore.profile }) : null }));
+      calc.steepSel = (sh.steep || []).map(st => st.recommended);
+      S.push({ id: 'shortest', title: 'Shortest route, building through obstacles', d: `${sh.length_km} km of ${sh.road_width_m} m road (${n(sh.road_area_m2)} m² footprint) · ${n(sh.earthwork_m3)} m³ earthwork: ${n(sh.roadbed_m3)} m³ roadbed graded 0.3 m deep, ${n(sh.bench_m3)} m³ cut into side slopes${sh.steep && sh.steep.length ? ', plus the steep stretches below' : ''} (${sh.grading_sols} grading sols) · ${sh.rock_clearing_km} km rock clearing`, dur: 1.5 });
+      if (sh.steep && sh.steep.length) {
+        const nb = sh.steep.filter(st => st.recommended === 'bore').length;
+        S.push({ id: 'steep', title: `${sh.steep.length} steep stretch${sh.steep.length > 1 ? 'es' : ''}: fill a ramp, road on the slope, or bore`, d: `Road line designed at the fleet's ${j.fleet.limits.max_grade_deg}° limit: ${n(sh.fill_m3)} m³ of fill (embankments up to ${n(sh.max_fill_m)} m) to keep the straight line. Each stretch is also costed as a switchback road cut into the hillside and as a TBM bore · recommended: ${['ramp', 'road', 'bore'].map(k => `${sh.steep.filter(st => st.recommended === k).length} ${k}`).join(', ')} · switch each one below`, dur: 1.4 });
+      }
+    } else S.push({ id: 'shortest', title: 'No shortest route', d: sh.reason, dur: 0.6 });
+  }
+  if (tu) {
+    const tl = tr && tr.tunnel;
+    if (tl) { g.pf = tl.portals_from.map(c => wp(...c)); g.pt = tl.portals_to.map(c => wp(...c)); g.pairs = (tl.pairs || []).map(p => ({ a: wp(...p.from), b: wp(...p.to), r: p.result })); }
+    const cand = tl ? `${n(tl.portals_from.length)} + ${n(tl.portals_to.length)} portal sites, ${tl.pairs.length} pair${tl.pairs.length === 1 ? '' : 's'} checked · ` : '';
+    if (tu.status === 'ok') {
+      g.tunnelLegs = tu.surface_legs.map(l => line(l.geometry.coordinates)); g.bore = line(tu.tunnel.geometry.coordinates); g.bore3d = tunnel3d(tu.tunnel);
+      S.push({ id: 'tunnel', title: tu.beats_surface === false ? 'Tunnel option (marginal)' : 'Tunnel option', d: `${cand}${tu.note ? tu.note + ' · ' : ''}${tu.direct ? 'surfaces partway: ' + tu.direct + ' · ' : ''}${tu.tunnel.length_km} km bore in ${n(tu.tunnel.bore_sols)} sols (${tu.tunnel.faces} face${tu.tunnel.faces > 1 ? 's' : ''}) · ${n(tu.tunnel.spoil_m3)} m³ spoil for pads and roads`, dur: 2.3 });
+    } else S.push({ id: 'tunnel', title: 'No tunnel option', d: cand + tu.reason, dur: tl ? 1.6 : 0.6 });
+  }
+  const rec = j.recommended;
+  S.push({ id: 'pick', title: rec ? `Recommended: ${ROUTE_STYLE[rec.route].label.toLowerCase()}` : 'No route found', d: rec ? `${n(rec.build_sols)} build sols + ${n(rec.driving_vehicle_sols)} vehicle-sols driving (${rec.basis})` : 'Try a fleet with looser limits, or another destination.', dur: 0.6 });
+  calc.sel = rec ? rec.route : null;
+  let t = 0; for (const s of S) { s.at = t; t += reduced ? 0 : s.dur; }
+  calc.end = t; calc.t0 = performance.now(); calc.hold = null;
+  document.getElementById('calc-scrubber').hidden = reduced || !t;
+  renderSteps(true);
+}
+// replay clock in seconds: running from t0, or held at a scrubbed position
+const calcTime = now => calc.hold != null ? calc.hold : (now - calc.t0) / 1000;
+// 0..1 progress of a step at time `now`; -1 before it starts
+function stepP(id, now) {
+  if (!calc || !calc.res) return -1;
+  const s = calc.steps.find(x => x.id === id); if (!s) return -1;
+  const e = calcTime(now) - s.at;
+  return e < 0 ? -1 : s.dur ? clamp(e / s.dur + 1e-6) : 1;
+}
+let stepState = '';
+function renderSteps(force) {
+  if (!calc) return;
+  const now = performance.now();
+  const st = calc.steps.map(s => s.fail ? 'f' : s.skip ? 's' : s.wait ? 'w' : (p => p < 0 ? 'p' : p < 1 ? 'a' : 'd')(stepP(s.id, now))).join('');
+  if (!force && st === stepState) {
+    // only the active step's bar moves
+    const i = st.indexOf('a'); if (i >= 0) { const bar = stepsEl.children[i]?.querySelector('.bar span'); if (bar) bar.style.width = (stepP(calc.steps[i].id, now) * 100).toFixed(1) + '%'; }
+    return;
+  }
+  stepState = st; stepsEl.replaceChildren();
+  calc.steps.forEach((s, i) => {
+    const li = document.createElement('li'), c = st[i];
+    li.className = 'step ' + ({ p: '', a: 'active', d: 'done', w: 'active', s: 'skip', f: 'active' })[c];
+    const dot = document.createElement('i'); if (c === 'f') dot.style.background = 'var(--warn)';
+    const body = document.createElement('div');
+    const t = document.createElement('b'); t.textContent = s.title;
+    const d = document.createElement('span'); d.className = 'd'; d.textContent = s.d;
+    body.append(t, d);
+    if (c === 'a' || c === 'w') { const bar = document.createElement('div'); bar.className = 'bar' + (c === 'w' ? ' wait' : ''); bar.appendChild(document.createElement('span')); body.appendChild(bar); }
+    li.append(dot, body); stepsEl.appendChild(li);
+  });
+  if (calc.res && st.endsWith('d') && !resEl.childElementCount) (calc.kind === 'site' ? renderSiteResults : renderResults)();
+}
+function renderResults() {
+  const j = calc.res; resEl.replaceChildren();
+  for (const key of ['accessible', 'shortest', 'tunnel']) {
+    const r = j[key]; if (!r) continue;
+    const ok = r.status === 'ok', stl = ROUTE_STYLE[key];
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'rc' + (ok ? '' : ' none'); b.style.setProperty('--rc', stl.color);
+    b.setAttribute('aria-pressed', String(calc.sel === key)); b.disabled = !ok;
+    const k = document.createElement('div'); k.className = 'k'; const i = document.createElement('i'); k.append(i, document.createTextNode(stl.label));
+    if (j.recommended && j.recommended.route === key) { const rr = document.createElement('span'); rr.className = 'rec'; rr.textContent = 'Best'; k.appendChild(rr); }
+    const v = document.createElement('div'); v.className = 'v';
+    const s = document.createElement('div'); s.className = 's';
+    if (!ok) { v.textContent = key === 'accessible' ? 'Not drivable' : 'None'; s.textContent = r.gap ? `${r.gap.width_km} km gap · ${Object.keys(r.gap.blocked_by).join(', ').replace('_', ' ')}` : r.reason; }
+    else if (key === 'accessible') { v.textContent = r.length_km + ' km'; s.textContent = `${r.travel_h} h · no construction · hazard ${r.hazard.mean}`; }
+    else if (key === 'shortest') { const T = shortestTotals(r); v.textContent = T.km.toFixed(1) + ' km'; s.textContent = `${fmtInt(T.earth)} m³ earthwork${T.bore ? ` · ${fmtInt(T.boreKm * 1000)} m bored` : ''} · ${fmtInt(T.sols)} build sols`; }
+    else { v.textContent = r.length_km + ' km'; s.textContent = `${r.beats_surface === false ? `saves ${r.saves_km} km · ` : ''}${r.tunnel.length_km} km bored · ${fmtInt(r.tunnel.bore_sols)} sols · ${fmtInt(r.tunnel.spoil_m3)} m³ spoil`; }
+    b.append(k, v, s);
+    b.addEventListener('click', () => { calc.sel = key; renderResults(); });
+    resEl.appendChild(b);
+  }
+  const sel = calc.sel && j[calc.sel];
+  if (sel && sel.status === 'ok') resEl.appendChild(profileChart(calc.sel, sel));
+  if (calc.sel === 'shortest' && sel && sel.steep && sel.steep.length) resEl.appendChild(steepChoices(sel));
+  if (j.fleet.trips_per_sol && sel && sel.haulers_needed) {
+    const p = document.createElement('p'); p.id = 'calc-note';
+    p.textContent = `${j.fleet.trips_per_sol} hauler trips per sol on a ${j.fleet.lanes}-lane, ${j.fleet.road_width_m} m road · ${sel.haulers_needed} hauler${sel.haulers_needed > 1 ? 's' : ''} needed on this route.`;
+    resEl.appendChild(p);
+  }
+}
+// the shortest route's totals with the user's road/bore pick on each steep stretch (the backend's totals use its picks)
+function shortestTotals(r) {
+  let km = r.length_km, earth = r.earthwork_m3, bore = 0, boreKm = 0;
+  (r.steep || []).forEach((st, i) => {
+    const pick = (calc.steepSel && calc.steepSel[i]) || st.recommended, rec = st[st.recommended], o = st[pick];
+    km += o.length_km - rec.length_km; earth += o.earthwork_m3 - rec.earthwork_m3;
+    if (pick === 'bore') { bore += o.bore_sols; boreKm += o.length_km; }
+  });
+  return { km, earth, bore, boreKm, sols: earth / (r.grading_rate_m3_per_sol || 400) + r.clearing_sols + bore };
+}
+function steepChoices(r) {
+  const box = document.createElement('div'); box.id = 'steep';
+  const h = document.createElement('h4'); h.textContent = 'Steep stretches · road or bore'; box.appendChild(h);
+  r.steep.forEach((st, i) => {
+    const row = document.createElement('div'); row.className = 'st';
+    const head = document.createElement('div'); head.className = 'st-head';
+    const b = document.createElement('b'); b.textContent = `km ${st.from_km}–${st.to_km}`;
+    const d = document.createElement('span'); d.textContent = [st.climb_m && `climbs ${fmtInt(st.climb_m)} m`, st.drop_m && `drops ${fmtInt(st.drop_m)} m`].filter(Boolean).join(', ') + ` · up to ${st.max_grade_deg}°`;
+    head.append(b, d);
+    const opts = document.createElement('div'); opts.className = 'st-opts';
+    const rd = st.road, bo = st.bore;
+    const mk = (key, title, lines, color, ok, why) => {
+      const o = document.createElement('button'); o.type = 'button'; o.className = 'st-opt'; o.style.setProperty('--oc', color);
+      o.setAttribute('aria-pressed', String(calc.steepSel[i] === key)); o.disabled = !ok;
+      const t = document.createElement('b'); t.textContent = title;
+      if (st.recommended === key) { const tg = document.createElement('span'); tg.className = 'tag'; tg.textContent = 'Best'; t.appendChild(tg); }
+      const sm = document.createElement('small'); sm.textContent = ok ? lines : why;
+      o.append(t, sm); o.title = ok ? `${title}: ${lines}. Recommended by ${st.basis}.` : why;
+      o.addEventListener('click', () => { calc.steepSel[i] = key; renderResults(); });
+      return o;
+    };
+    opts.append(
+      mk('ramp', 'Fill a ramp', `straight · ${fmtInt(st.ramp.fill_m3)} m³ fill${st.ramp.cut_m3 ? ` + ${fmtInt(st.ramp.cut_m3)} m³ cut` : ''} · embankment up to ${fmtInt(st.ramp.max_fill_m)} m · ${fmtInt(st.ramp.build_sols)} sols`, '#e0a35c', true),
+      mk('road', 'Road on the slope', `${rd.length_km} km${rd.hairpins ? ` · ${rd.hairpins} hairpin${rd.hairpins > 1 ? 's' : ''}` : ''} · ${fmtInt(rd.earthwork_m3)} m³ ${rd.bench} · ${fmtInt(rd.build_sols)} sols`, '#d49a92', true),
+      mk('bore', 'Bore through', bo.status === 'ok' ? `${bo.length_km} km at ${bo.grade_pct}%${bo.spiral_m ? ` (${(bo.spiral_m / 1000).toFixed(1)} km spiral)` : ''} · ${fmtInt(bo.bore_sols)} sols · ${fmtInt(bo.spoil_m3)} m³ spoil` : '', ROUTE_STYLE.tunnel.color, bo.status === 'ok', bo.reason));
+    row.append(head, opts);
+    row.addEventListener('pointerenter', () => { calc.steepHover = i; }); row.addEventListener('pointerleave', () => { calc.steepHover = null; });
+    box.appendChild(row);
+  });
+  return box;
+}
+// switchback road drawn as a zigzag across the stretch: one leg per hairpin + 1, as wide as the extra length needs
+function switchbacks(st) {
+  const c = st.coordinates, a = c[0], b = c[c.length - 1], legs = st.road.hairpins + 1;
+  if (legs < 2) return null;
+  const kx = Math.cos(st.coordinates[0][1] * Math.PI / 180) * 59.27, ky = 59.27;           // km per degree
+  const ex = (b[0] - a[0]) * kx, ey = (b[1] - a[1]) * ky, L = Math.hypot(ex, ey) || 1;
+  const leg = st.road.length_km / legs, run = L / legs, half = Math.min(1.5, Math.sqrt(Math.max(0, leg * leg - run * run)) / 2);
+  const nx = -ey / L, ny = ex / L, pts = [];
+  for (let k = 0; k <= legs * 8; k++) {
+    const f = k / (legs * 8), ph = f * legs, side = (Math.floor(ph) % 2 ? -1 : 1) * (1 - 2 * (ph % 1));   // triangle wave
+    const off = k === 0 || k === legs * 8 ? 0 : side * half;
+    pts.push(wp(a[0] + (ex * f + nx * off) / kx, a[1] + (ey * f + ny * off) / ky));
+  }
+  return pts;
+}
+// elevation along the selected route; for a tunnel, the bore floor is drawn under the surface
+function profileChart(key, r) {
+  const wrap = document.createElement('div'); wrap.id = 'calc-profile';
+  const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
+  let series, xs = 'km', title;
+  if (key === 'tunnel') {
+    // the whole trip: drive to the portal, the bore (floor dashed under the ground), drive on from the far portal
+    const legs = r.surface_legs || [], [[lo0, la0]] = r.tunnel.geometry.coordinates;
+    const first = legs.find(l => { const c = l.geometry.coordinates, e = c[c.length - 1]; return Math.hypot(e[0] - lo0, e[1] - la0) < 0.01; });
+    const rest = legs.filter(l => l !== first), ground = [], floor = [];
+    let x = 0;
+    if (first) { for (const q of first.profile) ground.push([x + q[0], q[1]]); x += first.length_km; }
+    for (const q of r.tunnel.profile) { ground.push([x + q[0], q[1]]); floor.push([x + q[0], q[2]]); }
+    x += r.tunnel.length_km;
+    for (const l of rest) { for (const q of l.profile) ground.push([x + q[0], q[1]]); x += l.length_km; }
+    series = [[ground, 'rgba(220,217,210,.55)', ''], [floor, ROUTE_STYLE.tunnel.color, '4 3']];
+    title = `${first ? `drive ${first.length_km} km · ` : ''}bore ${r.tunnel.length_km} km · cover ${r.tunnel.cover.min_cover_m}–${Math.round(r.tunnel.cover.max_cover_m)} m${rest.length ? ` · drive ${rest.reduce((a, l) => a + l.length_km, 0).toFixed(1)} km` : ''}`;
+  }
+  else if (key === 'shortest' && r.design_profile) {   // ground, and the road line built up with fill where it is too steep
+    const p = r.design_profile;
+    series = [[p.map(q => [q[0], q[1]]), 'rgba(220,217,210,.55)', ''], [p.map(q => [q[0], q[2]]), ROUTE_STYLE.shortest.color, '']];
+    title = r.fill_m3 ? `Ground and road line · ${fmtInt(r.fill_m3)} m³ fill, embankment up to ${fmtInt(r.max_fill_m)} m` : `Ground and road line · road follows the ground · ${fmtInt(r.roadbed_m3 + r.bench_m3)} m³ roadbed and side cut`;
+  }
+  else { series = [[r.profile, ROUTE_STYLE[key].color, '']]; title = `Elevation · climb ${fmtInt(r.climb_m)} m · steepest ${r.max_grade_deg}°`; }
+  const pts = series.flatMap(s => s[0]);
+  const x1 = Math.max(...pts.map(p => p[0])) || 1, y0 = Math.min(...pts.map(p => p[1])), y1 = Math.max(...pts.map(p => p[1])), W = 600, H = 74;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('preserveAspectRatio', 'none'); svg.setAttribute('aria-label', title);
+  for (const [s, col, dash] of series) {
+    const pl = document.createElementNS(ns, 'polyline');
+    pl.setAttribute('points', s.map(([x, y]) => `${(x / x1 * W).toFixed(1)},${(H - 4 - (y - y0) / Math.max(1, y1 - y0) * (H - 10)).toFixed(1)}`).join(' '));
+    pl.setAttribute('fill', 'none'); pl.setAttribute('stroke', col); pl.setAttribute('stroke-width', '1.6'); pl.setAttribute('vector-effect', 'non-scaling-stroke');
+    if (dash) pl.setAttribute('stroke-dasharray', dash);
+    svg.appendChild(pl);
+  }
+  const cap = document.createElement('div'); cap.className = 'cap';
+  const l = document.createElement('span'); l.textContent = title;
+  const rr = document.createElement('span'); rr.textContent = `${fmtInt(y0)} to ${fmtInt(y1)} m · ${x1.toFixed(1)} ${xs}`;
+  cap.append(l, rr); wrap.append(svg, cap);
+  return wrap;
+}
+document.getElementById('calc-close').addEventListener('click', () => { calc = null; calcEl.hidden = true; document.body.classList.remove('calc-open'); });
+const scrub = document.getElementById('calc-scrub'), playBtn = document.getElementById('calc-play'), timeEl = document.getElementById('calc-time');
+function replay() { if (calc && calc.res) { calc.t0 = performance.now(); calc.hold = null; resEl.replaceChildren(); renderSteps(true); } }
+function syncScrub(now) {
+  const t = Math.min(calcTime(now), calc.end), playing = calc.hold == null && t < calc.end;
+  if (document.activeElement !== scrub) scrub.value = Math.round(t / (calc.end || 1) * 1000);
+  timeEl.textContent = t.toFixed(1) + ' s';
+  playBtn.textContent = playing ? '❚❚' : '▶'; playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+}
+document.getElementById('calc-replay').addEventListener('click', replay);
+scrub.addEventListener('input', () => { if (calc && calc.res) { calc.hold = scrub.value / 1000 * calc.end; renderSteps(true); } });
+playBtn.addEventListener('click', () => {
+  if (!calc || !calc.res) return;
+  const now = performance.now(), t = calcTime(now);
+  if (calc.hold == null && t < calc.end) calc.hold = t;                   // pause
+  else if (t >= calc.end) replay();                                        // finished: play again from the start
+  else { calc.t0 = now - calc.hold * 1000; calc.hold = null; }             // resume
+});
+
+function drawPartial(pts, p, off = 0, sc = 1) {
+  if (p <= 0) return;
+  const n = Math.max(2, Math.ceil(pts.length * p));
+  strokePath(pts.slice(0, n), off, sc);
+}
+function drawCalc(now) {
+  if (!calc) return;
+  renderSteps(false);
+  if (calc.kind === 'site') return drawSiteCalc(now);
+  const g = calc.geo;
+  if (!g) {   // waiting on the backend: pulse both ends
+    const pulse = 0.5 + 0.5 * Math.sin(now / 220);
+    for (const e of [calc.a, calc.b]) { const s = proj(...wp(e.lon, e.lat)); if (s) { ctx.strokeStyle = `rgba(205,180,142,${0.3 + 0.5 * pulse})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(s[0], s[1], 8 + 8 * pulse, 0, Math.PI * 2); ctx.stroke(); } }
+    return;
+  }
+  const done = calcTime(now) - calc.end;
+  syncScrub(now);
+  const art = done > 0 ? 1 - 0.8 * clamp(done / 1.6) : 1;         // search artifacts fade once the routes are in
+  const ga = ctx.globalAlpha;
+  const pw = stepP('window', now);
+  if (g.window && pw >= 0) {
+    ctx.setLineDash([5, 5]); ctx.lineWidth = 1; ctx.strokeStyle = `rgba(205,180,142,${0.7 * art})`; drawPartial(g.window, pw); ctx.setLineDash([]);
+  }
+  const pl = stepP('limits', now);
+  if (g.blocked && pl >= 0) {
+    const n = Math.floor(g.blocked.length * pl);
+    for (let i = 0; i < n; i++) { const [w, why] = g.blocked[i]; const s = proj(...w); if (!s) continue; ctx.fillStyle = `rgba(${BLOCK_COLOR[why]},${0.5 * art})`; ctx.fillRect(s[0] - 1, s[1] - 1, 2, 2); }
+  }
+  const ps = stepP('search', now);
+  if (g.explored && ps >= 0) {
+    // cells appear in the order Dijkstra settled them; the frontier glows
+    for (const [w, fr] of g.explored) {
+      if (fr > ps) break;
+      const s = proj(...w); if (!s) continue;
+      const front = Math.exp(-(ps - fr) * 14);
+      ctx.fillStyle = front > 0.3 ? `rgba(243,217,168,${(0.35 + 0.6 * front) * art})` : `rgba(143,179,196,${0.35 * art})`;
+      const r = 1 + front * 1.4; ctx.fillRect(s[0] - r, s[1] - r, r * 2, r * 2);
+    }
+    const s = proj(...g.start); if (s && ps < 1) { ctx.strokeStyle = 'rgba(243,217,168,.8)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(s[0], s[1], 6 + 10 * ((now / 600) % 1), 0, Math.PI * 2); ctx.stroke(); }
+  }
+  // tunnel search: portal candidates, then each pair the backend checked
+  const pt = stepP('tunnel', now);
+  if (g.pf && pt >= 0) {
+    const a = clamp(pt * 3) * art;
+    ctx.lineWidth = 0.8;
+    for (const [list, col] of [[g.pf, '205,180,142'], [g.pt, '143,179,196']]) { ctx.strokeStyle = `rgba(${col},${0.55 * a})`; for (const w of list) { const s = proj(...w); if (s) { ctx.beginPath(); ctx.arc(s[0], s[1], 2.2, 0, Math.PI * 2); ctx.stroke(); } } }
+    const k = Math.floor(g.pairs.length * clamp((pt - 0.3) / 0.5));
+    for (let i = 0; i < k; i++) {
+      const p = g.pairs[i]; const sa = proj(...p.a), sb = proj(...p.b); if (!sa || !sb) continue;
+      const chosen = p.r === 'chosen';
+      ctx.strokeStyle = chosen ? 'rgba(143,179,196,.95)' : p.r === 'breakout' ? `rgba(212,154,146,${0.6 * art})` : `rgba(138,141,149,${0.5 * art})`;
+      ctx.lineWidth = chosen ? 1.6 : 0.8; ctx.setLineDash(chosen ? [] : [3, 4]);
+      ctx.beginPath(); ctx.moveTo(sa[0], sa[1]); ctx.lineTo(sb[0], sb[1]); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+  drawRoutes(now, 0, 1);
+  // route ends: A and B rings (bases also keep their own labels)
+  ctx.font = '600 10px "IBM Plex Mono", ui-monospace, monospace'; ctx.textAlign = 'center';
+  for (const [e, tag] of [[calc.a, 'A'], [calc.b, 'B']]) {
+    const s = proj(...wp(e.lon, e.lat)); if (!s) continue;
+    ctx.strokeStyle = 'rgba(243,217,168,.9)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(s[0], s[1], 6, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = 'rgba(243,217,168,.95)'; ctx.fillText(tag, s[0], s[1] + 18);
+  }
+  ctx.textAlign = 'left';
+  ctx.globalAlpha = ga;
+}
+// final routes; the selected one is drawn on top and brighter
+function drawRoutes(now, off, sc) {
+  const g = calc && calc.kind === 'route' && calc.geo; if (!g) return;
+  const P = id => now === null ? 1 : stepP(id, now);
+  const order = ['accessible', 'shortest', 'tunnel'].sort((x, y) => (x === calc.sel) - (y === calc.sel));
+  for (const key of order) {
+    const p = P(key); if (p < 0) continue;
+    const dim = calc.sel && calc.sel !== key && P('pick') >= 1 ? 0.35 : 1, col = hx(ROUTE_STYLE[key].color).map(c => Math.round(c * 255)).join(',');
+    if (key === 'accessible' && g.gap) {
+      ctx.strokeStyle = `rgba(212,154,146,${0.9 * dim})`; ctx.lineWidth = 2.2; ctx.setLineDash([2, 3]); drawPartial(g.gap, p, off, sc); ctx.setLineDash([]);
+      const s = proj(...g.gap[0], off, sc); if (s && p >= 1 && now !== null) { ctx.font = '500 9.5px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillStyle = `rgba(212,154,146,${dim})`; ctx.fillText('GAP · ' + calc.res.accessible.gap.width_km + ' KM', s[0] + 6, s[1] - 6); }
+    }
+    const paths = key === 'accessible' ? (g.accessible ? [g.accessible] : []) : key === 'shortest' ? (g.shortest ? [g.shortest] : []) : (g.tunnelLegs || []);
+    for (const pts of paths) {
+      ctx.lineWidth = 5; ctx.strokeStyle = `rgba(${col},${0.12 * dim})`; drawPartial(pts, p, off, sc);
+      ctx.lineWidth = calc.sel === key ? 2 : 1.4; ctx.strokeStyle = `rgba(${col},${0.95 * dim})`; drawPartial(pts, p, off, sc);
+    }
+    if (key === 'shortest' && g.work && p >= 1) { ctx.lineWidth = 3.2; ctx.strokeStyle = `rgba(212,154,146,${0.85 * dim})`; for (const w of g.work) strokePath(w, off, sc); }
+    if (key === 'shortest' && g.steep && p >= 1) drawSteep(g, now, dim, off, sc);
+    if (key === 'tunnel' && g.bore3d) drawBore(g.bore3d, p, col, dim, off, sc, now !== null);
+  }
+}
+
+/* ---------- detail patch: full 200 m elevation around the camera when zoomed in ---------- */
+// Up close the terrain turns solid. The map grid is 0.84 km; zoomed in further, an ~80 km mesh of the backend's
+// native 200 m DEM replaces it around the view. It never pops: the patch carries the coarse surface too, so its
+// rim sits exactly on the coarse surface and the 200 m relief ramps in over the outer DETAIL_BAND_KM, and when a
+// patch loads (or moves with the view) its relief grows out of the coarse surface over about a second.
+// Without the backend the patch resamples the map grid: smoother, but no new detail.
+const DETAIL_DIST = 1.0, DETAIL_HALF_KM = 40, DETAIL_BAND_KM = 14, MORPH_S = 1.1;
+const detail = { n: 0, a: 0, t: 0, morph: 0, busy: false, pending: null, mesh: null, cu: -9, cv: -9, grid: null, hole: [0, 0, 0, 0, 0], bc: null, src: '' };
+const shadeOf = (gx, gy) => clamp(0.82 - (gx * -0.7071 + gy * 0.7071) * 7, 0.42, 1.4);
+function updateDetail(now, dt) {
+  const want = !overview && sep < 0.01 && cam.dist < DETAIL_DIST;
+  // relief grows in while wanted; a new patch waits until the old one has sunk back into the coarse surface
+  const up = want && detail.n && !detail.pending;
+  detail.t = reduced ? (up ? 1 : 0) : clamp(detail.t + (up ? 1 : -1) * dt / MORPH_S);
+  if (detail.pending && detail.t <= 0) { const p = detail.pending; detail.pending = null; buildDetail(p.g, p.u, p.v); }
+  detail.morph = detail.t * detail.t * (3 - 2 * detail.t);
+  detail.a = detail.n && detail.t > 0 ? 1 : 0;      // at t = 0 the patch is the coarse surface, so the hole can close
+  if (!want || detail.busy || detail.pending || pointers.size) return;
+  const [u, v] = unbend(cam.target);
+  if (u < 0 || u > 1 || v < 0 || v > 1) return;
+  if (Math.hypot(u - detail.cu, v - detail.cv) * SPAN_KM < DETAIL_HALF_KM * 0.45) return;
+  loadDetail(u, v);
+}
+async function loadDetail(u, v) {
+  detail.busy = true;
+  const lon = lonOf(u), lat = latOf(v);
+  let g = null;
+  if (apiOk) {
+    try {
+      const r = await fetch(`${API}/terrain/patch?lon=${lon.toFixed(4)}&lat=${lat.toFixed(4)}&half_km=${DETAIL_HALF_KM}`);
+      if (r.ok) {
+        const p = await r.json(), h16 = unpack(p.h, Int16Array);
+        g = { rows: p.rows, cols: p.cols, u0: uOf(p.lon_west), u1: uOf(p.lon_east), v0: vOf(p.lat_south), v1: vOf(p.lat_north), h: Float32Array.from(h16, x => x / 1000), src: '200 m' };
+      }
+    } catch (e) { /* backend unreachable: fall back below */ }
+  }
+  if (!g) {
+    const half = DETAIL_HALF_KM / SPAN_KM, n = Math.round(DETAIL_HALF_KM * 2 / 0.2);
+    const u0 = clamp(u - half), u1 = clamp(u + half), v0 = clamp(v - half), v1 = clamp(v + half);
+    const h = new Float32Array(n * n);
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) h[j * n + i] = height(u0 + (i + 0.5) / n * (u1 - u0), v1 - (j + 0.5) / n * (v1 - v0));
+    g = { rows: n, cols: n, u0, u1, v0, v1, h, src: 'resampled' };
+  }
+  if (detail.n) detail.pending = { g, u, v }; else buildDetail(g, u, v);
+  detail.busy = false;
+}
+// how much of the 200 m relief shows at a point: 0 on the patch rim, 1 inside the blend band
+const edgeW = (g, u, v) => { const e = Math.min(u - g.u0, g.u1 - u, v - g.v0, g.v1 - v) * SPAN_KM; return ss(0.6, DETAIL_BAND_KM, e); };
+function detailHeight(u, v) {   // km, as drawn (fine relief blended with the coarse surface); null outside the patch
+  const g = detail.grid; if (!g || u < g.u0 || u > g.u1 || v < g.v0 || v > g.v1) return null;
+  const x = (u - g.u0) / (g.u1 - g.u0) * g.cols - 0.5, y = (g.v1 - v) / (g.v1 - g.v0) * g.rows - 0.5;
+  const i = Math.max(0, Math.min(g.cols - 2, Math.floor(x))), j = Math.max(0, Math.min(g.rows - 2, Math.floor(y))), fx = clamp(x - i), fy = clamp(y - j);
+  const at = (a, b) => g.h[b * g.cols + a];
+  const fine = at(i, j) * (1 - fx) * (1 - fy) + at(i + 1, j) * fx * (1 - fy) + at(i, j + 1) * (1 - fx) * fy + at(i + 1, j + 1) * fx * fy;
+  const k = edgeW(g, u, v) * detail.morph;
+  return fine * k + height(clamp(u), clamp(v)) * (1 - k);
+}
+const hAt = (u, v) => detail.n && detail.a > 0.5 ? (detailHeight(u, v) ?? height(clamp(u), clamp(v))) : height(clamp(u), clamp(v));
+function buildDetail(g, cu, cv) {
+  const { rows, cols } = g, du = g.u1 - g.u0, dv = g.v1 - g.v0, nv = rows * cols;
+  const cx = du * SPAN_KM / cols, cy = dv * SPAN_KM / rows, d1 = 1 / N;
+  const at = (i, j) => g.h[Math.max(0, Math.min(rows - 1, j)) * cols + Math.max(0, Math.min(cols - 1, i))];
+  const unit = (o, a, x, z) => { const nx = -EXAG * x, nz = EXAG * z, l = Math.hypot(nx, 1, nz); a[o] = nx / l; a[o + 1] = 1 / l; a[o + 2] = nz / l; };
+  // one vertex per 200 m sample (rows run north to south), lit by its own normal; plus the coarse surface under it
+  const pos = new Float32Array(nv * 3), nrm = new Float32Array(nv * 3), nrm0 = new Float32Array(nv * 3), aux = new Float32Array(nv * 2), bc = new Uint32Array(nv);
+  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+    const c = j * cols + i, u = g.u0 + (i + 0.5) / cols * du, v = g.v1 - (j + 0.5) / rows * dv;
+    const w = world(u, v, at(i, j)); pos[3 * c] = w[0]; pos[3 * c + 1] = w[1]; pos[3 * c + 2] = w[2];
+    unit(3 * c, nrm, (at(i + 1, j) - at(i - 1, j)) / (2 * cx), (at(i, j - 1) - at(i, j + 1)) / (2 * cy));
+    const uc = clamp(u), vc = clamp(v);
+    unit(3 * c, nrm0, (height(clamp(uc + d1), vc) - height(clamp(uc - d1), vc)) / (2 * d1 * SPAN_KM), (height(uc, clamp(vc + d1)) - height(uc, clamp(vc - d1))) / (2 * d1 * SPAN_KM));
+    aux[2 * c] = world(u, v, height(uc, vc))[1]; aux[2 * c + 1] = edgeW(g, u, v);
+    bc[c] = Math.min(N - 1, Math.max(0, Math.floor(v * N))) * N + Math.min(N - 1, Math.max(0, Math.floor(u * N)));
+  }
+  const big = nv > 65535; if (big && !EXT_UINT) return;
+  const idx = big ? new Uint32Array((rows - 1) * (cols - 1) * 6) : new Uint16Array((rows - 1) * (cols - 1) * 6); let q = 0;
+  for (let j = 0; j < rows - 1; j++) for (let i = 0; i < cols - 1; i++) { const a = j * cols + i, b = a + 1, c = a + cols, d = c + 1; idx[q++] = a; idx[q++] = c; idx[q++] = b; idx[q++] = b; idx[q++] = c; idx[q++] = d; }
+  detail.grid = g;
+  if (gl) {
+    const m = detail.mesh; if (m) for (const k of ['pos', 'nrm', 'nrm0', 'aux', 'col', 'idx']) gl.deleteBuffer(m[k]);
+    detail.mesh = { pos: glBuf(pos), nrm: glBuf(nrm), nrm0: glBuf(nrm0), aux: glBuf(aux), col: glBuf(new Uint8Array(nv * 4)), idx: glIdx(idx), n: idx.length, type: big ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT, nv };
+  }
+  detail.bc = bc; detail.n = idx.length; detail.cu = cu; detail.cv = cv; detail.src = g.src;
+  const hx = du, hz = dv, f = Math.min(hx, hz) * 0.012;         // world half-sizes of the patch (u, v span 0..1 -> world -1..1)
+  detail.hole = [(g.u0 + g.u1) - 1, -((g.v0 + g.v1) - 1), hx, hz, f];
+  detail.t = 0;
+  recolorDetail();
+}
+function recolorDetail() {
+  if (!gl || !detail.mesh) return;
+  const nv = detail.mesh.nv, out = new Uint8ClampedArray(nv * 4), bc = detail.bc;
+  for (let k = 0; k < nv; k++) albedo(out, 4 * k, bc[k]);
+  gl.bindBuffer(gl.ARRAY_BUFFER, detail.mesh.col); gl.bufferData(gl.ARRAY_BUFFER, out, gl.STATIC_DRAW);
+}
+
+// each steep stretch as the option picked for it: a zigzag road on the slope, or a bore under it
+function drawSteep(g, now, dim, off, sc) {
+  const ps = now === null ? 1 : stepP('steep', now); if (ps < 0) return;
+  const tc = hx(ROUTE_STYLE.tunnel.color).map(c => Math.round(c * 255)).join(',');
+  g.steep.forEach((st, i) => {
+    const pick = calc.steepSel[i], hov = calc.steepHover === i, a = dim * (hov ? 1 : 0.9) * clamp(ps * 2);
+    if (pick === 'bore' && st.bore3d) {
+      ctx.lineWidth = 3.2; ctx.strokeStyle = `rgba(20,22,26,${0.55 * a})`; strokePath(st.line, off, sc);   // the surface line is not driven
+      drawBore(st.bore3d, 1, tc, a, off, sc, false);
+    } else if (pick === 'ramp') {   // straight, on a built-up embankment
+      ctx.lineWidth = hov ? 4.5 : 3.6; ctx.strokeStyle = `rgba(224,163,92,${a})`; strokePath(st.line, off, sc);
+    } else {
+      ctx.lineWidth = hov ? 3 : 2.2; ctx.strokeStyle = `rgba(239,196,150,${a})`; strokePath(st.zig || st.line, off, sc);
+    }
+    if (now !== null && (hov || ps < 1 || g.steep.length <= 3)) {
+      const m = st.line[st.line.length >> 1], s = proj(...m, off, sc), r = calc.res.shortest.steep[i];
+      if (s) { ctx.font = '500 9px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillStyle = pick === 'bore' ? `rgba(${tc},${a})` : `rgba(239,196,150,${a})`; ctx.fillText(pick === 'bore' ? `BORE ${r.bore.length_km} KM` : pick === 'ramp' ? `RAMP · FILL UP TO ${Math.round(r.ramp.max_fill_m)} M` : `ROAD ${r.road.length_km} KM${r.road.hairpins ? ` · ${r.road.hairpins} HAIRPIN${r.road.hairpins > 1 ? 'S' : ''}` : ''}`, s[0] + 8, s[1] - 6 + (i % 2) * 16); }   // neighbouring stretches alternate above and below
+    }
+  });
+}
+
+/* ---------- tunnels underground: depth exaggerated so the bore reads below the surface ---------- */
+const TUNNEL_DEPTH_X = 5;   // on top of the map's ×20 vertical exaggeration
+function tunnel3d(tn) {
+  const [[lo0, la0], [lo1, la1]] = tn.geometry.coordinates, p = tn.profile, L = p[p.length - 1][0] || 1;
+  return p.map(([s, surf, z]) => {
+    const f = s / L, u = uOf(lo0 + (lo1 - lo0) * f), v = vOf(la0 + (la1 - la0) * f);
+    const top = world(u, v, height(clamp(u), clamp(v)) + 0.01);
+    const depth = Math.max(0, surf - z) / 1000;                  // km of cover over the bore floor
+    return [top, [top[0], top[1] - depth / SPAN_KM * 2 * EXAG * TUNNEL_DEPTH_X, top[2]]];
+  });
+}
+function drawBore(b3, p, col, dim, off, sc, labels) {
+  const n = Math.max(2, Math.ceil(b3.length * p));
+  // a faint curtain from the surface down to the bore shows how deep it runs
+  ctx.lineWidth = 1; ctx.strokeStyle = `rgba(${col},${0.22 * dim})`;
+  ctx.beginPath();
+  for (let i = 0; i < n; i += 4) { const a = proj(...b3[i][0], off, sc), c = proj(...b3[i][1], off, sc); if (a && c) { ctx.moveTo(a[0], a[1]); ctx.lineTo(c[0], c[1]); } }
+  ctx.stroke();
+  // portal shafts
+  ctx.lineWidth = 1.6; ctx.strokeStyle = `rgba(${col},${0.9 * dim})`;
+  for (const i of [0, n - 1]) { const a = proj(...b3[i][0], off, sc), c = proj(...b3[i][1], off, sc); if (a && c) { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(c[0], c[1]); ctx.stroke(); } }
+  ctx.lineWidth = 6; ctx.strokeStyle = `rgba(${col},${0.12 * dim})`; strokePath(b3.slice(0, n).map(q => q[1]), off, sc);
+  ctx.lineWidth = 2.2; ctx.setLineDash([7, 4]); ctx.strokeStyle = `rgba(${col},${dim})`; strokePath(b3.slice(0, n).map(q => q[1]), off, sc); ctx.setLineDash([]);
+  if (labels && p >= 1) {
+    const deepest = b3.reduce((a, q) => (q[0][1] - q[1][1] > a[0][1] - a[1][1] ? q : a));
+    const s = proj(...deepest[1], off, sc), t = calc.res.tunnel.tunnel;
+    if (s) { ctx.font = '500 9.5px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillStyle = `rgba(${col},${dim})`; ctx.fillText(`TBM ${t.length_km} KM · COVER UP TO ${Math.round(t.cover.max_cover_m)} M · DEPTH ×${EXAG * TUNNEL_DEPTH_X}`, s[0] + 8, s[1] + 14); }
+  }
+}
+
+/* ---------- base site search: pick facilities, mark an area, the backend finds the least flattening ---------- */
+const SITE = { area: null, drag: null, fac: [], counts: {}, areas: {} };
+const FAC_COLOR = { 'landing-pad': '#efdcb8', habitat: '#cdb48e', 'propellant-plant': '#d49a92', 'solar-farm': '#8fb3c4', 'ice-mine': '#7fc4b6', depot: '#b9a3dc' };
+const facColor = id => FAC_COLOR[id] || '#dcd9d2';
+const sBtn = document.getElementById('site-btn');
+async function loadFacilities() {
+  if (!apiOk) { renderFacilities(); return; }
+  try { const r = await fetch(API + '/catalog/facilities'); if (r.ok) SITE.fac = await r.json(); else SITE.stale = true; } catch (e) { /* stays empty */ }
+  for (const f of SITE.fac) { SITE.counts[f.id] ??= 1; SITE.areas[f.id] ??= f.area_m2; }
+  renderFacilities();
+}
+function renderFacilities() {
+  const host = document.getElementById('fac-list'); host.replaceChildren();
+  if (!SITE.fac.length) { const p = document.createElement('p'); p.className = 'note'; p.textContent = SITE.stale ? 'The running backend is older than the base planner. Restart it (backend/.venv/bin/uvicorn app.main:app --app-dir backend --port 8001) and reload this page.' : 'Facility presets come from the planner backend, which is not reachable.'; host.appendChild(p); }
+  for (const f of SITE.fac) {
+    const row = document.createElement('div'); row.className = 'fac' + (SITE.counts[f.id] ? '' : ' off'); row.title = f.basis;
+    const st = document.createElement('span'); st.className = 'step';
+    const mk = (t, d, label) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.setAttribute('aria-label', label + ' ' + f.name); b.addEventListener('click', () => { SITE.counts[f.id] = clamp((SITE.counts[f.id] || 0) + d, 0, 12); renderFacilities(); }); return b; };
+    const n = document.createElement('span'); n.textContent = SITE.counts[f.id] || 0;
+    st.append(mk('−', -1, 'Fewer'), n, mk('+', 1, 'More'));
+    const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = f.name;
+    const side = Math.round(Math.sqrt(SITE.areas[f.id]));
+    const sm = document.createElement('small'); sm.textContent = `${side} × ${side} m · ≤ ${f.max_slope_deg}°` + (f.min_separation_m ? ` · ${f.min_separation_m / 1000} km clear` : ''); nm.appendChild(sm);
+    const inp = document.createElement('input'); inp.type = 'number'; inp.min = 100; inp.max = 4000000; inp.step = 100; inp.value = Math.round(SITE.areas[f.id]);
+    inp.setAttribute('aria-label', f.name + ' area in square metres'); inp.title = 'Ground to flatten, m²';
+    inp.addEventListener('change', () => { SITE.areas[f.id] = clamp(+inp.value || f.area_m2, 100, 4e6); renderFacilities(); });
+    row.append(st, nm, inp); host.appendChild(row);
+  }
+  const pads = SITE.fac.reduce((a, f) => a + (SITE.counts[f.id] || 0), 0);
+  const area = SITE.fac.reduce((a, f) => a + (SITE.counts[f.id] || 0) * SITE.areas[f.id], 0);
+  document.getElementById('fac-total').textContent = pads ? `Ground to flatten: ${fmtInt(area)} m² (${(area / 1e6).toFixed(2)} km²) across ${pads} pad${pads > 1 ? 's' : ''}` : 'Add at least one facility';
+  updateSiteForm();
+}
+const areaLabel = a => a.poly ? `${fmtInt(a.km2)} km²` : `${((a.u1 - a.u0) * SPAN_KM).toFixed(0)} × ${((a.v1 - a.v0) * SPAN_KM).toFixed(0)} km`;
+const areaPts = a => a.poly ? outlinePts(a.poly, true) : rectPts([a.u0, a.v0, a.u1, a.v1]);
+function updateSiteForm() {
+  const a = SITE.area, t = document.getElementById('area-text');
+  t.textContent = a ? `${areaLabel(a)} around ${latOf((a.v0 + a.v1) / 2).toFixed(2)}° N ${lonOf((a.u0 + a.u1) / 2).toFixed(2)}° E` : 'No area marked';
+  document.getElementById('area-btn').textContent = a ? 'Mark again' : 'Mark search area';
+  sBtn.disabled = !apiOk || !a || !SITE.fac.some(f => SITE.counts[f.id]);
+  const pads = SITE.fac.reduce((n, f) => n + (SITE.counts[f.id] || 0), 0);
+  document.getElementById('site-sum').textContent = `${pads} facilit${pads === 1 ? 'y' : 'ies'} · ${a ? areaLabel(a) + ' search area' : 'no area marked'}`;
+  renderSiteBar();
+}
+document.getElementById('area-btn').addEventListener('click', startArea);
+// the two dropdowns in the Bases panel remember whether they were open
+for (const id of ['route-sec', 'site-sec']) {
+  const d = document.getElementById(id), key = 'mars.open.' + id;
+  try { d.open = localStorage.getItem(key) === '1'; } catch (e) { /* storage unavailable */ }
+  d.addEventListener('toggle', () => { try { localStorage.setItem(key, d.open ? '1' : '0'); } catch (e) { /* storage unavailable */ } });
+}
+sBtn.addEventListener('click', runSiteSearch);
+
+async function runSiteSearch() {
+  const a = SITE.area; if (!a) return;
+  const body = {
+    ...(a.poly ? { polygon: a.poly.map(([u, v]) => [+lonOf(u).toFixed(5), +latOf(v).toFixed(5)]) } : { area: [[lonOf(a.u0), latOf(a.v0)], [lonOf(a.u1), latOf(a.v1)]] }),
+    facilities: SITE.fac.filter(f => SITE.counts[f.id]).map(f => ({ type: f.id, count: SITE.counts[f.id], area_m2: SITE.areas[f.id] })),
+    max_spread_km: clamp(+document.getElementById('site-spread').value || 3, 0.5, 20),
+    grading_rate_m3_per_sol: Math.max(1, +document.getElementById('site-rate').value || 400),
+    trace: true,
+  };
+  calc = { kind: 'site', body, area: { ...a, poly: a.poly && a.poly.map(p => [...p]) }, res: null, t0: 0, steps: [], sel: 0, err: null };
+  document.getElementById('calc-title').textContent = 'Base site search';
+  document.getElementById('calc-sub').textContent = `POST ${API.replace(/^https?:\/\//, '')}/sites/search`;
+  calcEl.hidden = false; document.body.classList.add('calc-open'); document.getElementById('calc-scrubber').hidden = true;
+  if (narrow()) document.body.dataset.sheet = 'none';
+  resEl.replaceChildren();
+  const pads = body.facilities.reduce((s, f) => s + f.count, 0);
+  calc.steps = [{ id: 'req', title: 'Sending the base to the backend', d: `${pads} pads · ${body.facilities.map(f => `${f.count}× ${SITE.fac.find(x => x.id === f.type).name.toLowerCase()}`).join(', ')}`, dur: 0, wait: true }];
+  renderSteps(true);
+  lock = null; renderLockSel();
+  const span = Math.max(a.u1 - a.u0, a.v1 - a.v0) * 2;
+  goal = { target: surfPt((a.u0 + a.u1) / 2, (a.v0 + a.v1) / 2), dist: clamp(span * 1.7, 0.2, 3) };
+  const my = calc, t0 = performance.now();
+  try {
+    const r = await fetch(API + '/sites/search', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail));
+    if (calc === my) siteLoaded(j, performance.now() - t0);
+  } catch (e) { if (calc === my) calcFailed(e); }
+}
+function siteLoaded(j, ms) {
+  calc.res = j;
+  const S = calc.steps, tr = j.trace, n = fmtInt, g = calc.geo = {};
+  const a = calc.area;
+  g.area = areaPts(a);
+  if (j.status !== 'ok') {
+    S[0] = { id: 'req', title: 'No layout fits', d: j.reason, dur: 0 };
+    calc.end = 0; calc.t0 = performance.now(); renderSteps(true); return;
+  }
+  const ev = j.evaluated;
+  S[0] = { id: 'req', title: 'Backend answered', d: `${(ms / 1000).toFixed(1)} s · ${n(j.best.flatten_area_m2)} m² of pads to place`, dur: 0.5 };
+  S.push({ id: 'area', title: 'Read the elevation in the area', d: `${n(ev.positions_per_facility)} positions on the ${ev.grid_resolution_m} m grid, each a possible pad centre`, dur: 0.9 });
+  if (tr) {
+    g.maps = tr.cost_maps.map((m, i) => {
+      // a lattice of cell corners on the terrain; each cell is drawn as its projected quad
+      const [wl, nl] = m.nw, [el, sl] = m.se, cells = [], lat = [];
+      for (let r = 0; r <= m.rows; r++) for (let c = 0; c <= m.cols; c++) lat.push(wp(wl + c / m.cols * (el - wl), nl - r / m.rows * (nl - sl), 0.012));
+      for (let r = 0; r < m.rows; r++) for (let c = 0; c < m.cols; c++) { const q = m.values[r * m.cols + c]; if (q !== 255) cells.push([r * (m.cols + 1) + c, q]); }
+      const cw = m.cols + 1;
+      S.push({ id: 'map' + i, title: `Fit a ${m.side_m} m pad everywhere: ${m.name.toLowerCase()}`, d: `Plane fit per position via summed-area tables · least ${n(m.min_m3)} m³, most ${n(m.max_m3)} m³ (green = less to flatten)`, dur: 1.1 });
+      return { cells, lat, cw };
+    });
+    const sc = tr.centres.filter(c => c[2] != null).map(c => c[2]).sort((x, y) => x - y);
+    const pct = v => { let lo = 0, hi = sc.length; while (lo < hi) { const m = (lo + hi) >> 1; if (sc[m] < v) lo = m + 1; else hi = m; } return lo / Math.max(1, sc.length - 1); };
+    g.centres = tr.centres.map(([lo, la, v, rank]) => [wp(lo, la, 0.02), v == null ? -1 : pct(v), rank]);
+    S.push({ id: 'centres', title: `Score ${n(ev.base_centres)} candidate base centres`, d: `Greedy layout around each: largest pad first, cheapest free spot within reach · ${n(ev.feasible_centres)} fit everything · best ${n(sc[0])} m³, median ${n(sc[sc.length >> 1])} m³`, dur: 2.6 });
+    g.steps = tr.layout_steps.map(st => ({ ...st, w: st.at && wp(...st.at, 0.02) }));
+    g.centre = wp(...j.best.center, 0.02);
+    S.push({ id: 'layout', title: 'Lay out the base at the best centre', d: tr.layout_steps.map(st => `${st.name.toLowerCase()}: ${n(st.options)} free spots`).join(' · '), dur: Math.max(1, 0.35 * tr.layout_steps.length) });
+  }
+  const best = j.best;
+  S.push({ id: 'pick', title: `Best site: ${n(best.earthwork_m3)} m³ to move`, d: `${best.grading_sols} grading sols at ${calc.body.grading_rate_m3_per_sol} m³/sol` + (j.alternatives.length ? ` · next best ${j.alternatives.map(x => n(x.earthwork_m3) + ' m³').join(', ')}` : ''), dur: 0.7 });
+  calc.options = [best, ...j.alternatives];
+  let t = 0; for (const s of S) { s.at = t; t += reduced ? 0 : s.dur; }
+  calc.end = t; calc.t0 = performance.now(); calc.hold = null;
+  document.getElementById('calc-scrubber').hidden = reduced || !t;
+  renderSteps(true);
+  focusOption(0, true);
+}
+function focusOption(i, wait) {
+  calc.sel = i;
+  const o = calc.options[i], c = wp(...o.center);
+  const reach = Math.max(1.2, ...o.facilities.map(p => Math.hypot((p.center[0] - o.center[0]) * 32.2, (p.center[1] - o.center[1]) * 59.3)));   // km, roughly
+  const pose = { target: bendW(c), dist: clamp(reach / SPAN_KM * 2 * 3.2, MIN_DIST * 2, 0.6) };
+  if (wait) calc.focusAt = pose; else goal = pose;
+}
+// pads drawn at their real size, on the most detailed surface available
+function padPts(p, lift = 0.004) { return p.polygon.map(([lo, la]) => { const u = uOf(lo), v = vOf(la); return world(u, v, hAt(u, v) + lift); }); }
+function drawSiteCalc(now) {
+  const g = calc.geo, ga = ctx.globalAlpha;
+  if (!g) {   // waiting: the area outline breathes
+    const pts = areaPts(calc.area);
+    ctx.lineWidth = 1.2; ctx.strokeStyle = `rgba(205,180,142,${0.35 + 0.4 * Math.sin(now / 220) ** 2})`; strokePath(pts); return;
+  }
+  const done = calcTime(now) - calc.end; syncScrub(now);
+  const art = done > 0 ? 1 - 0.85 * clamp(done / 1.6) : 1;
+  if (calc.focusAt && done > -0.2) { goal = calc.focusAt; calc.focusAt = null; }
+  ctx.lineWidth = 1; ctx.setLineDash([5, 5]); ctx.strokeStyle = 'rgba(205,180,142,.7)';
+  const pa = stepP('area', now); drawPartial(g.area, pa < 0 && calc.res.status !== 'ok' ? 1 : pa); ctx.setLineDash([]);
+  // cost maps one after another: each cell is the cheapest pad near it (green little to flatten, red a lot)
+  if (g.maps) g.maps.forEach((m, i) => {
+    const p = stepP('map' + i, now); if (p < 0) return;
+    const nxt = stepP(i + 1 < g.maps.length ? 'map' + (i + 1) : 'centres', now);
+    const a = 0.75 * (nxt < 0 ? 1 : 1 - clamp(nxt * 1.5)) * art; if (a < 0.02) return;
+    const sp = m.lat.map(w => proj(...w)), lim = Math.floor(m.cells.length * p);
+    ctx.globalAlpha = ga * a;
+    for (let k = 0; k < lim; k++) {
+      const [i0, q] = m.cells[k], A = sp[i0], B = sp[i0 + 1], C = sp[i0 + m.cw + 1], D = sp[i0 + m.cw];
+      if (!A || !B || !C || !D) continue;
+      const c = ramp(SITE_RAMP, q / 250);
+      ctx.fillStyle = `rgb(${c[0] * 255 | 0},${c[1] * 255 | 0},${c[2] * 255 | 0})`;
+      ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); ctx.lineTo(C[0], C[1]); ctx.lineTo(D[0], D[1]); ctx.closePath(); ctx.fill();
+    }
+    ctx.globalAlpha = ga;
+  });
+  // candidate base centres in evaluation order; the best few pulse
+  const pc = stepP('centres', now);
+  if (g.centres && pc >= 0) {
+    const lim = Math.floor(g.centres.length * pc);
+    for (let k = 0; k < lim; k++) {
+      const [w, f, rank] = g.centres[k], s = proj(...w); if (!s) continue;
+      if (f < 0) { ctx.fillStyle = `rgba(138,141,149,${0.35 * art})`; ctx.fillRect(s[0] - 1, s[1] - 1, 2, 2); continue; }
+      const c = ramp(SITE_RAMP, f);
+      ctx.fillStyle = `rgba(${c[0] * 255 | 0},${c[1] * 255 | 0},${c[2] * 255 | 0},${(0.85 - 0.4 * f) * art})`;
+      const r = rank != null && rank < 5 && pc >= 1 ? 3.2 + Math.sin(now / 160 + rank) : 2.2;
+      ctx.beginPath(); ctx.arc(s[0], s[1], r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // greedy layout at the winning centre, one pad at a time
+  const pl = stepP('layout', now), best = calc.res.best;
+  if (g.steps && pl >= 0 && pl < 1) {
+    const k = Math.min(g.steps.length - 1, Math.floor(pl * g.steps.length)), st = g.steps[k];
+    const cs = proj(...g.centre);
+    if (cs && st.search_radius_m) {
+      const e = proj(...wp(lonOf(uOf(best.center[0]) + st.search_radius_m / 1000 / SPAN_KM), best.center[1], 0.02));
+      if (e) { ctx.strokeStyle = 'rgba(243,217,168,.55)'; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.ellipse(cs[0], cs[1], Math.abs(e[0] - cs[0]), Math.abs(e[0] - cs[0]) * 0.55, 0, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+    }
+    best.facilities.slice(0, k + 1).forEach(p => drawPad(p, 1, false));
+  }
+  // final: selected site highlighted, alternatives as numbered rings
+  if (stepP('pick', now) >= 0) {
+    calc.options.forEach((o, i) => { if (i !== calc.sel) drawSiteRing(o, i, false); });
+    const o = calc.options[calc.sel];
+    drawSiteRing(o, calc.sel, true);
+    o.facilities.forEach(p => drawPad(p, 1, true));
+  }
+  ctx.globalAlpha = ga;
+}
+const SITE_RAMP = ['#9fbfa8', '#ebe0a8', '#d49a92'].map(hx);
+function drawPad(p, a, label) {
+  const pts = padPts(p), s = pts.map(w => proj(...w)); if (s.some(x => !x)) return;
+  const col = hx(facColor(p.facility)).map(c => c * 255 | 0).join(',');
+  ctx.beginPath(); s.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.closePath();
+  ctx.fillStyle = `rgba(${col},${0.45 * a})`; ctx.fill(); ctx.lineWidth = 1.2; ctx.strokeStyle = `rgba(${col},${0.95 * a})`; ctx.stroke();
+  const w = Math.max(...s.map(q => q[0])) - Math.min(...s.map(q => q[0]));
+  if (label && w > 7) {
+    const cx = s.reduce((t, q) => t + q[0], 0) / 4, cy = Math.min(...s.map(q => q[1]));
+    ctx.font = '500 10px "IBM Plex Sans", system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillStyle = `rgba(220,217,210,${0.9 * a})`; ctx.fillText(p.name.replace(/ \(.*\)/, ''), cx, cy - 12);
+    ctx.font = '400 9px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillStyle = `rgba(${col},${a})`; ctx.fillText(fmtInt(p.earthwork_m3) + ' m³', cx, cy - 3);
+    ctx.textAlign = 'left';
+  }
+}
+function drawSiteRing(o, i, sel) {
+  const c = proj(...wp(...o.center, 0.02)); if (!c) return;
+  const far = o.facilities.reduce((m, p) => Math.max(m, Math.hypot((p.center[0] - o.center[0]) * Math.cos(o.center[1] * Math.PI / 180), p.center[1] - o.center[1])), 0) * DEG_KM + 0.4;
+  const e = proj(...wp(lonOf(uOf(o.center[0]) + far / SPAN_KM), o.center[1], 0.02)); if (!e) return;
+  const rx = Math.max(14, Math.abs(e[0] - c[0]));
+  const pulse = reduced ? 0 : Math.sin(performance.now() / 380) * 0.5 + 0.5;
+  ctx.lineWidth = sel ? 1.6 : 1; ctx.setLineDash(sel ? [] : [4, 4]);
+  ctx.strokeStyle = sel ? `rgba(243,217,168,${0.55 + 0.4 * pulse})` : 'rgba(220,217,210,.45)';
+  ctx.beginPath(); ctx.ellipse(c[0], c[1], rx, rx * 0.6, 0, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+  if (sel) { ctx.strokeStyle = `rgba(243,217,168,${0.18 * (1 - pulse)})`; ctx.lineWidth = 6; ctx.beginPath(); ctx.ellipse(c[0], c[1], rx + 6 * pulse, (rx + 6 * pulse) * 0.6, 0, 0, Math.PI * 2); ctx.stroke(); }
+  ctx.font = '600 10px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillStyle = sel ? 'rgba(243,217,168,.95)' : 'rgba(220,217,210,.7)';
+  ctx.fillText((i === 0 ? 'BEST SITE' : 'OPTION ' + (i + 1)) + ' · ' + fmtInt(o.earthwork_m3) + ' M³', c[0] + rx + 6, c[1] - rx * 0.6);
+}
+function renderSiteResults() {
+  const j = calc.res; resEl.replaceChildren();
+  calc.options.forEach((o, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'rc'; b.style.setProperty('--rc', i ? '#8a8d95' : '#f3d9a8');
+    b.setAttribute('aria-pressed', String(calc.sel === i));
+    const k = document.createElement('div'); k.className = 'k'; const ic = document.createElement('i'); k.append(ic, document.createTextNode(i ? `Option ${i + 1}` : 'Best site'));
+    const v = document.createElement('div'); v.className = 'v'; v.textContent = fmtInt(o.earthwork_m3) + ' m³';
+    const s = document.createElement('div'); s.className = 's'; s.textContent = `${o.grading_sols} grading sols · ${o.center[1].toFixed(3)}° N ${o.center[0].toFixed(3)}° E`;
+    b.append(k, v, s);
+    b.addEventListener('click', () => { focusOption(i); renderSiteResults(); });
+    resEl.appendChild(b);
+  });
+  const o = calc.options[calc.sel];
+  const t = document.createElement('div'); t.className = 'pads';
+  for (const p of o.facilities) {
+    const i = document.createElement('i'); i.style.background = facColor(p.facility);
+    const nm = document.createElement('b'); nm.textContent = p.name; nm.title = `${p.side_m} m square · pad level ${fmtInt(p.pad_elevation_m)} m · cut ${fmtInt(p.cut_m3)} m³, fill ${fmtInt(p.fill_m3)} m³`;
+    const sl = document.createElement('span'); sl.textContent = p.ground_slope_deg.toFixed(1) + '°';
+    const v = document.createElement('span'); v.textContent = fmtInt(p.earthwork_m3) + ' m³';
+    t.append(i, nm, sl, v);
+  }
+  resEl.appendChild(t);
+  const note = document.createElement('p'); note.id = 'calc-note'; note.textContent = j.assumptions[0].replace(/^./, c => c.toUpperCase()) + '.';
+  resEl.appendChild(note);
+  const add = document.createElement('button'); add.type = 'button'; add.className = 'btn-primary'; add.textContent = `Add these ${o.facilities.length} facilities to the plan`;
+  if (calc.added) { add.disabled = true; add.textContent = 'Added to the plan'; }
+  add.addEventListener('click', () => { addSiteToPlan(o); renderSiteResults(); });
+  resEl.appendChild(add);
+}
+function addSiteToPlan(o) {
+  if (calc && calc.kind === 'site') calc.added = true;
+  SITE.area = null; updateSiteForm();   // this area is done; the bar goes away until a new one is marked
+  const seen = {};
+  let last = null;
+  for (const p of o.facilities) {
+    seen[p.facility] = (seen[p.facility] || 0) + 1;
+    const multi = o.facilities.filter(q => q.facility === p.facility).length > 1;
+    const name = p.name.replace(/ \(.*\)/, '') + (multi ? ' ' + seen[p.facility] : '');
+    last = addBase(nearestK(uOf(p.center[0]), vOf(p.center[1])), { name, type: TYPE_OF_FACILITY[p.facility] || 'depot', foot: p.side_m, maxSlope: p.max_slope_deg, rate: calc.body.grading_rate_m3_per_sol, pad: p });
+  }
+  const el = document.getElementById('toast'); el.replaceChildren();
+  const b = document.createElement('b'); b.textContent = 'Added to the plan. ';
+  el.append(b, document.createTextNode(`${o.facilities.length} facilities, ${fmtInt(o.earthwork_m3)} m³ of earthwork in total.`));
+  el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 5000);
+  if (last) { selected = last.id; renderBases(); }
+}
+// The on-map action bar walks through the flow: area marked -> find the best site -> add the base.
+let barKey = '';
+function renderSiteBar() {
+  const bar = document.getElementById('site-bar'), txt = document.getElementById('site-bar-text'), go = document.getElementById('site-bar-go'), alt = document.getElementById('site-bar-alt');
+  const sc = calc && calc.kind === 'site' ? calc : null, a = SITE.area;
+  const ready = sc && sc.res && sc.res.status === 'ok' && resEl.childElementCount > 0;
+  const pads = SITE.fac.reduce((t, f) => t + (SITE.counts[f.id] || 0), 0);
+  let st;
+  if (areaMode || placing || overview) st = ['hide'];
+  else if (ready && !sc.added) { const o = sc.options[sc.sel]; st = ['result', sc.sel, `${sc.sel ? 'Option ' + (sc.sel + 1) : 'Best site'} · ${fmtInt(o.earthwork_m3)} m³ to flatten · ${o.facilities.length} facilities`, sc.options.length > 1 ? 'Next option' : '', 'Add base here']; }
+  else if (sc && !sc.res && !sc.err) st = ['busy', 'Finding the flattest site…'];
+  else if (a) st = ['area', `${areaLabel(a)} area · ${pads} facilit${pads === 1 ? 'y' : 'ies'}`, 'Redraw', 'Find the best site', apiOk && pads > 0];
+  else st = ['hide'];
+  const key = JSON.stringify(st); if (key === barKey) return; barKey = key;
+  bar.hidden = st[0] === 'hide'; if (bar.hidden) return;
+  if (st[0] === 'busy') { txt.textContent = st[1]; go.hidden = alt.hidden = true; return; }
+  if (st[0] === 'result') { txt.textContent = st[2]; alt.textContent = st[3]; alt.hidden = !st[3]; go.textContent = st[4]; go.hidden = false; go.disabled = false; return; }
+  txt.textContent = st[1]; alt.textContent = st[2]; alt.hidden = false; go.textContent = st[3]; go.hidden = false; go.disabled = !st[4];
+  go.title = st[4] ? '' : apiOk ? 'Add at least one facility in the Bases panel' : 'The planner backend is not reachable';
+}
+document.getElementById('site-bar-go').addEventListener('click', () => {
+  const sc = calc && calc.kind === 'site' && calc.res && calc.res.status === 'ok' && !calc.added ? calc : null;
+  if (sc && resEl.childElementCount) { addSiteToPlan(sc.options[sc.sel]); renderSiteResults(); } else runSiteSearch();
+  renderSiteBar();
+});
+document.getElementById('site-bar-alt').addEventListener('click', () => {
+  const sc = calc && calc.kind === 'site' && calc.res && calc.res.status === 'ok' && !calc.added ? calc : null;
+  if (sc && resEl.childElementCount) { focusOption((sc.sel + 1) % sc.options.length); renderSiteResults(); } else startArea();
+  renderSiteBar();
+});
+document.getElementById('add-base-btn').addEventListener('click', startArea);
+// Clear all: first click asks, a second click within 3 s removes every base and marking.
+let clearArm = 0;
+document.getElementById('clear-all').addEventListener('click', e => {
+  const btn = e.currentTarget;
+  if (!clearArm) {
+    btn.textContent = 'Click again to clear'; btn.setAttribute('aria-pressed', 'true');
+    clearArm = setTimeout(() => { clearArm = 0; btn.textContent = 'Clear all'; btn.setAttribute('aria-pressed', 'false'); }, 3000);
+    return;
+  }
+  clearTimeout(clearArm); clearArm = 0; btn.textContent = 'Clear all'; btn.setAttribute('aria-pressed', 'false');
+  const n = bases.length;
+  if (placing || areaMode) stopPlacing();
+  bases.length = 0; openBases.clear(); selected = null; if (lock != null) unlock();
+  routePt = null; SITE.area = null; SITE.drag = null; SITE.hover = null;
+  calc = null; calcEl.hidden = true; document.body.classList.remove('calc-open');
+  renderBases(); updateSiteForm(); notifyPlanner();
+  const el = document.getElementById('toast'); el.replaceChildren();
+  const b = document.createElement('b'); b.textContent = 'Cleared. ';
+  el.append(b, document.createTextNode(`${n} base${n === 1 ? '' : 's'}, the search outline, routes and site results were removed.`));
+  el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 4000);
+});
+
+function drawAreaSelection() {
+  const d = SITE.drag, font = '500 9.5px "IBM Plex Mono", ui-monospace, monospace';
+  if (d) {   // being drawn: the outline so far, a rubber band to the cursor, and the closing edge faintly
+    const P = SITE.hover ? [...d.pts, SITE.hover] : d.pts;
+    ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(205,180,142,.9)'; if (P.length > 1) strokePath(outlinePts(P, false));
+    if (P.length > 2) { ctx.setLineDash([3, 5]); ctx.strokeStyle = 'rgba(205,180,142,.45)'; strokePath(outlinePts([P[P.length - 1], P[0]], false)); ctx.setLineDash([]); }
+    ctx.fillStyle = 'rgba(205,180,142,.95)';
+    d.pts.forEach((p, i) => { if (d.pts.length > 40 && i) return; const s = proj(...world(p[0], p[1], height(clamp(p[0]), clamp(p[1])) + 0.05)); if (s) { ctx.beginPath(); ctx.arc(s[0], s[1], i ? 2.2 : 4, 0, Math.PI * 2); ctx.fill(); } });
+    const f = d.pts[0], s = f && proj(...world(f[0], f[1], height(clamp(f[0]), clamp(f[1])) + 0.05));
+    if (s && P.length > 2) { ctx.font = font; ctx.fillText(`${fmtInt(polyKm2(P))} KM²`, s[0] + 8, s[1] - 8); }
+    return;
+  }
+  const a = SITE.area; if (!a) return;
+  if (calc && calc.kind === 'site') return;   // the search draws its own outline
+  const pts = areaPts(a);
+  ctx.lineWidth = 1.3; ctx.strokeStyle = 'rgba(205,180,142,.85)'; strokePath(pts);
+  const top = pts.reduce((b, p) => { const s = proj(...p); return s && (!b || s[1] < b[1]) ? s : b; }, null);
+  if (top) { ctx.font = font; ctx.fillStyle = 'rgba(205,180,142,.95)'; ctx.fillText(`SEARCH AREA · ${areaLabel(a).toUpperCase()}`, top[0] + 6, top[1] - 8); }
+}
+
 /* ---------- boot ---------- */
-buildLayerUI();
+document.getElementById('cell-km').textContent = (SPAN_KM / N).toFixed(2) + ' km';
+computeHazard();
 if (gl) initGL();
-layersChanged();
+buildStackUI();
 resize(); addEventListener('resize', resize);
-applyTypeDefaults();
 addBase(nearestK(J.u + 0.012, J.v - 0.016), { name: 'Habitat Alpha', type: 'habitat', foot: 120, maxSlope: 3, rate: 50 }, true);
-fName.value = suggestName();
+plannerChanged();
+for (const s of SHEETS) s.pos = s.slot;
+loadCatalog().then(loadFacilities);
+loadGlobe();
 document.body.dataset.sheet = 'none';
 requestAnimationFrame(frame);
 })();

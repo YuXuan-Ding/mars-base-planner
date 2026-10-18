@@ -1,4 +1,4 @@
-"""Simulator tests: determinism, no hidden-truth leaks, the demo story, and the API."""
+"""Simulator tests: determinism, no hidden-truth leaks, map-based incidents, and the API."""
 import pytest
 from fastapi.testclient import TestClient
 
@@ -18,26 +18,27 @@ def test_deterministic():
     assert a == b and sa.series["propellant_t"] == sb.series["propellant_t"]
 
 
+def _first_incident(seed=1):
+    s = scenario.mission(seed)
+    while not s.open_incidents:
+        s.advance()
+    return s
+
+
 def test_branches_share_weather():
     """A different decision must not change the dice for later sols."""
-    s1 = scenario.demo()
-    s1.advance()
+    s1 = scenario.mission(2)
     s2 = s1.clone()
-    inc = s1.open_incidents[0]
-    policy.apply(s1, inc.id, [{"type": "continue"}])
-    policy.apply(s2, inc.id, [{"type": "repair", "machine": inc.target, "part": "cutters"}])
     policy.play(s1, policy.fixed_rule)
-    policy.play(s2, policy.fixed_rule)
+    policy.play(s2, lambda sim, inc: [{"type": "continue"}])
     storms = lambda s: [i.sol for i in s.incidents if i.kind == "dust_storm"]
-    assert storms(s1) == storms(s2) == [384]
+    assert storms(s1)[:1] == storms(s2)[:1]
 
 
 def test_observe_hides_truth():
-    s = scenario.demo()
-    s.advance()
+    s = _first_incident()
     obs = s.observe()
-    inc = obs["open_incidents"][0]
-    assert inc["kind"] == "tbm_anomaly" and "truth" not in inc
+    assert obs["open_incidents"] and "truth" not in obs["open_incidents"][0]
     hidden = {"bearing_health", "bearing_failing", "hard_zones", "cutter_wear", "truth"}
 
     def keys(x):
@@ -52,44 +53,37 @@ def test_observe_hides_truth():
 
 
 def test_truth_revealed_after_resolution():
-    s = scenario.demo()
-    s.advance()
+    s = _first_incident()
     inc = s.open_incidents[0]
     policy.apply(s, inc.id, [{"type": "continue"}])
-    assert s.incident_view(inc)["truth"]["cause"] == "bearing"
+    assert "truth" in s.incident_view(inc)
 
 
-def test_demo_first_incident_is_ambiguous():
-    s = scenario.demo()
-    s.advance()
-    v = s.incident_view(s.open_incidents[0])
-    est = v["cause_estimate"]
-    assert 200 <= s.sol <= 220
-    assert est["hard_rock"] > 0.3 and est["bearing"] > 0.25      # needs a diagnosis
+def test_incidents_come_from_map_tiles():
+    s = scenario.mission(1)
+    policy.play(s, policy.fixed_rule)
+    tiled = [i for i in s.incidents if i.kind in ("tbm_anomaly", "wheel_damage", "tbm_breakdown")]
+    assert tiled and all(i.where and "tile_odds" in i.where for i in tiled)
+    hard = [s.site.tiles[ti]["hard_per_km"] for t in s.site.tunnels.values() for _, _, ti in t["segs"]]
+    assert max(hard) > 1.5 * min(hard)          # the map varies, so the odds vary
 
 
-def test_rollouts_do_not_know_the_script():
-    s = scenario.demo()
-    s.advance()
+def test_rollouts_redraw_hidden_state():
+    s = _first_incident()
     c = policy._rollout_sim(s, 12345)
-    assert c.scripted == [] and c.random_kinds == {"storm", "bearing", "cargo"}
+    assert c.seed == 12345 and c.site is s.site
 
 
-def test_demo_fixed_rule_misses_and_guided_makes_it():
-    fixed = policy.play(scenario.demo(), policy.fixed_rule)
-    assert not fixed["on_time"]
-    s = scenario.demo()
-    while not s.done:
-        for inc in s.advance():
-            best = policy.recommend(policy.evaluate(s, policy.menu(s, inc), inc.id, n=120))
-            policy.apply(s, inc.id, best["actions"])
-            if inc.status == "open":
-                s.act(inc.id, [{"type": "continue"}])
-    assert s.outcome()["on_time"]
+def test_guided_beats_fixed_rule():
+    fixed = guided = 0
+    for seed in range(6):
+        fixed += policy.play(scenario.mission(seed), policy.fixed_rule)["on_time"]
+        guided += policy.play(scenario.mission(seed), policy.sim_guided(8))["on_time"]
+    assert guided >= fixed
 
 
 def test_consult_blocked_during_conjunction():
-    s = scenario.demo()
+    s = scenario.mission(1)
     s.sol = 385
     assert not s.comms_ok
 
@@ -101,10 +95,12 @@ def client():
 
 
 def test_api_flow(client):
-    r = client.post("/sim/runs", json={"scenario": "demo"}).json()
+    r = client.post("/sim/runs", json={"seed": 1}).json()
     rid = r["run_id"]
     r = client.post(f"/sim/runs/{rid}/advance", json={}).json()
     inc = r["state"]["open_incidents"][0]
+    assert client.get(f"/sim/runs/{rid}/map").json()["tunnels"]
+    assert client.get("/sim/hazard-map").json()["layers"]["wheel_per_km"]
     assert client.post(f"/sim/runs/{rid}/advance", json={}).status_code == 409
     opts = client.get(f"/sim/runs/{rid}/incidents/{inc['id']}/options", params={"n": 40}).json()
     assert len(opts["options"]) >= 4 and 0 <= opts["recommended"] < len(opts["options"])

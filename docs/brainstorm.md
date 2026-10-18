@@ -126,7 +126,7 @@ In the prototype, cut ≈ L³·tan(slope)/8 + L²·roughness term, and the gradi
 
 ## Interface design
 
-- **Default view:** a calm, near-black WebGL particle map of the region's elevation (~48k points, ×20 vertical exaggeration). Particles rise on load and the view drifts slowly when idle.
+- **Default view:** a calm, near-black WebGL particle map of the region's elevation (~230k points on a 0.84 km grid, ×20 vertical exaggeration). Particles rise on load and the view drifts slowly when idle.
 - **Layers panel:** every dataset, with toggle, legend, opacity, and its source and resolution. Each is marked real or placeholder.
 - **Bases panel:** facility type, footprint, max slope and grading rate, then click the map to place. Each card shows elevation, slope against tolerance, hazard, cut and fill, grading time in sols, pressure, and nearest mineral.
 - **Overview mode:** an exploded stack with one floating sheet per dataset over the same box (elevation → slope → thermal inertia → hazard → minerals → geology → craters → coverage → your plan). Dashed guides run through Jezero and each base.

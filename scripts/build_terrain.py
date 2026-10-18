@@ -7,7 +7,7 @@ import array, base64, json, math
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-N = 220                                  # particle grid is N x N cells (~1.8 km each)
+N = 480                                  # particle grid is N x N cells (~0.84 km each)
 MARS_R = 3396190.0
 DEG_M = 2 * math.pi * MARS_R / 360
 
@@ -73,6 +73,15 @@ out = {
     "H": pack(H, "h"), "S": pack(S, "H", 10), "SM": pack(SM, "H", 10), "RO": pack(RO, "H", 10),
     "craters": craters, "traverse": pts, "traverse_last_sol": last_sol,
 }
+
+# coarse backdrop around the box (scripts/fetch_context.py), flipped so row 0 is the south edge like H
+ctx_path = ROOT / "data/context_dem.i16"
+if ctx_path.exists():
+    cmeta = json.loads((ROOT / "data/context_dem.json").read_text())
+    cdem = array.array("h"); cdem.frombytes(ctx_path.read_bytes())
+    cn = cmeta["cols"]
+    rows = [cdem[r * cn:(r + 1) * cn] for r in range(cmeta["rows"])][::-1]
+    out["context"] = {"N": cn, "meta": cmeta, "H": pack([v for row in rows for v in row], "h")}
 (ROOT / "web").mkdir(exist_ok=True)
 (ROOT / "web/terrain.js").write_text("window.TERRAIN = " + json.dumps(out, separators=(",", ":")) + ";\n")
 print(f"cells {N}x{N}, H {min(H)}..{max(H)} m, mean slope max {max(S):.1f}°, pixel slope max {max(SM):.1f}°")

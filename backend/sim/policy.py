@@ -2,8 +2,8 @@
 
 Evaluation never peeks at hidden truth. Each rollout clones the simulation, redraws
 everything the planner cannot see (the cause of an open anomaly from its posterior,
-true cutter wear, rock ahead of each TBM, storm length, cargo delays, scripted demo
-events), applies an option, and plays the rest of the mission with the fixed rule.
+true cutter wear, hard-rock bands ahead of each TBM from the map's tile odds, storm
+length, cargo delays), applies an option, and plays the rest of the mission with the fixed rule.
 """
 from __future__ import annotations
 
@@ -46,8 +46,16 @@ def menu(sim: Sim, inc) -> list[dict]:
             opts.append({"label": f"Strip {o} for its {part}", "actions": [{"type": "cannibalize", "from": o, "to": m, "part": part}]})
         opts.append({"label": "Leave it down", "actions": [{"type": "continue"}]})
         return [o for o in opts if _feasible(sim, o)]
+    if k == "wheel_damage" and m == "dozer":
+        donors = [h.id for h in sim.haulers if h.status in ("ok", "down")]
+        opts = [{"label": "Repair the track with a wheel spare", "actions": [{"type": "repair", "machine": m, "part": "wheel"}]}]
+        if donors:
+            opts.append({"label": f"Strip {donors[-1]} for running gear", "actions": [
+                {"type": "cannibalize", "from": donors[-1], "to": m, "part": "wheel"}]})
+        opts.append({"label": "Leave it down", "actions": [{"type": "continue"}]})
+        return [o for o in opts if _feasible(sim, o)]
     if k == "wheel_damage":
-        alt = next((r for r in sim.p.routes if r != sim.route), None)
+        alt = next((r for r in sim.site.routes if r != sim.route), None)
         opts = [{"label": "Replace the wheel", "actions": [{"type": "repair", "machine": m, "part": "wheel"}]}]
         if alt:
             opts.append({"label": f"Replace the wheel and switch to the {alt} route",
@@ -100,7 +108,7 @@ def menu(sim: Sim, inc) -> list[dict]:
 def _repair_down(sim: Sim) -> list[dict]:
     left = dict(sim.spares)
     acts = []
-    for m in sim.tbms + sim.haulers:
+    for m in sim.machines:
         if m.status != "down":
             continue
         part = "wheel" if m.down_reason == "wheel" else "bearing" if "bearing" in m.down_reason else "cutters"
@@ -192,8 +200,6 @@ def resample_hidden(c: Sim, k: int):
     """Replace hidden truth with a draw consistent with what has been observed."""
     p = c.p
     c.seed = k
-    c.scripted = []
-    c.random_kinds = {"storm", "bearing", "cargo"}
     for i, t in enumerate(c.tbms):
         inc = next((x for x in c.incidents if x.status == "open" and x.kind == "tbm_anomaly" and x.target == t.id), None)
         cause = "none"
