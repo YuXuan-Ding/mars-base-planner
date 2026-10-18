@@ -175,7 +175,8 @@ def test_route_without_nearby_craters_does_not_crash(client):
 
 
 def test_steep_stretches_offer_road_or_bore(client):
-    j = client.post("/routes", json={"from": [77.439, 17.814], "to": [77.559, 17.814], "equipment": ["hauler"]}).json()
+    # the ends are ~1,400 m apart in height, so some climb steeper than the fleet can drive is unavoidable
+    j = client.post("/routes", json={"from": [76.08, 21.006], "to": [76.36, 21.006], "equipment": ["hauler"]}).json()
     steep = j["shortest"]["steep"]
     assert steep
     for st in steep:
@@ -205,3 +206,59 @@ def test_site_search_inside_drawn_outline(client):
         for lo, la in pad["polygon"]:
             assert math.hypot(lo - cx, la - cy) <= 0.12 + 1e-3
     assert client.post("/sites/search", json={"facilities": [{"type": "habitat", "count": 1}]}).status_code == 422
+
+
+def test_shortest_goes_around_a_high_steep_peak(client):
+    # straight across a ~2,400 m peak; going round it climbs much less for a little more length
+    j = route(client, **{"from": [77.20, 16.734], "to": [77.44, 16.734]}, equipment=["hauler"], modes=["shortest"])
+    s = j["shortest"]
+    assert s["status"] == "ok"
+    assert s["climb_m"] < 800                       # straight over climbs ~1,200 m
+    assert max(p[1] for p in s["design_profile"]) < -1500   # the summit is at about -800 m
+
+
+PEAK = {"from": [77.20, 16.734], "to": [77.44, 16.734], "equipment": ["hauler"]}
+
+
+def test_minimal_route_builds_least(client):
+    j = route(client, **PEAK, modes=["shortest", "minimal"])
+    s, m = j["shortest"], j["minimal"]
+    assert m["status"] == "ok"
+    assert m["earthwork_m3"] < s["earthwork_m3"] and m["grading_sols"] <= s["grading_sols"]
+
+
+def test_bore_through_the_peak_pays_off(client):
+    # boring is a third of a grading unit's speed, so a level bore under the peak beats the road around it
+    for tp in (0, 300):
+        j = route(client, **PEAK, throughput_t_per_sol=tp, modes=["shortest", "through"])
+        t = j["through"]
+        assert t["status"] == "ok" and t["beats_shortest"] and j["recommended"]["route"] == "through"
+        assert t["tunnel_km"] > 5 and all(b["vertical_m"] < 200 for b in t["bores"])   # level, under the peak
+
+
+def test_through_costs_a_given_height(client):
+    none = client.post("/routes/through", json={**PEAK, "no_bore": True}).json()
+    assert none["status"] == "ok" and none["bores"] == [] and none["height_m"] is None
+    line = none["line"]
+    span = line["highest_ground_m"] - line["lowest_bore_m"]
+    hi = client.post("/routes/through", json={**PEAK, "height_m": line["lowest_bore_m"] + 0.7 * span}).json()
+    lo = client.post("/routes/through", json={**PEAK, "height_m": line["lowest_bore_m"] + 0.2 * span}).json()
+    assert hi["status"] == lo["status"] == "ok"
+    assert lo["tunnel_km"] > hi["tunnel_km"] > 0 and lo["climb_m"] < hi["climb_m"] < none["climb_m"]
+    assert all(b["height_m"] == lo["height_m"] for b in lo["bores"])
+    # the route never changes: roads and bores together cover the same straight line
+    for p in (none, hi, lo):
+        on_line = sum(l["design_profile"][-1][0] for l in p["legs"]) + p["tunnel_km"]
+        assert on_line == pytest.approx(line["length_km"], abs=0.05)
+    bad = client.post("/routes/through", json={**PEAK, "height_m": line["lowest_bore_m"] - 100}).json()
+    assert bad["status"] == "none" and "below the ground" in bad["reason"]
+
+
+def test_through_falls_back_to_the_rule_without_claude(client, monkeypatch):
+    from construct import ai
+
+    def broken():
+        raise TypeError("no client in tests")
+    monkeypatch.setattr(ai, "_get_client", broken)
+    j = client.post("/routes/through", json={**PEAK, "decide": "ai"}).json()
+    assert j["decided_by"] == "rule (AI unavailable)" and "AI call failed" in j["rationale"]

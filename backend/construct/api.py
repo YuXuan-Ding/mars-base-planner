@@ -11,14 +11,16 @@ with .../ai-decide.
 from __future__ import annotations
 
 import itertools
+import re
 from collections import OrderedDict
 from typing import Literal
 
 from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel, Field, model_validator
 
-from . import ai
+from . import ai, ask, pdf, review
 from .engine import Job
 from .model import Params
 from .plan import base_plan, route_plan
@@ -32,13 +34,22 @@ _ids = itertools.count(1)
 Point = tuple[float, float]
 
 
+class Bore(BaseModel):
+    coordinates: list[Point] = Field(min_length=2, description="the bore line, portal to portal [lon, lat]")
+    length_m: float | None = Field(None, gt=0, description="bored length if longer than the line (spirals, ramps)")
+
+
 class NewJob(BaseModel):
     kind: Literal["route", "base"]
     units: int = Field(4, ge=1, le=40, description="construction units on the job")
     # route
     from_: Point | None = Field(None, alias="from", description="route start [lon, lat]")
     to: Point | None = Field(None, description="route end [lon, lat]")
-    mode: Literal["shortest", "accessible"] = "accessible"
+    mode: Literal["shortest", "accessible", "minimal", "through", "tunnel"] = "accessible"
+    paths: list[list[Point]] | None = Field(None, description="build along these [lon, lat] lines (the route picked in the planner) instead of planning one")
+    bores: list[Bore] | None = Field(None, description="bores on the route, dug by TBMs during the job; road crews "
+                                     "can't cross one until it breaks through")
+    tbms: int = Field(2, ge=1, le=20, description="boring machines on the job (used only when there are bores)")
     # base
     center: Point | None = Field(None, description="base centre [lon, lat]")
     area_m2: float = Field(250_000, gt=1000, le=25_000_000, description="ground to flatten")
@@ -52,7 +63,7 @@ class NewJob(BaseModel):
 
     @model_validator(mode="after")
     def _where(self):
-        if self.kind == "route" and (self.from_ is None or self.to is None):
+        if self.kind == "route" and not self.paths and not self.bores and (self.from_ is None or self.to is None):
             raise ValueError("a route needs 'from' and 'to'")
         if self.kind == "base" and self.center is None:
             raise ValueError("a base needs 'center'")
@@ -87,10 +98,12 @@ def _plan_view(job: Job) -> dict:
 def new_job(req: NewJob):
     p = Params()
     try:
-        plan = route_plan(p, req.from_, req.to, req.mode) if req.kind == "route" else base_plan(p, req.center, req.area_m2)
+        bores = [b.model_dump() for b in req.bores] if req.bores else None
+        plan = (route_plan(p, req.from_, req.to, req.mode, req.paths, bores) if req.kind == "route"
+                else base_plan(p, req.center, req.area_m2))
     except ValueError as e:
         raise HTTPException(422, str(e))
-    job = Job(plan, req.units, p, req.seed, req.budget_musd, req.deadline_sols, guard=req.guard)
+    job = Job(plan, req.units, p, req.seed, req.budget_musd, req.deadline_sols, guard=req.guard, n_tbms=req.tbms)
     jid = f"job{next(_ids)}"
     _jobs[jid] = job
     while len(_jobs) > MAX_JOBS:
@@ -111,6 +124,7 @@ def tiles(jid: str):
     return {"geometry": job.plan["geometry"], "tiles": [
         {**{k: t[k] for k in ("r", "c", "lon", "lat", "slope_deg", "rock_cover_pct", "hazard", "incident_rate", "kinds",
                               "slope_factor", "hazard_factor")},
+         "kind": t.get("kind", "road"), "bore": t.get("bore"),
          "work_unit_sols": t["work"], "left_unit_sols": round(job.remaining[i], 3),
          "done_pct": round(100 * (1 - job.remaining[i] / t["work"]), 1) if t["work"] else 100.0}
         for i, t in enumerate(job.tiles)]}
@@ -171,6 +185,58 @@ def decide(jid: str, iid: str, req: Decide):
 @router.get("/jobs/{jid}/report")
 def report(jid: str):
     return _get(jid).report()
+
+
+class Turn(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+
+class Ask(BaseModel):
+    question: str = Field(min_length=1, max_length=4000)
+    job_id: str | None = Field(None, description="include this job's state as context")
+    history: list[Turn] = Field(default_factory=list, description="earlier turns, for follow-up questions")
+
+
+@router.post("/ask")
+def ask_claude(req: Ask):
+    """Ask Claude a general question about the project (and optionally a job)."""
+    job = _get(req.job_id) if req.job_id else None
+    try:
+        return ask.ask(req.question, [t.model_dump() for t in req.history], job)
+    except RuntimeError as e:
+        raise HTTPException(503, f"Claude is unavailable: {e}")
+
+
+@router.post("/jobs/{jid}/review")
+def write_review(jid: str):
+    """Claude writes the hazard review of a finished job: each hazard it hit (where, how often, how
+    it was handled, what it cost), whether the hazard map predicted it, and procedures per hazard.
+    Takes about a minute."""
+    job = _get(jid)
+    if not job.done:
+        raise HTTPException(409, "the job isn't finished; run it to the end first")
+    try:
+        job.review = review.write(job)
+    except RuntimeError as e:
+        raise HTTPException(503, f"Claude is unavailable: {e}")
+    return job.review
+
+
+@router.get("/jobs/{jid}/review")
+def get_review(jid: str, format: Literal["json", "pdf"] = "json"):
+    """The last review written for this job; `?format=pdf` returns it as a PDF to download."""
+    job = _get(jid)
+    rv = getattr(job, "review", None)
+    if rv is None:
+        raise HTTPException(404, "no review yet; POST to this path to write one")
+    if format == "pdf":
+        if "pdf" not in rv:
+            m = re.search(r"^#\s+(.+)$", rv["markdown"], flags=re.M)
+            rv["pdf"] = pdf.render(rv["markdown"], m.group(1).strip() if m else f"{jid} hazard review")
+        return Response(rv["pdf"], media_type="application/pdf",
+                        headers={"Content-Disposition": f'attachment; filename="{jid}-hazard-review.pdf"'})
+    return {k: v for k, v in rv.items() if k != "pdf"}
 
 
 @router.get("/jobs/{jid}/_guard", include_in_schema=False)

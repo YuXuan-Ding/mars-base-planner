@@ -71,17 +71,32 @@ class RouteRequest(BaseModel):
     hazard_overrides: HazardOverrides | None = Field(None, description="fleet-wide limits that replace the vehicles' own")
     hazard_weights: HazardWeights = HazardWeights()
     avoidance: float = Field(3.0, ge=0, description="how far to detour around soft hazards (0 = ignore them)")
-    modes: list[Literal["accessible", "shortest", "tunnel"]] = ["accessible", "shortest", "tunnel"]
+    modes: list[Literal["accessible", "shortest", "minimal", "through", "tunnel"]] = [
+        "accessible", "shortest", "minimal", "through", "tunnel"]
     tbm: MachineSelection = MachineSelection()
     grading_rate_m3_per_sol: float = Field(400, gt=0, description="surface grading rate (assumed)")
     rock_clearing_km_per_sol: float = Field(0.5, gt=0, description="surface rock clearing rate (assumed)")
-    earthwork_weight: float = Field(0.002, ge=0, description="metres of extra length worth avoiding 1 m3 of grading")
+    earthwork_weight: float | None = Field(None, ge=0, description="metres of extra road worth avoiding 1 m3 of grading "
+                                           "(default: from the grading rate and the fleet's driving over the planning horizon)")
     tunnel_weight: float = Field(2.0, ge=1, description="1 m of tunnel costs this many metres of driving")
-    max_tunnel_km: float = Field(15, gt=0, le=60)
+    tunnel_vertical_m: float = Field(20.0, ge=0, description="metres of tunnel that 1 m of vertical travel inside a "
+                                     "tunnel costs, up or down alike (bores that climb or dive are avoided)")
+    max_tunnel_km: float = Field(40, gt=0, le=60, description="longest bore allowed; at 200 m a sol per machine a 40 km bore takes about 100 sols with two")
+    resurface_penalty_sols: float = Field(100, ge=0, description="extra sols charged each time the route comes up "
+                                          "out of a bore and later goes back underground (a TBM relaunch, a portal pair "
+                                          "and the fleet changing between tunnel and surface); higher keeps bores going")
     operating_hours_per_sol: float = Field(10, gt=0, le=24.6)
     search_margin_km: float = Field(40, gt=0)
     trace: bool = Field(False, description="also return the search steps (window, blocked ground, "
                         "explored cells in search order, tunnel portal pairs tried) for visualizing the calculation")
+
+
+class ThroughRequest(RouteRequest):
+    """Bore through: the road runs along the straight A–B line; only the bore height is decided (by Claude or the
+    rule), or costed as given. Ground above the height is bored level at that height."""
+    decide: Literal["ai", "rule"] = "ai"
+    height_m: float | None = Field(None, description="bore height to cost as given instead of deciding")
+    no_bore: bool = Field(False, description="cost the road over the top along the line, with no bore")
 
 
 class Facility(BaseModel):

@@ -83,13 +83,21 @@ rock cover ÷ rock limit, roughness ÷ p95, and crater-rim proximity (`exp(−d/
 (`hazard_weights`). A move costs `length × (1 + avoidance × hazard)`. `avoidance` sets how far the route will
 detour to stay on safer ground.
 
-**Three route kinds:**
+**Route kinds:**
 
 1. **Accessible:** drivable today. Every move that breaks a fleet limit is removed, then Dijkstra.
    If the ends are disconnected, it returns `status: "none"` plus a **gap**: the closest approach between the area
    reachable from the start and the area reachable from the goal, the gap width, and which limits block it
    (`rocks`, `crater_rim`, `slope`, `cross_slope`).
-2. **Shortest:** nearly the straight line. Everything is allowed except cliffs (> 35°). Along the chosen path the
+2. **Shortest:** the cheapest road to build and use. Everything is allowed except cliffs (> 35°). Each move costs,
+   in metres of driving: its length × (1 + 0.3 × hazard), plus `CLIMB_M / 2` = 4 m per metre of height change (a
+   metre of climb costs about 8 m of level driving on loose ground, and a round trip climbs each height once),
+   plus `earthwork_weight` × its grading (roadbed and bench). A move steeper than the fleet's grade is costed as
+   the switchback road it would need: `|dh| / tan(max_grade) × 1.15` long, benched into the slope. So a high,
+   steep mountain costs what crossing it really costs and the route goes around it when that is cheaper.
+   `earthwork_weight` (m of road per m³) defaults to the grading time of 1 m³ divided by the driving time of 1 m
+   over the horizon (`(1/grading_rate) / (trips × 2 / speed × 500 sols / hours per sol)`, about 0.25 m per m³ at one
+   trip a sol), so building and driving are traded in the same sols. Along the chosen path the
    backend designs the **road line**: the lowest line that never sits below the ground and never exceeds the
    fleet's grade, so steep ground is built up with fill (ramps and embankments), pinned to the ground at both
    ends (cut only where that forces it). It is the upper envelope of grade cones from every point, two passes
@@ -105,8 +113,33 @@ detour to stay on safer ground.
    (km range, m³, coordinates) for the map. The grading volume equals the fill needed, which TBM spoil can supply.
 
    **Steep stretches** (`steep`): every run where the road line leaves the ground by more than 1 m (runs within
-   3 moves merge, plus one move each side for portals) is costed three ways, and `recommended` picks the one with fewer
-   equipment-sols (build + driving over the horizon, as below). The route totals use the recommended picks.
+   3 moves merge, plus one move each side for portals) is costed as a ramp or a road on the slope. Bores on steep
+   stretches are off (`STEEP_BORES = False` in `app/routing.py`): they bored up a flank, drove across a flat top
+   and bored down again, so boring is planned as a whole in the bore-through option instead, and each stretch's
+   `bore` is `status: "none"`. With `STEEP_BORES` on, each stretch is costed three ways, and `recommended` picks the one with fewer
+   equipment-sols (build + driving over the horizon, each metre climbed counted as 8 m). The route totals use the
+   recommended picks. Neighbouring runs can also be crossed together by **one bore from the first run's foot to the
+   last run's foot**, under the flatter ground between them (the two flanks of a mountain with a flat top, say)
+   instead of a bore up one flank, a drive across the top and a bore down the other. The runs are grouped whichever
+   way costs least overall (a small dynamic program over the runs; a group is bore-only and at most
+   `max_tunnel_km` long).
+   Once underground, a bore may stay there: each run's ends can grow outward over neighbouring moves that are
+   still steeper than half the grade limit (`STAY_UNDER`), such as the drivable but sloping upper part of a
+   mountain whose foot is the steep part. Grown ends are only ever bored. Three weights favour staying under:
+   - **resurfacing penalty:** a bore that follows an earlier bore (the route came up and goes back down) costs
+     `resurface_penalty_sols` extra (request field, default 100; 0 turns it off)
+   - driving still-sloping ground right where a bore surfaces or dives counts 4× (`STAY_WEIGHT` = 3 extra)
+   - every bore pays 15 sols of portal and TBM set-up (`setup_sols`, included in `bore_sols`)
+
+   **Climbing or diving inside a bore** is weighted, up and down alike: a bore's cost counts each metre of height
+   it travels (`vertical_m`: the rises and falls of its floor, plus any spiral or portal ramp between the floor's
+   ends and the ground) as `tunnel_vertical_m` metres of tunnel (request field, default 20). So a level bore
+   through a ridge is preferred, and a bore that only climbs a flank usually loses to a road. The same weight
+   ranks the tunnel route: the first 12 buildable portal pairs, best first by score, are compared with
+   `tunnel_weight × tunnel_vertical_m × vertical_m` added, and the cheapest is returned (`tunnel.vertical_m`).
+
+   The search tries every option of every stretch (ramp, road, bore) with these weights included, so they can
+   change the pick: two bores a few hundred metres apart become one, while bores kilometres apart stay separate.
    - **ramp:** the road line above, straight, with its fill and cut in that run plus its roadbed and bench
      (`max_fill_m` is the highest embankment).
    - **road on the slope:** long enough to gain the climb and drop at the fleet's grade
@@ -117,7 +150,35 @@ detour to stay on safer ground.
      grade (vehicles drive it). Through a ridge it is the transit profile below. Up a scarp it climbs from the
      low portal while keeping its cover, then a spiral under the high portal gains the rest (`spiral_m`). It
      fails only if the ground between drops below the low portal.
-3. **Tunnel:** drive, then portal, tunnel, portal, drive, with at most one straight TBM tunnel. Candidate
+3. **Least construction** (`minimal`): the route that needs the least building. Moves the fleet can already drive
+   cost nothing to build; others cost their grading volume (switchback bench and roadbed, as for the shortest
+   route) plus rock clearing as m³, and every metre of length costs 0.02 m³ (`MINIMAL_M3_PER_M`) so it doesn't
+   detour without limit. Its road gets no roadbed or bench where the ground is already drivable, and its steep
+   stretches are picked by build time alone. Same fields as `shortest`; `segments` are the stretches to build.
+4. **Bore through** (`through`, `app/through.py`): one fixed route, the straight A–B line on the grid cells it
+   crosses, and one decision, the **bore height** `height_m`. Every run of ground above it (300 m or longer) is a
+   level TBM bore at that height, with portals where the ground crosses it; the rest is a built road on the line
+   (`_build_road`, as `shortest`). Heights go from the higher of the two ends (`line.lowest_bore_m`) up to the
+   highest ground (`line.highest_ground_m`); at or above that there is no bore. Scored in the shortest route's
+   units: the shortest-route move costs along the road parts + each bore (boring and 15 set-up sols as metres of
+   driving + its length + `tunnel_vertical_m` × the height its portal ramps make up) + `resurface_penalty_sols`
+   for each bore after the first. A cliff on the road part (a move steeper than 35°) makes the height unbuildable
+   (bore lower, below the cliff's top). `/routes` returns the rule's height: the lowest score over 80 heights, even when the shortest route
+   scores better (`beats_shortest: false`). Fields: `height_m`, `bores` (km along the line, length, height,
+   `bore_sols`, cover, profile), `legs` (the roads on the line), totals, `climb_m`/`drop_m`, `score_sols` and
+   `shortest_score_sols`, `line` (km, ground, slope along the line). No bore may be longer than `max_tunnel_km`
+   (default 40 km; about 100 sols with two machines).
+
+   `POST /routes/through` takes the same body plus `decide`: `"ai"` (default) has Claude choose the height: it gets
+   the line's elevation profile, the fleet, TBM and scoring, tries heights with an `evaluate_height` tool and
+   submits one with its reasons (`decided_by`, `rationale`, `tries`). If Claude can't be reached, or submits a
+   height that isn't buildable, the rule's height comes back with the reason. `"rule"` returns the rule's height;
+   `height_m` costs a given height and `no_bore: true` the road over the top.
+
+   The route recommendation (`recommended`) uses the same climb weights: build sols + driving over the horizon,
+   each metre climbed or descended on the surface counted as 4 m and each metre up or down inside a bore as
+   `tunnel_vertical_m` m.
+5. **Tunnel:** drive, then portal, tunnel, portal, drive, with at most one straight TBM tunnel. Candidate
    portals sit on a ~2.5 km lattice of flat (≤ 5°) open cells reachable from each end. Each pair within
    `max_tunnel_km` is scored as `surface cost A→p + tunnel_weight × tunnel length + surface cost q→B`, and the
    best 120 pairs are checked for feasibility, best first, after a straight bore from A to B (tried first, so
@@ -139,8 +200,14 @@ plus vehicle time driving the route over a 500-sol horizon.
 swell factor.
 
 ```
-bore rate   = advance × duty                      (4 m TBM: 8 m/sol × 0.6 = 4.8 m/sol)
-spoil       = π(D/2)² × length × swell            (≈ 84 m³ of loose spoil per machine-sol)
+bore rate   = advance × duty                      (4 m TBM: 333 m/sol × 0.6 ≈ 200 m/sol)
+spoil       = π(D/2)² × length × swell            (≈ 3,500 m³ of loose spoil per machine-sol)
+```
+
+A boring machine is a third as fast as a construction unit, which grades 600 m of road a sol on flat ground
+(`construct/model.py`). The compact 2 m TBM bores 585 m/sol × 0.65 ≈ 380 m/sol.
+
+```
 ore         = π(D/2)² × drift length × ore fraction × rock density
 ```
 

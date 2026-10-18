@@ -216,6 +216,7 @@ def _summary(ctx: Ctx, nodes: np.ndarray) -> dict:
         "length_km": round(length / 1000, 2),
         "travel_h": round(length / 1000 / ctx.fleet.slowest_kmh, 1),
         "climb_m": round(float(np.clip(m["dh"], 0, None).sum())),
+        "drop_m": round(float(-np.clip(m["dh"], None, 0).sum())),
         "max_grade_deg": round(math.degrees(math.atan(float(m["grade"].max(initial=0)))), 1),
         "max_cross_slope_deg": round(math.degrees(math.atan(float(m["cross"].max(initial=0)))), 1),
         "hazard": {
@@ -301,19 +302,70 @@ def _accessible(ctx: Ctx, a: int, b: int, avoidance: float):
     return G, dist_a, pred_a
 
 
-def _shortest(ctx: Ctx, a: int, b: int, req: RouteRequest, tbm: TBM) -> dict:
+CLIMB_M = 8.0   # metres of level driving that one metre of climb costs (energy and time on loose ground)
+
+
+def _drive_sols_per_m(ctx: Ctx, req: RouteRequest) -> float:
+    """Vehicle-sols spent driving one metre of route over the planning horizon (round trips at the route's
+    traffic, at least one a sol)."""
+    trips = max(ctx.fleet.trips_per_sol, 1)
+    return trips * 2 / (ctx.fleet.slowest_kmh * 1000) * HORIZON_SOLS / req.operating_hours_per_sol
+
+
+def _earthwork_weight(ctx: Ctx, req: RouteRequest) -> float:
+    """Metres of route worth 1 m3 of grading: build time and driving time in the same sols."""
+    if req.earthwork_weight is not None:
+        return req.earthwork_weight
+    return (1 / req.grading_rate_m3_per_sol) / _drive_sols_per_m(ctx, req)
+
+
+MINIMAL_M3_PER_M = 0.02   # least-construction route: 1 km of extra driving is worth avoiding 20 m3 of building
+
+
+def _road_graph(ctx: Ctx, req: RouteRequest, objective: str = "balanced") -> csr_matrix:
+    """Move costs for a built road. "balanced" (the shortest route): building and using it, in metres of
+    driving. "build" (the least-construction route): only what has to be built, in m3; ground the fleet can
+    already drive costs nothing to build, so the route keeps to it wherever it can."""
     lim, w = ctx.fleet.limits, ctx.fleet.road_width_m
-    tg, tc = math.tan(math.radians(lim.max_grade_deg)), math.tan(math.radians(lim.max_cross_slope_deg))
-    excess_h = np.clip(np.abs(ctx.dh) - tg * ctx.L, 0, None)
-    vol = 0.25 * excess_h * ctx.L * w + (w * w / 8) * np.clip(ctx.cross - tc, 0, None) * ctx.L
+    tg = math.tan(math.radians(lim.max_grade_deg))
+    # Each move costs what building and using it costs, in metres of driving: its length (longer where hazards
+    # slow the fleet), the climb, and the grading. A move steeper than the fleet can drive is costed as the
+    # switchback road it would need (long enough to gain the height at the fleet's grade, benched into the
+    # slope), so a high, steep mountain costs what crossing it really costs and the search goes around it
+    # when that is cheaper.
+    steep = ctx.grade > tg
+    run = np.where(steep, np.maximum(ctx.L, np.abs(ctx.dh) / tg * HAIRPIN), ctx.L)
+    slope = ctx.g.slope.ravel()
+    side = np.tan(np.radians((slope[ctx.src] + slope[ctx.dst]) / 2))
+    bench_area = np.where(steep, w * w * side / np.where(side > math.tan(math.radians(FULL_BENCH_DEG)), 2, 8),
+                          (w * w / 8) * ctx.cross)
+    vol = run * (bench_area + w * ROADBED_M)
     clear = ~ctx.move_ok_cells
     mask = ctx.grade <= math.tan(math.radians(CLIFF_DEG))
-    cost = ctx.L * (1 + SHORTEST_AVOIDANCE * ctx.edge_hazard) + req.earthwork_weight * vol + clear * ctx.L * 0.05
-    G = ctx.graph(mask, cost)
+    if objective == "build":
+        clear_m3 = req.grading_rate_m3_per_sol / (req.rock_clearing_km_per_sol * 1000)   # clearing 1 m, as m3
+        cost = np.where(ctx.accessible_mask(), 0.0, vol + clear * ctx.L * clear_m3) + MINIMAL_M3_PER_M * run + 1e-6
+    else:
+        cost = (run * (1 + SHORTEST_AVOIDANCE * ctx.edge_hazard) + CLIMB_M / 2 * np.abs(ctx.dh)
+                + _earthwork_weight(ctx, req) * vol + clear * ctx.L * 0.05)
+    return ctx.graph(mask, cost)
+
+
+def _shortest(ctx: Ctx, a: int, b: int, req: RouteRequest, tbm: TBM, objective: str = "balanced") -> dict:
+    G = _road_graph(ctx, req, objective)
     dist, pred = dijkstra(G, directed=False, indices=a, return_predecessors=True)
     nodes = _walk(pred, a, b) if np.isfinite(dist[b]) else None
     if nodes is None:
         return {"status": "none", "reason": f"blocked by cliffs steeper than {CLIFF_DEG}°"}
+    return _build_road(ctx, nodes, req, tbm, objective)
+
+
+def _build_road(ctx: Ctx, nodes: np.ndarray, req: RouteRequest, tbm: TBM, objective: str = "balanced") -> dict:
+    """The road built along a path: its road line, earthwork, steep stretches and totals. With objective
+    "build", ground the fleet can already drive gets no roadbed or bench (it is driven as it is), and steep
+    stretches are picked by build time alone."""
+    lim, w = ctx.fleet.limits, ctx.fleet.road_width_m
+    tg = math.tan(math.radians(lim.max_grade_deg))
 
     # Design the road line along the path: never steeper than the fleet's grade, built up with fill wherever the
     # ground is too steep (ramps and embankments), meeting the ground at both ends. Earthwork is the embankment
@@ -331,6 +383,11 @@ def _shortest(ctx: Ctx, a: int, b: int, req: RouteRequest, tbm: TBM) -> dict:
     level_m = ROADBED_M + np.tan(np.radians((rough[1:] + rough[:-1]) / 2)) * w / 4
     roadbed = w * level_m * m["L"]
     bench = (w * w / 8) * m["cross"] * m["L"]
+    if objective == "build":
+        okc = ctx.cell_ok.ravel()[nodes]
+        drivable = ((m["grade"] <= tg) & (m["cross"] <= math.tan(math.radians(lim.max_cross_slope_deg)))
+                    & okc[1:] & okc[:-1])
+        roadbed, bench = np.where(drivable, 0.0, roadbed), np.where(drivable, 0.0, bench)
     v = fill + cut + bench + roadbed
     ok_cells = ctx.cell_ok.ravel()[nodes]
     needs_clear = ~(ok_cells[1:] & ok_cells[:-1])
@@ -357,7 +414,7 @@ def _shortest(ctx: Ctx, a: int, b: int, req: RouteRequest, tbm: TBM) -> dict:
             "coordinates": _coords(ctx, nodes[i: j + 1]),
         })
         i = j
-    steep = _steep_choices(ctx, nodes, m, d, fill, cut, bench + roadbed, cum, req, tbm)
+    steep = _steep_choices(ctx, nodes, m, d, fill, cut, bench + roadbed, cum, req, tbm, objective)
     # route totals follow each steep stretch's recommended option; the page re-adds them as the user switches
     earth = float(v.sum())
     length_m = float(m["L"].sum())
@@ -419,12 +476,22 @@ def _section(depth: np.ndarray, w: float) -> np.ndarray:
 HAIRPIN = 1.15        # switchback roads run this much longer than their climb needs (turns, landings)
 FULL_BENCH_DEG = 30   # steeper side slopes than this won't hold fill, so the road bench is cut in full
 STEEP_MERGE = 3       # steep moves this close together are one stretch
+STEEP_BORES = False   # bores on the shortest route's own steep stretches. Off: boring is planned as a whole in the
+                      # bore-through option (Claude or the rule decides which part), so steep stretches are ramp
+                      # or road only, and no bore climbs a flank, surfaces on a flat top and bores down again
+STAY_UNDER = 0.5      # a bore may carry on through ground steeper than this share of the fleet's grade limit
+STAY_WEIGHT = 3.0     # surfacing onto such ground right after a bore: driving it counts (1 + this) times
+BORE_SETUP_SOLS = 15  # portal pits at both ends and TBM set-up, paid once per bore, so surfacing and diving
+                      # back in costs extra
 
 
-def _steep_choices(ctx: Ctx, nodes, m, d, fill, cut, base, cum, req: RouteRequest, tbm: TBM) -> list[dict]:
+def _steep_choices(ctx: Ctx, nodes, m, d, fill, cut, base, cum, req: RouteRequest, tbm: TBM,
+                   objective: str = "balanced") -> list[dict]:
     """Every stretch where the ground is steeper than the fleet can drive, with three ways past it: a ramp
     of fill along the straight line (the shortest route's design), a switchback road cut into the slope,
-    or a straight bore through the hill."""
+    or a bore through the hill. Neighbouring stretches (say the two flanks of a mountain with a flatter top)
+    can also be crossed by one bore from foot to foot instead of climbing out onto the flat between them:
+    the stretches are grouped whichever way costs least overall."""
     lim, w, t = ctx.fleet.limits, ctx.fleet.road_width_m, ctx.t
     tg = math.tan(math.radians(lim.max_grade_deg))
     off = np.abs(d) > 1.0
@@ -437,13 +504,17 @@ def _steep_choices(ctx: Ctx, nodes, m, d, fill, cut, base, cum, req: RouteReques
             runs.append((s0, prev + 1)); s0 = k
         prev = k
     runs.append((s0, prev + 1))
+    # one move of gentler ground each side for portals
+    runs = [(max(0, i - 1), min(len(m["L"]), j + 1)) for i, j in runs]
+    # least construction: driving barely counts, so each stretch is picked by build time
+    drive_m = _drive_sols_per_m(ctx, req) * (1e-4 if objective == "build" else 1.0)
+    # sols of driving over the horizon, counting each metre climbed as CLIMB_M metres of level road
+    drive_cost = lambda length_m, climb_m: (length_m + CLIMB_M / 2 * climb_m) * drive_m
     trips = max(ctx.fleet.trips_per_sol, 1)
-    drive_cost = lambda km: trips * 2 * km / ctx.fleet.slowest_kmh * HORIZON_SOLS / req.operating_hours_per_sol
     rate, faces = tunnels.bore_rate(tbm), min(req.tbm.count, 2)
     slope = ctx.g.slope.ravel()
-    out = []
-    for i, j in runs:
-        i, j = max(0, i - 1), min(len(m["L"]), j + 1)       # one move of gentler ground each side for portals
+
+    def stretch(i, j, bore_only=False):
         seg = nodes[i: j + 1]
         L = float(m["L"][i:j].sum())
         dh = m["dh"][i:j]
@@ -464,10 +535,26 @@ def _steep_choices(ctx: Ctx, nodes, m, d, fill, cut, base, cum, req: RouteReques
                 "build_sols": round(road_v / req.grading_rate_m3_per_sol, 1), "side_slope_deg": round(side, 1),
                 "bench": "full cut" if side > FULL_BENCH_DEG else "half cut, half fill"}
 
+        cost = {}
+        if not STEEP_BORES:
+            bore = {"status": "none", "reason": "boring is planned in the Bore through option"}
+            if bore_only:
+                return None, {}
+            cost["ramp"] = ramp["build_sols"] + drive_cost(L, climb + drop)
+            cost["road"] = road["build_sols"] + drive_cost(road_m, climb + drop)
+            rec = min(cost, key=cost.get)
+            return {
+                "from_km": round(float(cum[i]) / 1000, 2), "to_km": round(float(cum[j]) / 1000, 2),
+                "climb_m": round(climb), "drop_m": round(drop),
+                "max_grade_deg": round(math.degrees(math.atan(float(m["grade"][i:j].max()))), 1),
+                "coordinates": _coords(ctx, seg), "ramp": ramp, "road": road, "bore": bore, "recommended": rec,
+                "basis": f"build sols + {trips} round trip(s)/sol over {HORIZON_SOLS} sols, each metre climbed counted as {CLIMB_M:g} m",
+            }, cost
+
         # bore: straight through a ridge, or up a scarp with a spiral at the top; vehicles drive it,
         # so its grade is held to both the TBM's and the fleet's limit
-        (ra, rb), (ca, cb) = ctx.rc(np.array([seg[0], seg[-1]]))
-        pa, pb = t.lonlat(ra, ca), t.lonlat(rb, cb)
+        (ra, rb_), (ca, cb) = ctx.rc(np.array([seg[0], seg[-1]]))
+        pa, pb = t.lonlat(ra, ca), t.lonlat(rb_, cb)
         pa, pb = (float(pa[0]), float(pa[1])), (float(pb[0]), float(pb[1]))
         g_b = min(tbm.max_grade_pct / 100, tg)
         prof = tunnels.transit_profile(t, pa, pb, tbm)
@@ -475,30 +562,131 @@ def _steep_choices(ctx: Ctx, nodes, m, d, fill, cut, base, cum, req: RouteReques
             prof = tunnels.climb_profile(t, pa, pb, tbm, g_b)
         bore = {"length_km": round(prof["length_m"] / 1000, 2), "earthwork_m3": 0, "spiral_m": prof.get("spiral_m", 0),
                 "grade_pct": round(g_b * 100, 1)}
-        if prof["feasible"]:
-            sols = prof["length_m"] / (rate * faces)
+        if prof["feasible"] and prof["length_m"] <= req.max_tunnel_km * 1000:
+            sols = prof["length_m"] / (rate * faces) + BORE_SETUP_SOLS
             bore.update({"status": "ok", "bore_sols": round(sols, 1), "build_sols": round(sols, 1), "faces": faces,
+                         "setup_sols": BORE_SETUP_SOLS,
                          "spoil_m3": round(tunnels.face_area(tbm) * prof["length_m"] * tbm.swell),
                          "cover": {k: prof[k] for k in ("min_cover_m", "max_cover_m", "shallow_m", "portal_cut_m")},
                          "path3d": tunnels.path3d(prof, 60), "profile": tunnels.profile(prof, 60)})
+            # every metre the bore climbs or dives counts as tunnel_vertical_m metres of tunnel, up and down alike
+            vert = tunnels.vertical_m(prof)
+            bore["vertical_m"] = round(vert)
+            cost["bore"] = sols + (prof["length_m"] + req.tunnel_vertical_m * vert) * drive_m
+        elif prof["feasible"]:
+            bore.update({"status": "none", "reason": f"a {prof['length_m'] / 1000:.1f} km bore is over the {req.max_tunnel_km:g} km limit"})
         else:
             bore.update({"status": "none", "reason": "the ground between drops below the low end, so the bore would "
                          f"break out {prof['breakout_at_m'] / 1000:.1f} km in"})
-
-        cost = {"ramp": ramp["build_sols"] + drive_cost(ramp["length_km"]),
-                "road": road["build_sols"] + drive_cost(road["length_km"])}
-        if bore["status"] == "ok":
-            cost["bore"] = bore["build_sols"] + drive_cost(bore["length_km"])
-        out.append({
+        if not bore_only:
+            cost["ramp"] = ramp["build_sols"] + drive_cost(L, climb + drop)
+            cost["road"] = road["build_sols"] + drive_cost(road_m, climb + drop)
+        if not cost:
+            return None, {}
+        rec = min(cost, key=cost.get)
+        return {
             "from_km": round(float(cum[i]) / 1000, 2), "to_km": round(float(cum[j]) / 1000, 2),
             "climb_m": round(climb), "drop_m": round(drop),
             "max_grade_deg": round(math.degrees(math.atan(float(m["grade"][i:j].max()))), 1),
             "coordinates": _coords(ctx, seg),
             "ramp": ramp, "road": road, "bore": bore,
-            "recommended": min(cost, key=cost.get),
-            "basis": f"build sols + {trips} round trip(s)/sol over {HORIZON_SOLS} sols",
-        })
-    return out
+            "recommended": rec,
+            "basis": f"build sols + {trips} round trip(s)/sol over {HORIZON_SOLS} sols, each metre climbed counted as {CLIMB_M:g} m",
+        }, cost
+
+    # ground between stretches is driven as an ordinary road; per-move cost, summed by prefix
+    mc = base / req.grading_rate_m3_per_sol + (m["L"] + CLIMB_M / 2 * np.abs(m["dh"])) * drive_m
+    P = np.concatenate([[0.0], np.cumsum(mc)])
+
+    def between(i, j, heavy=()):
+        """Driving moves i..j-1; moves inside a `heavy` range (still-sloping ground where a bore surfaces)
+        count STAY_WEIGHT extra, so a bore prefers to carry on underground through them."""
+        if j <= i:
+            return 0.0
+        c = float(P[j] - P[i])
+        for h0, h1 in heavy:
+            a, b = max(i, h0), min(j, h1)
+            if b > a:
+                c += STAY_WEIGHT * float(P[b] - P[a])
+        return c
+
+    # Once underground, a bore may stay there through gentler ground: each run's ends can grow outward over
+    # moves still steeper than STAY_UNDER × the grade limit (say the drivable but sloping upper part of a
+    # mountain whose foot is the steep part). The extended ends are only ever bored, and are taken only
+    # when that costs less overall than surfacing.
+    n, nm = len(runs), len(m["L"])
+    stay = STAY_UNDER * tg
+    gr = np.abs(m["dh"]) / np.maximum(m["L"], 1e-9)
+    lo, hi = [], []
+    for k, (i, j) in enumerate(runs):
+        floor, ceil = (runs[k - 1][1] if k else 0), (runs[k + 1][0] if k + 1 < n else nm)
+        while i > floor and gr[i - 1] > stay:
+            i -= 1
+        while j < ceil and gr[j] > stay:
+            j += 1
+        lo.append(i); hi.append(j)
+    memo = {}
+
+    def cached(i, j, bore_only):
+        if (i, j, bore_only) not in memo:
+            memo[i, j, bore_only] = stretch(i, j, bore_only)
+        return memo[i, j, bore_only]
+
+    # best[l, v]: cheapest way past runs 0..l-1, ending at run l-1's own end (v = 0) or its extended end (v = 1).
+    # A group of runs k..l is one stretch; several runs together, or extended ends, only as one bore that fits
+    # the tunnel length limit. The ground between groups is driven. Each option of a stretch (ramp, road, bore)
+    # is tried with the resurfacing weights, so they can change which one is picked:
+    #  - a bore that follows an earlier bore pays `resurface_penalty_sols` (the route came up and went back down)
+    #  - still-sloping ground driven right where a bore surfaces or dives counts STAY_WEIGHT extra
+    end = lambda l, v: 0 if l == 0 else (runs[l - 1][1], hi[l - 1])[v]
+    best, choice = {(0, 0): 0.0}, {}
+    bored = lambda l, v: l > 0 and choice[l, v][2]["recommended"] == "bore"
+    for l in range(n):
+        for k in range(l, -1, -1):
+            if k < l and float(cum[runs[l][1]] - cum[runs[k][0]]) > req.max_tunnel_km * 1000:
+                break
+            for sv in (0, 1):
+                if sv and lo[k] == runs[k][0]:
+                    continue
+                for ev in (0, 1):
+                    if ev and hi[l] == runs[l][1]:
+                        continue
+                    for pv in (0, 1):
+                        if (k, pv) not in best:
+                            continue
+                        e = end(k, pv)
+                        a, b = max((runs[k][0], lo[k])[sv], e), (runs[l][1], hi[l])[ev]
+                        if a >= b:
+                            continue
+                        st, costs = cached(a, b, bool(sv or ev or k < l))
+                        if st is None:
+                            continue
+                        after_bore = bored(k, pv)
+                        for pick, c in costs.items():
+                            heavy = []
+                            if after_bore and pv == 0:
+                                heavy.append((runs[k - 1][1], hi[k - 1]))    # the last bore surfaced early
+                            if pick == "bore":
+                                if sv == 0:
+                                    heavy.append((lo[k], runs[k][0]))        # this bore dives in late
+                                if after_bore:
+                                    c += req.resurface_penalty_sols          # up out of one bore, down into another
+                            c += best[k, pv] + between(e, a, heavy)
+                            if c < best.get((l + 1, ev), math.inf):
+                                best[l + 1, ev], choice[l + 1, ev] = c, (k, pv, {**st, "recommended": pick})
+    finals = [(c + between(end(n, v), nm, [(runs[-1][1], hi[-1])] if v == 0 and bored(n, v) else []), v)
+              for (l, v), c in best.items() if l == n]
+    if not finals:
+        return []
+    out, l, v = [], n, min(finals)[1]
+    while l > 0:
+        k, pv, st = choice[l, v]
+        out.append(st)
+        l, v = k, pv
+    return out[::-1]
+
+
+TUNNEL_RERANK = 12   # buildable portal pairs compared once their climb inside the tunnel is known
 
 
 def _tunnel(ctx: Ctx, a: int, b: int, dist_a: np.ndarray, pred_a, G_acc: csr_matrix,
@@ -548,7 +736,10 @@ def _tunnel(ctx: Ctx, a: int, b: int, dist_a: np.ndarray, pred_a, G_acc: csr_mat
               if d_ab > max_m else None)
     if 500 <= d_ab <= max_m:
         cands.insert(0, (a, b, req.tunnel_weight * d_ab))
+    found = []   # buildable candidates; the first few are ranked again with their climb inside the tunnel
     for p, q, sc in cands:
+        if len(found) >= TUNNEL_RERANK:
+            break
         (pr, qr), (pc, qc) = ctx.rc(np.array([p, q]))
         plon, plat = t.lonlat(pr, pc)
         qlon, qlat = t.lonlat(qr, qc)
@@ -571,8 +762,6 @@ def _tunnel(ctx: Ctx, a: int, b: int, dist_a: np.ndarray, pred_a, G_acc: csr_mat
                 pair["result"] = "unreachable"
             continue
         leg_b = leg_b[::-1]
-        faces = min(req.tbm.count, 2)
-        rate = tunnels.bore_rate(tbm)
         tun_m = prof["length_m"]
         surf_a = _summary(ctx, leg_a) if len(leg_a) > 1 else None
         surf_b = _summary(ctx, leg_b) if len(leg_b) > 1 else None
@@ -583,8 +772,20 @@ def _tunnel(ctx: Ctx, a: int, b: int, dist_a: np.ndarray, pred_a, G_acc: csr_mat
             if pair:
                 pair["result"] = "saves too little"
             continue
+        vert = tunnels.vertical_m(prof)
+        sc += req.tunnel_weight * req.tunnel_vertical_m * vert     # climbing or diving inside the bore
+        if pair:
+            pair["result"] = "buildable"
+            pair["score_km"] = round(sc / 1000, 2)
+        found.append((sc, len(found), p, q, pair, prof, plon, plat, qlon, qlat, leg_a, leg_b, tun_m, surf_a, surf_b,
+                      surf_km, total_m, vert))
+    if found:
+        (sc, _, p, q, pair, prof, plon, plat, qlon, qlat, leg_a, leg_b, tun_m, surf_a, surf_b, surf_km, total_m,
+         vert) = min(found, key=lambda f: (f[0], f[1]))
         if pair:
             pair["result"] = "chosen"
+        faces = min(req.tbm.count, 2)
+        rate = tunnels.bore_rate(tbm)
         if acc_len_m is None:
             vs = {"beats_surface": True, "note": "the only way through: no drivable surface route"}
         else:
@@ -604,6 +805,7 @@ def _tunnel(ctx: Ctx, a: int, b: int, dist_a: np.ndarray, pred_a, G_acc: csr_mat
                 "geometry": {"type": "LineString", "coordinates": [[round(float(plon), 5), round(float(plat), 5)],
                                                                    [round(float(qlon), 5), round(float(qlat), 5)]]},
                 "length_km": round(tun_m / 1000, 2),
+                "vertical_m": round(vert),
                 "bore_sols": round(tun_m / (rate * faces), 1),
                 "faces": faces,
                 "spoil_m3": round(tunnels.face_area(tbm) * tun_m * tbm.swell),
@@ -716,6 +918,11 @@ def plan_routes(t: Terrain, req: RouteRequest, vehicles: list[Vehicle], tbm: TBM
         out["accessible"] = acc
     if "shortest" in req.modes:
         out["shortest"] = _shortest(ctx, a, b, req, tbm)
+    if "minimal" in req.modes:
+        out["minimal"] = _shortest(ctx, a, b, req, tbm, "build")
+    if "through" in req.modes:
+        from . import through
+        out["through"] = through.Through(ctx, a, b, req, tbm).best()
     tlog = {} if req.trace and "tunnel" in req.modes else None
     if "tunnel" in req.modes:
         out["tunnel"] = _tunnel(ctx, a, b, dist_a, pred_a, G, req, tbm, baseline, acc_len_m, tlog)
@@ -730,7 +937,7 @@ def plan_routes(t: Terrain, req: RouteRequest, vehicles: list[Vehicle], tbm: TBM
 def _add_fleet_sizing(out: dict, fleet: Fleet, req: RouteRequest):
     if not fleet.trips_per_sol:
         return
-    for key in ("accessible", "shortest", "tunnel"):
+    for key in ("accessible", "shortest", "minimal", "through", "tunnel"):
         r = out.get(key)
         if r and r.get("status") == "ok":
             trip_h = 2 * r["length_km"] / fleet.hauler.speed_kmh
@@ -741,20 +948,31 @@ HORIZON_SOLS = 500
 
 
 def _recommend(out: dict, fleet: Fleet, req: RouteRequest, tbm: TBM) -> dict | None:
-    """Lowest equipment-sols: build time (grading or boring) plus vehicle time spent
-    driving the route over the horizon."""
+    """Lowest equipment-sols: build time (grading or boring) plus vehicle time spent driving the route over the
+    horizon, each metre climbed or descended on the surface counted as CLIMB_M / 2 m of driving and each metre
+    up or down inside a bore as tunnel_vertical_m (the same weights the searches use)."""
     trips = max(fleet.trips_per_sol, 1)
+    drive_m = trips * 2 / (fleet.slowest_kmh * 1000) * HORIZON_SOLS / req.operating_hours_per_sol
+    surf_v = lambda r: (r.get("climb_m") or 0) + (r.get("drop_m") or 0)
     cands = []
-    for key in ("accessible", "shortest", "tunnel"):
+    for key in ("accessible", "shortest", "minimal", "through", "tunnel"):
         r = out.get(key)
         if not r or r.get("status") != "ok":
             continue
         build = (r.get("grading_sols", 0) + r.get("clearing_sols", 0) + r.get("tunnel", {}).get("bore_sols", 0)
-                 + (r.get("bore_sols", 0) if key == "shortest" else 0))
-        drive = trips * 2 * r["travel_h"] * HORIZON_SOLS / req.operating_hours_per_sol
+                 + (r.get("bore_sols", 0) if key in ("shortest", "minimal", "through") else 0))
+        if key == "through":
+            vert = (CLIMB_M / 2 * sum(surf_v(l) for l in r["legs"])
+                    + req.tunnel_vertical_m * sum(b["vertical_m"] for b in r["bores"]))
+        elif key == "tunnel":
+            vert = (CLIMB_M / 2 * sum(surf_v(l) for l in r.get("surface_legs", []))
+                    + req.tunnel_vertical_m * r["tunnel"].get("vertical_m", 0))
+        else:
+            vert = CLIMB_M / 2 * surf_v(r)
+        drive = drive_m * (r["length_km"] * 1000 + vert)
         cands.append((build + drive, key, build, drive))
     if not cands:
         return None
     total, key, build, drive = min(cands)
     return {"route": key, "build_sols": round(build, 1), "driving_vehicle_sols": round(drive, 1),
-            "basis": f"build time + {trips} round trip(s)/sol over {HORIZON_SOLS} sols"}
+            "basis": f"build time + {trips} round trip(s)/sol over {HORIZON_SOLS} sols, climbs weighted"}

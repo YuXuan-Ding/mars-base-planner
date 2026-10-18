@@ -27,10 +27,12 @@ FACILITIES: dict[str, Facility] = {f.id: f for f in [
              basis="assumed 50 m x 50 m for unloaded cargo, spares and rovers"),
 ]}
 
+# boring rates are set against a construction unit, which grades 600 m of road a sol on flat ground
+# (construct/model.py): the main TBM bores a third of that, 200 m a sol after downtime (333 m x 0.6 duty)
 TBMS: dict[str, TBM] = {t.id: t for t in [
-    TBM(id="tbm-4m", name="Main-drive TBM, 4 m", diameter_m=4.0, advance_m_per_sol=8.0, duty=0.6,
+    TBM(id="tbm-4m", name="Main-drive TBM, 4 m", diameter_m=4.0, advance_m_per_sol=333.0, duty=0.6,
         max_grade_pct=6.0, min_cover_m=5.0, swell=1.4, power_kw=300),
-    TBM(id="tbm-2m", name="Compact TBM, 2 m", diameter_m=2.0, advance_m_per_sol=14.0, duty=0.65,
+    TBM(id="tbm-2m", name="Compact TBM, 2 m", diameter_m=2.0, advance_m_per_sol=585.0, duty=0.65,
         max_grade_pct=10.0, min_cover_m=3.0, swell=1.4, power_kw=90),
 ]}
 

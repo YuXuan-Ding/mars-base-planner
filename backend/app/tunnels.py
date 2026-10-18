@@ -79,6 +79,13 @@ def climb_profile(t: Terrain, a, b, tbm: TBM, max_grade: float) -> dict:
             "length_m": float(s[-1]) + spiral, "spiral_m": round(spiral), **_check(s, surf, z, tbm)}
 
 
+def vertical_m(p: dict) -> float:
+    """Height travelled inside a bore, up and down alike: the rises and falls of its floor, plus any height a
+    spiral or portal ramp makes up between the floor's ends and the ground at the portals."""
+    z, surf = p["z"], p["surf"]
+    return float(np.abs(np.diff(z)).sum() + abs(surf[0] - z[0]) + abs(surf[-1] - z[-1]))
+
+
 def decline_profile(t: Terrain, a, b, depth_m: float, tbm: TBM) -> dict:
     """Portal at a, descending at max grade toward a point depth_m under b.
     If the straight run is too short to get that deep, a spiral decline at b makes up the rest."""

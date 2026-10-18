@@ -92,3 +92,105 @@ def test_api_flow(client):
 def test_api_validates(client):
     assert client.post("/construct/jobs", json={"kind": "route", "to": [77.4, 18.4]}).status_code == 422
     assert client.post("/construct/jobs", json={"kind": "base"}).status_code == 422
+
+
+def test_ask_validates(client):
+    assert client.post("/construct/ask", json={"question": ""}).status_code == 422
+    assert client.post("/construct/ask", json={"question": "hi", "job_id": "nope"}).status_code == 404
+
+
+def test_ask_context_never_mentions_guard():
+    from construct import ask
+    assert "guard" not in ask._docs().lower()
+
+
+def test_job_follows_given_paths(client):
+    legs = [[[77.78, 18.30], [77.80, 18.31], [77.83, 18.33]], [[77.90, 18.36], [77.93, 18.38]]]
+    r = client.post("/construct/jobs", json={"kind": "route", "mode": "tunnel", "paths": legs, "units": 3})
+    assert r.status_code == 200, r.text
+    tiles = client.get(f"/construct/jobs/{r.json()['job_id']}/tiles").json()
+    assert tiles["geometry"]["type"] == "MultiLineString"
+    # every tile lies near the given lines, none in the gap between the legs (the bored stretch)
+    assert all(t["lon"] < 77.84 or t["lon"] > 77.89 for t in tiles["tiles"])
+    assert client.post("/construct/jobs", json={"kind": "route", "paths": [[[77.8, 18.3]]]}).status_code == 422
+
+
+def test_review_facts(plans):
+    from construct import review
+    route, _ = plans
+    j = Job(route, 4, seed=7)
+    j.run(None, ai.heuristic)
+    f = review.facts(j)
+    assert f["incidents"] and f["unit_sols"]["working"] > 0 and f["plan_vs_actual"]["actual"]["sols"] == j.finish_sol
+    assert "guard" not in str(f).lower() and "boost" not in str(f)
+    kinds = {h["kind"] for h in f["hazards"]}
+    assert kinds == {i.kind for i in j.incidents}
+    assert sum(h["count"] for h in f["hazards"]) == len(j.incidents)
+    assert sum(b["tiles"] for b in f["hazard_bands"]) == len(j.tiles)
+
+
+def test_review_endpoints(client):
+    jid = client.post("/construct/jobs", json={"kind": "route", "from": list(YARD), "to": list(PLANT), "units": 4}).json()["job_id"]
+    assert client.post(f"/construct/jobs/{jid}/review").status_code == 409      # not finished
+    assert client.get(f"/construct/jobs/{jid}/review").status_code == 404       # none written yet
+
+
+def test_review_pdf(client):
+    from construct.api import _jobs
+    from construct.pdf import render
+    assert render("# T\n\n**A**\n- x ≥ 1\n\n| a | b |\n|---|---|\n| 1 | 2 |").startswith(b"%PDF")
+    jid = client.post("/construct/jobs", json={"kind": "route", "from": list(YARD), "to": list(PLANT), "units": 4}).json()["job_id"]
+    _jobs[jid].review = {"markdown": "# Job hazard review\n\nAll fine.", "model": "test"}
+    r = client.get(f"/construct/jobs/{jid}/review", params={"format": "pdf"})
+    assert r.status_code == 200 and r.headers["content-type"] == "application/pdf" and r.content.startswith(b"%PDF")
+    assert "pdf" not in client.get(f"/construct/jobs/{jid}/review").json()
+
+
+def _bored_route():
+    """Road from YARD to a portal, a 6 km bore, road on to beyond the far portal."""
+    p = Params()
+    P, Q = (77.40, 18.49), (77.455, 18.47)
+    paths = [[YARD, P], [Q, (77.47, 18.44)]]
+    return p, route_plan(p, None, None, "through", paths, [{"coordinates": [P, Q]}])
+
+
+def test_tbms_bore_from_both_portals():
+    p, plan = _bored_route()
+    b = plan["bores"][0]
+    assert plan["groups"] == 2 and b["groups"] == [0, 1]
+    j = Job(plan, 4, p, seed=2, n_tbms=2)
+    assert {u.face for u in j.tbms} == {(0, "a"), (0, "b")}
+    assert {u.group for u in j.road_units} == {0, 1}          # crews start on both sides
+    # set-up at both portals in parallel, then the bore from both ends
+    assert j.est_sols >= p.bore_setup_sols + b["length_m"] / (2 * p.bore_m_per_tbm_sol) - 0.5
+    one = Job(plan, 4, p, seed=2, n_tbms=1)
+    assert one.est_sols > j.est_sols
+
+
+def test_road_crews_wait_for_the_breakthrough():
+    p, plan = _bored_route()
+    j = Job(plan, 4, p, seed=4, n_tbms=2)
+    j.run(None, ai.heuristic)
+    broke = next(s for s, t in j.log if "broke through" in t)
+    group = {i: t.get("group") for i, t in enumerate(j.tiles)}
+    first = {}
+    for f in j.frames:
+        if f["sol"] >= broke:
+            break
+        for u in f["units"]:
+            if u["kind"] == "road" and u["tile"] is not None:
+                first.setdefault(u["id"], group[u["tile"]])
+                assert group[u["tile"]] == first[u["id"]], f"{u['id']} crossed the bore before it broke through"
+    assert j.done
+
+
+def test_storms_do_not_stop_boring():
+    p, plan = _bored_route()
+    j = Job(plan, 2, p, seed=1, n_tbms=2)
+    j.storm = {"start": 0, "end": 99, "mode": "pause", "factor": 0.5}
+    for u in j.road_units:
+        u.status, u.down_reason = "down", "sheltering"
+    before = j.bore_left()
+    for _ in range(80):
+        j.step()
+    assert j.bore_left() < before and j.road_left() == pytest.approx(sum(j.tiles[i]["work"] for i in j.road_idx))

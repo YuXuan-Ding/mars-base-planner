@@ -3,7 +3,7 @@
 <title>Jezero Base Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Michroma&display=swap">
 <style>
 /* Layout: full-bleed particle terrain; quiet glass panels float above it (layers left, bases right, readout bottom-left). Single dark theme by design. */
 :root{
@@ -35,6 +35,12 @@ body.placing #gl{cursor:crosshair}
 .vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 75% 70% at 50% 48%, rgba(4,5,6,0) 55%, rgba(4,5,6,.7) 100%)}
 
 .topbar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 20px);left:calc(env(safe-area-inset-left,0px) + 20px);display:flex;flex-direction:column;gap:8px;max-width:calc(100% - 40px);pointer-events:none}
+/* NASA fonts: worm-style display face for titles, Helvetica for text (1975 NASA Graphics Standards Manual) */
+html.nasa{--font-display:"Michroma", "Eurostile", "Helvetica Neue", Helvetica, Arial, sans-serif;--font-body:"Helvetica Neue", Helvetica, Arial, sans-serif}
+html.nasa h1{font-size:22px;letter-spacing:.06em;text-transform:uppercase}
+html.nasa h1 em{font-style:normal}
+html.nasa .panel h2{font-size:14px;letter-spacing:.06em;text-transform:uppercase;line-height:1.3}
+html.nasa .ph-t{font-size:13px;letter-spacing:.06em;text-transform:uppercase}
 h1{font-family:var(--font-display);font-weight:400;font-size:32px;line-height:1;margin:0;letter-spacing:.005em;text-wrap:balance}
 h1 em{font-style:italic;color:var(--accent)}
 .coords{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
@@ -47,7 +53,7 @@ body.overview .panel,body.overview .tabbar{opacity:0;pointer-events:none}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:1.5px solid var(--accent);outline-offset:2px}
 
 .panel{position:absolute;background:var(--panel);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:14px;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
-#layers{left:calc(env(safe-area-inset-left,0px) + 20px);top:calc(env(safe-area-inset-top,0px) + 132px);width:296px;max-height:calc(100% - 132px - 76px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:14px 14px 10px}
+#layers{left:calc(env(safe-area-inset-left,0px) + 20px);top:calc(env(safe-area-inset-top,0px) + var(--hdr,132px));width:296px;max-height:calc(100% - var(--hdr,132px) - 76px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:14px 14px 10px}
 #bases{right:calc(env(safe-area-inset-right,0px) + 20px);top:calc(env(safe-area-inset-top,0px) + 20px);width:318px;max-height:calc(100% - 40px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:16px}
 .panel h2{font-family:var(--font-display);font-weight:400;font-size:21px;margin:0;line-height:1.1}
 .panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px}
@@ -140,9 +146,9 @@ select option{background:var(--panel-solid)}
 #readout .hover{color:var(--fg);font-variant-numeric:tabular-nums}
 #readout .scale{color:var(--faint);letter-spacing:.06em}
 
-#hint{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 24px);background:var(--panel);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(205,180,142,.35);border-radius:999px;padding:7px 8px 7px 16px;display:flex;align-items:center;gap:12px;font-size:12.5px;white-space:nowrap;max-width:calc(100% - 32px)}
+#hint{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 24px);width:max-content;white-space:normal !important;max-width:min(620px,calc(100% - 32px)) !important;background:var(--panel);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(205,180,142,.35);border-radius:999px;padding:7px 8px 7px 16px;display:flex;align-items:center;gap:12px;font-size:12.5px;white-space:nowrap;max-width:calc(100% - 32px)}
 #hint span{overflow:hidden;text-overflow:ellipsis}
-#hint[hidden],#toast[hidden],#site-bar[hidden]{display:none}
+#hint[hidden],#toast[hidden],#site-bar[hidden],.top-row button[hidden]{display:none}
 #site-bar{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 70px);display:flex;align-items:center;gap:10px;background:var(--panel);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(205,180,142,.45);border-radius:999px;padding:6px 6px 6px 16px;font-size:12.5px;max-width:calc(100% - 32px);box-sizing:border-box;white-space:nowrap}
 #site-bar span{overflow:hidden;text-overflow:ellipsis;min-width:0}
 #site-bar .btn-primary{margin:0;padding:6px 14px;border-radius:999px;font-size:12.5px}
@@ -173,6 +179,9 @@ body.overview .sheet-label{pointer-events:auto}
 .sheet-label .sl-sw,.sheet-label .sl-name,.sheet-label .sl-src{transition:opacity .4s,filter .4s}
 .sheet-label.dropped .sl-sw,.sheet-label.dropped .sl-name,.sheet-label.dropped .sl-src{opacity:.4;filter:grayscale(1)}
 
+/* the Layers panel's controls stay black, white and grey; the map keeps its colours */
+#layers .layer-head input,#layers .op-row input{accent-color:#b8b8b8}
+#layers .swatch,#layers .legend-ramp,#layers .legend-sw i{filter:grayscale(1)}
 .layer.dropped{opacity:.6}
 .layer.dropped .swatch{filter:grayscale(1)}
 .layer-head.static{grid-template-columns:10px 1fr auto auto;cursor:default}
@@ -191,7 +200,7 @@ body.overview .sheet-label{pointer-events:auto}
 #api-status[data-state="off"]::before{content:"● ";color:var(--warn)}
 #api-status code{font-family:var(--font-mono);font-size:10px;color:var(--muted);word-break:break-all}
 
-#calc{left:calc(env(safe-area-inset-left,0px) + 20px);top:calc(env(safe-area-inset-top,0px) + 132px);width:340px;box-sizing:border-box;max-height:calc(100% - 132px - 76px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:14px 16px 12px}
+#calc{left:calc(env(safe-area-inset-left,0px) + 20px);top:calc(env(safe-area-inset-top,0px) + var(--hdr,132px));width:340px;box-sizing:border-box;max-height:calc(100% - var(--hdr,132px) - 76px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:14px 16px 12px}
 body.calc-open #layers{display:none}
 .scrub{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin:0 0 10px;font-family:var(--font-mono);font-size:10px;color:var(--muted)}
 .scrub[hidden]{display:none}
@@ -227,11 +236,19 @@ body.calc-open #layers{display:none}
 .rc.none .v{color:var(--muted);font-weight:500;font-size:13px}
 .rc .rec{color:var(--accent);margin-left:auto}
 #steep{display:flex;flex-direction:column;gap:8px;margin-top:2px}
+#bore-plan{grid-column:1/-1;display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-left:2px solid #7fa6e0;border-radius:8px;padding:8px 10px;font-size:12px}
+#bore-plan h4{margin:0;font-family:var(--font-mono);font-size:9.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#bore-plan p{margin:0;line-height:1.45}
+#bore-plan .who{color:var(--muted);font-size:11px}
+#bore-plan ol{margin:0;padding-left:18px;color:var(--muted);font-size:11px;font-family:var(--font-mono)}
+#bore-plan ol li.win{color:var(--fg)}
+#bore-plan button{align-self:flex-start;font:inherit;font-size:12px;color:var(--bg);background:var(--accent);border:0;border-radius:7px;padding:6px 10px;cursor:pointer}
+#bore-plan button:disabled{opacity:.55;cursor:wait}
 #steep h4{margin:4px 0 0;font-family:var(--font-mono);font-size:9.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .st{border:1px solid var(--line);border-radius:10px;padding:7px 8px;display:flex;flex-direction:column;gap:6px}
 .st-head{font-size:11.5px;display:flex;gap:6px;align-items:baseline}
 .st-head span{color:var(--muted);font-size:10.5px}
-.st-opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.st-opts{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:5px}
 .st-opt{font:inherit;text-align:left;color:var(--fg);background:none;border:1px solid var(--line);border-radius:8px;padding:5px 7px;cursor:pointer;min-width:0}
 .st-opt b{display:block;font-size:11px;font-weight:600}
 .st-opt small{display:block;font-size:10px;color:var(--muted);line-height:1.35;margin-top:1px}
@@ -246,6 +263,102 @@ body.calc-open #layers{display:none}
 #toast{position:absolute;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 20px);background:var(--panel);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(205,180,142,.35);border-radius:12px;padding:8px 14px;font-size:12.5px;max-width:min(440px,calc(100% - 32px));box-sizing:border-box;text-align:center}
 #toast b{font-weight:600;color:var(--accent)}
 
+
+/* phases, bases as groups of facilities */
+.phases{list-style:none;margin:0 0 12px;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;counter-reset:none}
+.phases button{font:inherit;width:100%;font-size:12px;color:var(--muted);background:rgba(214,220,230,.03);border:1px solid var(--line);border-radius:8px;padding:6px 4px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.phases button b{font-family:var(--font-mono);font-size:10px;font-weight:500;width:16px;height:16px;border-radius:50%;display:inline-grid;place-items:center;border:1px solid var(--line-strong)}
+.phases button[aria-current="step"]{color:#16130e;background:var(--accent);border-color:var(--accent)}
+.phases button[aria-current="step"] b{border-color:rgba(22,19,14,.4)}
+.phases button.done{color:var(--fg)}
+.phases button.done b{background:rgba(159,191,168,.25);border-color:rgba(159,191,168,.6)}
+.phases button:disabled{opacity:.38;cursor:not-allowed}
+.phase{display:flex;flex-direction:column;gap:9px}
+.phase[hidden]{display:none}
+.ph-t{font-family:var(--font-display);font-weight:400;font-size:18px;margin:8px 0 0;border-top:1px solid var(--line);padding-top:10px;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.ph-t span{font-family:var(--font-sans,inherit);font-size:11px;color:var(--muted)}
+.ph-body{display:flex;flex-direction:column;gap:9px}
+#to-route.ready{position:sticky;bottom:-16px;margin:10px -16px -16px;width:calc(100% + 32px);border-radius:0 0 13px 13px;background:#2a2620;border-color:rgba(205,180,142,.7);padding:12px 16px;text-align:left;z-index:2}
+.btn-next{font:inherit;font-size:12.5px;font-weight:500;color:var(--fg);background:rgba(205,180,142,.1);border:1px solid rgba(205,180,142,.5);border-radius:9px;padding:8px 12px;cursor:pointer}
+.btn-next:disabled{opacity:.4;cursor:not-allowed}
+.btn-back{font:inherit;font-size:11.5px;color:var(--muted);background:none;border:0;padding:2px 0;cursor:pointer;text-align:left}
+.btn-back:hover{color:var(--fg)}
+.choice{border:1px solid var(--line);border-left:3px solid var(--rc,var(--accent));border-radius:10px;padding:8px 10px;font-size:12px;display:flex;flex-direction:column;gap:3px}
+.choice b{font-size:13px}
+.choice span{color:var(--muted)}
+.base .fac-row{border-top:1px solid var(--line);margin-top:8px;padding-top:6px}
+.base .fac-row .fr-n{font-size:12px;color:var(--fg)}
+.base .fac-row .fr-m{font-family:var(--font-mono);font-size:10px;color:var(--faint)}
+.base:not(.open) .fac-row dl,.base:not(.open) .fac-row .base-miss{display:none}
+/* construction simulator and Ask Claude */
+.rsetup{border:1px solid var(--line);border-radius:10px;margin:0 0 10px;font-size:12px}
+.rsetup[hidden]{display:none}
+.rsetup summary{cursor:pointer;padding:6px 9px;color:var(--muted);font-size:11.5px}
+.rsetup summary span{color:var(--faint);font-family:var(--font-mono);font-size:10px;margin-left:4px}
+.rsetup-body{display:flex;flex-direction:column;gap:9px;padding:2px 9px 9px}
+.connect{display:flex;align-items:center;gap:6px;margin-top:7px;font-size:11px;color:var(--muted)}
+.connect select{flex:1;min-width:0;font-size:12px;padding:4px 6px}
+.rc-row{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:stretch}
+.rc-build{font:inherit;font-size:11.5px;font-weight:500;color:#16130e;background:var(--accent);border:0;border-radius:10px;padding:0 10px;cursor:pointer}
+.rc-build:disabled{opacity:.4;cursor:default}
+.bset{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
+.bset input{width:52px}
+.bset input,.bset select{font-size:12px;padding:3px 6px}
+.bctl input[type=range]{flex:1;accent-color:var(--accent);min-width:60px;margin:0}
+.bctl #build-speed-v{min-width:64px;text-align:right;font-variant-numeric:tabular-nums}
+#build{left:calc(env(safe-area-inset-left,0px) + 20px);top:calc(env(safe-area-inset-top,0px) + var(--hdr,132px));width:340px;box-sizing:border-box;max-height:calc(100% - var(--hdr,132px) - 76px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:14px 16px 12px}
+#build[hidden],#ask[hidden]{display:none}
+body.build-open #layers{display:none}
+.bbar{height:6px;border-radius:3px;background:rgba(214,220,230,.08);overflow:hidden;margin:2px 0 8px}
+.bbar i{display:block;height:100%;background:var(--accent);transition:width .2s}
+.bgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:12px;margin-bottom:8px}
+.bgrid .k{display:block;font-size:10px;color:var(--faint);font-family:var(--font-mono);letter-spacing:.04em;text-transform:uppercase}
+.bgrid .over{color:var(--warn)}
+.bunits{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.bunits span{font-family:var(--font-mono);font-size:10px;border:1px solid var(--line-strong);border-radius:999px;padding:1px 7px;color:var(--muted)}
+.bunits span.down{color:var(--warn);border-color:rgba(212,154,146,.5)}
+.bunits span.working{color:var(--fg)}
+.bctl{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-bottom:10px}
+.bctl select{font:inherit;font-size:11px}
+.binc{border:1px solid rgba(212,154,146,.45);background:rgba(212,154,146,.06);border-radius:10px;padding:9px 10px;margin-bottom:10px;display:flex;flex-direction:column;gap:6px}
+.binc b{font-size:13px}
+.binc p{margin:0;font-size:11.5px;color:var(--muted)}
+.binc .opts{display:flex;flex-direction:column;gap:5px}
+.binc .opt{font:inherit;text-align:left;color:var(--fg);background:rgba(214,220,230,.03);border:1px solid var(--line-strong);border-radius:8px;padding:6px 8px;cursor:pointer;font-size:12px}
+.binc .opt small{display:block;color:var(--muted);font-size:10.5px;margin-top:2px}
+.binc .opt:hover:not(:disabled){border-color:var(--accent)}
+.binc .opt:disabled{cursor:default;opacity:.55}
+.binc .opt.chosen{opacity:1;border-color:var(--accent);background:rgba(205,180,142,.1)}
+.binc .why{font-size:11.5px;color:var(--fg);border-left:2px solid var(--accent);padding-left:8px}
+.binc .who{font-family:var(--font-mono);font-size:10px;color:var(--faint)}
+.binc .row{display:flex;gap:6px;flex-wrap:wrap}
+#build h4{font-size:11px;font-weight:500;color:var(--muted);margin:4px 0 6px;font-family:var(--font-mono);letter-spacing:.06em;text-transform:uppercase}
+#build-log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:11.5px}
+#build-log li{border-top:1px solid var(--line);padding-top:6px}
+#build-log .t{color:var(--fg)}
+#build-log .c{color:var(--accent)}
+#build-log .r{color:var(--muted);display:block;margin-top:2px}
+#build-log:empty::after{content:'No incidents yet.';color:var(--faint)}
+#build-report{margin-bottom:12px;font-size:12px;display:flex;flex-direction:column;gap:6px}
+#build-report:empty{display:none}
+#build-review{white-space:pre-wrap;max-height:340px;overflow:auto;font-size:11.5px;line-height:1.45;padding:8px;border:1px solid rgba(220,217,210,.15);border-radius:4px}
+#build-review-row{display:flex;gap:8px;align-items:center}
+#build-report table{border-collapse:collapse;width:100%;font-size:11.5px}
+#build-report td,#build-report th{text-align:right;padding:2px 4px;font-weight:400}
+#build-report th{color:var(--faint);font-family:var(--font-mono);font-size:10px}
+#build-report td:first-child,#build-report th:first-child{text-align:left;color:var(--muted)}
+#ask{right:calc(env(safe-area-inset-right,0px) + 20px);bottom:calc(env(safe-area-inset-bottom,0px) + 20px);width:380px;box-sizing:border-box;max-height:min(70%,620px);padding:14px 16px 12px;display:flex;flex-direction:column;z-index:5}
+#ask-log{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px;font-size:12.5px;line-height:1.45;min-height:60px;margin-bottom:8px}
+#ask-log .q{align-self:flex-end;background:rgba(205,180,142,.12);border:1px solid rgba(205,180,142,.3);border-radius:10px;padding:6px 9px;max-width:85%}
+#ask-log .a{color:var(--fg);white-space:pre-wrap}
+#ask-log .a code{font-family:var(--font-mono);font-size:11px;color:var(--accent)}
+#ask-log .a.err{color:var(--warn)}
+#ask-log .a.wait{color:var(--faint)}
+#ask-log:empty::before{content:'Ask about the planner, the routes, the simulators, or the construction job on screen.';color:var(--faint);font-size:12px}
+#ask-form{display:flex;flex-direction:column;gap:6px}
+#ask-form textarea{font:inherit;font-size:12.5px;color:var(--fg);background:rgba(214,220,230,.04);border:1px solid var(--line-strong);border-radius:9px;padding:7px 9px;resize:vertical;min-height:38px}
+#ask-form .row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted)}
+#ask-form .btn-primary{margin:0;padding:6px 14px}
 .tabbar{display:none}
 #nogl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);padding:0 24px;text-align:center}
 
@@ -271,6 +384,10 @@ body.calc-open #layers{display:none}
   body.calc-open #calc{display:block}
   body.calc-open #calc[hidden]{display:none}
   #calc{max-height:46%!important}
+  body.build-open #build{display:block}
+  #build{max-height:46%!important}
+  body.ask-open #ask{display:flex}
+  #ask{max-height:60%!important;bottom:calc(env(safe-area-inset-bottom,0px) + 70px)!important}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -290,12 +407,40 @@ body.calc-open #layers{display:none}
     <button class="btn-ghost" id="overview-btn" type="button" aria-pressed="false">Overview</button>
     <button class="btn-ghost" id="planner-btn" type="button" title="Layers the planner computes from. Change them in Overview."></button>
     <button class="btn-ghost" id="add-base-btn" type="button">+ Add a base</button>
+    <button class="btn-ghost" id="ask-btn" type="button" aria-pressed="false">Ask Claude</button>
     <button class="btn-ghost" id="clear-all" type="button" title="Remove every base, search outline, route and site result">Clear all</button>
+    <button class="btn-ghost" id="sound-btn" type="button" aria-pressed="false" title="Ambient soundtrack: Martian wind, a low drone and distant chimes, made in the browser">Sound: off</button>
+    <button class="btn-ghost" id="nasa-btn" type="button" aria-pressed="false" title="Switch to NASA-style fonts: worm-style titles, Helvetica text">NASA fonts: off</button>
+    <button class="btn-ghost" id="solid-btn" type="button" aria-pressed="true" title="Turn the solid surface up close on or off (particles only when off)">Solid ground: on</button>
     <button class="btn-ghost" id="reset-view" type="button">Reset view</button>
   </div>
 </header>
 <div id="toast" role="status" hidden></div>
 <div id="site-bar" role="group" aria-label="Base site" hidden><span id="site-bar-text"></span><button class="btn-ghost" type="button" id="site-bar-alt"></button><button class="btn-primary" type="button" id="site-bar-go"></button></div>
+
+<section id="build" class="panel" hidden aria-label="Construction" aria-live="polite">
+  <div class="panel-head"><h2 id="build-title">Construction</h2>
+    <span><button class="icon-btn" type="button" id="build-close" aria-label="Close">×</button></span></div>
+  <div class="calc-sub" id="build-sub"></div>
+  <div class="bbar"><i id="build-bar" style="width:0"></i></div>
+  <div class="bgrid" id="build-stats"></div>
+  <div class="bunits" id="build-units-row"></div>
+  <div class="bctl"><button class="icon-btn" type="button" id="build-play" aria-label="Pause">❚❚</button>
+    <label for="build-speed">Speed</label><input type="range" id="build-speed" min="0" max="200" step="1" value="6"><span id="build-speed-v">6 sols/s</span></div>
+  <div class="calc-sub" id="build-status" style="margin:-4px 0 8px"></div>
+  <div id="build-inc"></div>
+  <div id="build-report"></div>
+  <h4>Incidents and decisions</h4>
+  <ol id="build-log"></ol>
+</section>
+<section id="ask" class="panel" hidden aria-label="Ask Claude">
+  <div class="panel-head"><h2>Ask Claude</h2><span><button class="icon-btn" type="button" id="ask-clear" title="Start a new conversation" aria-label="New conversation">↺</button><button class="icon-btn" type="button" id="ask-close" aria-label="Close">×</button></span></div>
+  <div id="ask-log" aria-live="polite"></div>
+  <form id="ask-form">
+    <textarea id="ask-q" rows="2" placeholder="Ask a question… (Enter to send)" aria-label="Question"></textarea>
+    <div class="row"><label id="ask-job-wrap" hidden><input type="checkbox" id="ask-job" checked> about the construction job</label><span></span><button class="btn-primary" type="submit" id="ask-send">Ask</button></div>
+  </form>
+</section>
 
 <section id="calc" class="panel" hidden aria-label="Route calculation" aria-live="polite">
   <div class="panel-head"><h2 id="calc-title">Calculation</h2>
@@ -313,28 +458,17 @@ body.calc-open #layers{display:none}
 
 <aside id="bases" class="panel" aria-label="Bases">
   <div class="panel-head"><h2>Bases</h2><span class="count" id="base-count"></span></div>
+  <ol class="phases" id="phases" aria-label="Steps">
+    <li><button type="button" data-p="plan"><b>1</b> Plan</button></li>
+    <li><button type="button" data-p="route"><b>2</b> Route</button></li>
+    <li><button type="button" data-p="build"><b>3</b> Build</button></li>
+  </ol>
   <label class="lock" id="lock-wrap">Center view on<select id="lock-sel"></select></label>
-  <ul id="base-list"></ul>
-  <details id="route-sec" class="drop">
-    <summary><span class="drop-t">Connect two sites</span><span class="drop-s" id="route-sum"></span></summary>
-    <div class="drop-body">
-    <div class="row2">
-      <div class="field"><label for="route-from">From</label><select id="route-from"></select></div>
-      <div class="field"><label for="route-to">To</label><select id="route-to"></select></div>
-    </div>
-    <div class="field"><span class="flabel">Fleet · held to its strictest vehicle</span><div class="chips" id="fleet"></div></div>
-    <div class="row2">
-      <div class="field"><label for="route-tput">Haul, t per sol</label><input type="number" id="route-tput" min="0" max="5000" step="10" value="200"></div>
-      <div class="field"><label for="route-tbm">Boring machines</label><input type="number" id="route-tbm" min="1" max="50" step="1" value="2"></div>
-    </div>
-    <button class="btn-primary" type="button" id="route-btn">Compute routes</button>
-    <p class="note" id="api-status">Connecting to the planner backend…</p>
-    </div>
-  </details>
-  <details id="site-sec" class="drop">
-    <summary><span class="drop-t">Plan a base</span><span class="drop-s" id="site-sum"></span></summary>
-    <div class="drop-body">
-    <p class="note sm">Choose what the base needs, mark an area on the map, and the planner finds where it all fits with the least ground to flatten.</p>
+  <section class="phase" id="phase-plan" data-p="plan">
+    <ul id="base-list"></ul>
+    <h3 class="ph-t">Plan a base <span id="site-sum"></span></h3>
+    <div class="ph-body">
+    <p class="note sm">Choose what the base needs, mark an area on the map, and the planner finds where it all fits with the least ground to flatten. The facilities become one base, linked by internal roads.</p>
     <div class="fac-list" id="fac-list"></div>
     <div class="fac-total" id="fac-total"></div>
     <div class="row2">
@@ -344,7 +478,33 @@ body.calc-open #layers{display:none}
     <div class="area-row"><button class="btn-ghost" type="button" id="area-btn">Mark search area</button><span class="area-text" id="area-text">No area marked</span></div>
     <button class="btn-primary" type="button" id="site-btn" disabled>Find the best site</button>
     </div>
-  </details>
+    <button class="btn-next" type="button" id="to-route">Next: route between bases →</button>
+  </section>
+  <section class="phase" id="phase-route" data-p="route" hidden>
+    <p class="note sm">Choose the two ends. The planner finds a drivable route, the shortest route with earthwork, the route that needs the least construction, a bore through high ground along the straight line (Claude can choose the bore height) and a tunnel option; choose one in the route panel to go on to construction.</p>
+    <div class="row2">
+      <div class="field"><label for="route-from">From</label><select id="route-from"></select></div>
+      <div class="field"><label for="route-to">To</label><select id="route-to"></select></div>
+    </div>
+    <div class="field"><span class="flabel">Fleet · held to its strictest vehicle</span><div class="chips" id="fleet"></div></div>
+    <div class="row2">
+      <div class="field"><label for="route-tput">Haul, t per sol</label><input type="number" id="route-tput" min="0" max="5000" step="10" value="200"></div>
+      <div class="field"><label for="route-tbm">Boring machines</label><input type="number" id="route-tbm" min="1" max="50" step="1" value="2"></div>
+    </div>
+    <button class="btn-primary" type="button" id="route-btn">Find routes</button>
+    <p class="note sm" id="route-hint" hidden></p>
+    <button class="btn-back" type="button" data-go="plan">← Back to planning</button>
+  </section>
+  <section class="phase" id="phase-build" data-p="build" hidden>
+    <div class="choice" id="build-choice"></div>
+    <div class="row2">
+      <div class="field"><label for="build-units">Construction units</label><input type="number" id="build-units" min="1" max="40" step="1" value="4"></div>
+      <div class="field"><label for="build-who">Incidents decided by</label><select id="build-who"><option value="ai">Claude</option><option value="me">Me (Claude can advise)</option><option value="rule">Fixed rule</option></select></div>
+    </div>
+    <button class="btn-primary" type="button" id="build-start">Start construction</button>
+    <button class="btn-back" type="button" data-go="route">← Back to routing</button>
+  </section>
+  <p class="note" id="api-status">Connecting to the planner backend…</p>
   <p class="note">Slope comes from 200 m elevation data, averaged into <span id="cell-km"></span> cells. At a chosen site, the 1 m HiRISE elevation data would refine the grading volume.</p>
 </aside>
 
@@ -705,6 +865,113 @@ if (!gl) {
 }
 const COL = new Uint8ClampedArray(NP * 4);
 let colBuf, prog, loc = {}, SOLID = null, BGMESH = null;
+// Ambient soundtrack, made with Web Audio (no files): thin Martian wind, a slow drone chord under a moving filter,
+// and a faint chime now and then in a long reverb. Browsers only allow sound after a click, so it starts from the
+// button; if it was on last time, the first click anywhere on the page brings it back.
+const AMB = (() => {
+  let ac = null, master = null, verb = null, on = false, chimeT = 0;
+  const noiseBuf = (ac, sec, brown) => {
+    const n = ac.sampleRate * sec, b = ac.createBuffer(2, n, ac.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = b.getChannelData(ch); let last = 0;
+      for (let i = 0; i < n; i++) { const w = Math.random() * 2 - 1; last = brown ? (last + 0.02 * w) / 1.02 : w; d[i] = brown ? last * 3.5 : w; }
+    }
+    return b;
+  };
+  const lfo = (freq, depth, target, offset) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.frequency.value = freq; g.gain.value = depth; o.connect(g); g.connect(target); o.start();
+    if (offset != null) target.value = offset;
+  };
+  function build() {
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    master = ac.createGain(); master.gain.value = 0; master.connect(ac.destination);
+    // a long, dark reverb from decaying noise
+    verb = ac.createConvolver(); const ir = ac.createBuffer(2, ac.sampleRate * 6, ac.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3.2); }
+    verb.buffer = ir; const wet = ac.createGain(); wet.gain.value = 0.55; verb.connect(wet); wet.connect(master);
+    // wind: brown noise through a wandering band-pass, its loudness breathing slowly
+    const wind = ac.createBufferSource(); wind.buffer = noiseBuf(ac, 8, true); wind.loop = true;
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.9;
+    const wg = ac.createGain(); wg.gain.value = 0.32;
+    wind.connect(bp); bp.connect(wg); wg.connect(master); wg.connect(verb);
+    lfo(0.031, 160, bp.frequency, 340); lfo(0.047, 0.14, wg.gain, 0.32);
+    wind.start();
+    // drone: a low open chord of slightly detuned oscillators under a slowly sweeping low-pass
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 2;
+    const dg = ac.createGain(); dg.gain.value = 0.09; lp.connect(dg); dg.connect(master); dg.connect(verb);
+    lfo(0.019, 260, lp.frequency, 420);
+    for (const [f, type, g] of [[55, 'sawtooth', 0.5], [55.3, 'sawtooth', 0.5], [82.4, 'triangle', 0.7], [110, 'triangle', 0.55], [164.8, 'sine', 0.35], [246.9, 'sine', 0.12]]) {
+      const o = ac.createOscillator(), og = ac.createGain();
+      o.type = type; o.frequency.value = f; og.gain.value = g; o.connect(og); og.connect(lp); o.start();
+      lfo(0.05 + Math.random() * 0.05, f * 0.0025, o.frequency, f);   // slow drift keeps it alive
+    }
+  }
+  function chime() {
+    if (!on) return;
+    const notes = [329.6, 440, 493.9, 659.3, 739.99, 987.8], f = notes[Math.floor(Math.random() * notes.length)], t = ac.currentTime;
+    // a sine and a faint octave above, soft attack, five-second ring, placed somewhere left to right
+    const o = ac.createOscillator(), o2 = ac.createOscillator(), g = ac.createGain(), g2 = ac.createGain();
+    o.type = o2.type = 'sine'; o.frequency.value = f; o2.frequency.value = f * 2.01; g2.gain.value = 0.25;
+    o.connect(g); o2.connect(g2); g2.connect(g);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.035, t + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, t + 5);
+    let out = g;
+    if (ac.createStereoPanner) { out = ac.createStereoPanner(); out.pan.value = Math.random() * 1.4 - 0.7; g.connect(out); }
+    out.connect(master);                                                  // dry
+    const send = ac.createGain(); send.gain.value = 1.4; out.connect(send); send.connect(verb);   // and a long echo
+    o.start(t); o2.start(t); o.stop(t + 5.2); o2.stop(t + 5.2);
+    chimeT = setTimeout(chime, 9000 + Math.random() * 16000);
+  }
+  function fade(to, sec) { const t = ac.currentTime; master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(master.gain.value, t); master.gain.linearRampToValueAtTime(to, t + sec); }
+  return {
+    get on() { return on; },
+    start() {
+      if (!ac) build();
+      ac.resume(); on = true; fade(0.5, 3);
+      clearTimeout(chimeT); chimeT = setTimeout(chime, 4000);
+    },
+    stop() { if (!ac) return; on = false; clearTimeout(chimeT); fade(0, 1.2); setTimeout(() => { if (!on) ac.suspend(); }, 1400); },
+    hidden(h) { if (!ac || !on) return; if (h) ac.suspend(); else ac.resume(); },
+  };
+})();
+let soundWanted = false;
+try { soundWanted = localStorage.getItem('ambience') === 'on'; } catch (e) {}
+function syncSound() { const b = document.getElementById('sound-btn'); b.setAttribute('aria-pressed', String(AMB.on)); b.textContent = `Sound: ${AMB.on ? 'on' : 'off'}`; }
+document.getElementById('sound-btn').addEventListener('click', e => {
+  e.stopPropagation();
+  if (AMB.on) AMB.stop(); else AMB.start();
+  soundWanted = AMB.on; syncSound();
+  try { localStorage.setItem('ambience', soundWanted ? 'on' : 'off'); } catch (e) {}
+});
+if (soundWanted) addEventListener('pointerdown', () => { if (soundWanted && !AMB.on) { AMB.start(); syncSound(); } }, { once: true, capture: true });
+document.addEventListener('visibilitychange', () => AMB.hidden(document.hidden));
+// NASA fonts toggle (remembered in this browser): the page's CSS switches on html.nasa; map labels read FN
+let NASA_FONTS = false;
+try { NASA_FONTS = localStorage.getItem('nasaFonts') === 'on'; } catch (e) {}
+const FN = {
+  get sans() { return NASA_FONTS ? '"Helvetica Neue", Helvetica, Arial, sans-serif' : '"IBM Plex Sans", system-ui, sans-serif'; },
+  get place() { return NASA_FONTS ? '15px Michroma, "Helvetica Neue", Helvetica, sans-serif' : 'italic 19px "Instrument Serif", Georgia, serif'; },
+};
+function syncNasa(fire) {
+  document.documentElement.classList.toggle('nasa', NASA_FONTS);
+  const b = document.getElementById('nasa-btn'); b.setAttribute('aria-pressed', String(NASA_FONTS)); b.textContent = `NASA fonts: ${NASA_FONTS ? 'on' : 'off'}`;
+  if (fire) dispatchEvent(new Event('resize'));   // the top bar's height can change
+}
+document.getElementById('nasa-btn').addEventListener('click', () => {
+  NASA_FONTS = !NASA_FONTS; syncNasa(true);
+  try { localStorage.setItem('nasaFonts', NASA_FONTS ? 'on' : 'off'); } catch (e) {}
+});
+syncNasa();
+// Solid ground toggle (remembered in this browser): off keeps the terrain as particles at every zoom
+let solidOn = true;
+try { solidOn = localStorage.getItem('solidGround') !== 'off'; } catch (e) {}
+let solidK = solidOn ? 1 : 0;
+function syncSolidBtn() { const b = document.getElementById('solid-btn'); if (!b) return; b.setAttribute('aria-pressed', String(solidOn)); b.textContent = `Solid ground: ${solidOn ? 'on' : 'off'}`; }
+document.getElementById('solid-btn').addEventListener('click', () => {
+  solidOn = !solidOn; syncSolidBtn();
+  try { localStorage.setItem('solidGround', solidOn ? 'on' : 'off'); } catch (e) {}
+});
+syncSolidBtn();
 
 function computeColors() {
   const dim = [0.2, 0.21, 0.235];
@@ -938,7 +1205,7 @@ function setOverview(on) {
   setHover();
 }
 function lockOn(id) {
-  const b = bases.find(x => x.id === id); if (!b) return unlock();
+  const g = groupOf(id), b = g && groupAnchor(g); if (!b) return unlock();
   lock = id; selected = id;
   const p = basePose(b);
   if (overview) savedCam = { ...savedCam, ...p, dist: 1.15 }; else goal = p;
@@ -954,7 +1221,7 @@ function renderLockSel() {
   const sel = document.getElementById('lock-sel'); sel.replaceChildren();
   const opt = (v, t) => { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); };
   opt('', 'Whole region');
-  for (const b of bases) opt(String(b.id), b.name);
+  for (const g of groups) opt(String(g.id), g.name);
   sel.value = lock ? String(lock) : '';
   document.getElementById('lock-wrap').classList.toggle('on', !!lock);
 }
@@ -1106,8 +1373,35 @@ const TYPES = {
   ice: { label: 'Ice extraction', foot: 50, slope: 10 },
 };
 const TYPE_OF_FACILITY = { 'landing-pad': 'pad', habitat: 'habitat', 'propellant-plant': 'propellant', 'solar-farm': 'solar', 'ice-mine': 'ice', depot: 'depot' };
-const bases = [];
-let nextId = 1, selected = null, placing = null, hoverK = -1, areaMode = false;
+const bases = [];        // facilities; each belongs to a base (group) through b.g
+const groups = [];       // bases: facilities planned together, linked by internal roads by default
+let nextId = 1, nextGroup = 1, selected = null, placing = null, hoverK = -1, areaMode = false;   // selected / lock: base (group) ids
+const BASE_NAMES = ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo', 'Foxtrot', 'Golf', 'Hotel', 'India', 'Juliett', 'Kilo', 'Lima'];
+function newGroup(name, example) {
+  const g = { id: nextGroup++, name: name || `${BASE_NAMES[(nextGroup - 2) % BASE_NAMES.length]} base`, example: !!example };
+  groups.push(g); return g;
+}
+const members = g => bases.filter(b => b.g === g.id);
+const facKm = (a, b) => Math.hypot((U[a.k] - U[b.k]) * SPAN_KM, (V[a.k] - V[b.k]) * SPAN_KM);
+// the facility nearest the middle of the base: routes start there and the label sits on it
+function groupAnchor(g) {
+  const ms = members(g); if (!ms.length) return null;
+  const cu = ms.reduce((t, b) => t + U[b.k], 0) / ms.length, cv = ms.reduce((t, b) => t + V[b.k], 0) / ms.length;
+  return ms.reduce((best, b) => (U[b.k] - cu) ** 2 + (V[b.k] - cv) ** 2 < (U[best.k] - cu) ** 2 + (V[best.k] - cv) ** 2 ? b : best);
+}
+// internal roads: the shortest set of straight links joining every facility of the base (Prim's tree)
+function groupLinks(g) {
+  const ms = members(g); if (ms.length < 2) return [];
+  const inT = [ms[0]], out = ms.slice(1), links = [];
+  while (out.length) {
+    let bi = 0, bj = 0, bd = Infinity;
+    inT.forEach((a, i) => out.forEach((b, j) => { const d = facKm(a, b); if (d < bd) { bd = d; bi = i; bj = j; } }));
+    links.push([inT[bi], out[bj], bd]); inT.push(out.splice(bj, 1)[0]);
+  }
+  return links;
+}
+const groupLinkKm = g => groupLinks(g).reduce((t, l) => t + l[2], 0);
+const groupOf = id => groups.find(g => g.id === id);
 
 function nearestK(u, v) { let b = 0, bd = 1e9; for (let k = 0; k < NP; k++) { const d = (U[k] - u) ** 2 + (V[k] - v) ** 2; if (d < bd) { bd = d; b = k; } } return b; }
 const inRect = (u, v, r) => u >= r[0] && u <= r[2] && v >= r[1] && v <= r[3];
@@ -1129,47 +1423,64 @@ function stats(k, cfg) {
 }
 function addBase(k, cfg, example) {
   const b = { id: nextId++, k, ...cfg, example: !!example, w: [POS[3 * k], POS[3 * k + 1], POS[3 * k + 2]] };
-  b.s = stats(k, cfg); bases.push(b); selected = b.id; renderBases(); notifyPlanner(); return b;
+  b.g = cfg.g || newGroup(cfg.name ? cfg.name.replace(/^\w+ /, '') + ' base' : null, example).id;
+  b.s = stats(k, cfg); bases.push(b); selected = b.g; renderBases(); notifyPlanner(); return b;
 }
 const openBases = new Set();   // base cards showing their full details
+let buildReady = false;   // the construction code has loaded
+function facilityRow(b) {
+  const d = document.createElement('div'); d.className = 'fac-row';
+  const n = document.createElement('div'); n.className = 'fr-n'; n.textContent = b.name;
+  const meta = document.createElement('div'); meta.className = 'fr-m'; meta.textContent = `${TYPES[b.type].label} · ${b.foot} m · ${fmtLL(U[b.k], V[b.k])}`;
+  const dl = document.createElement('dl'); dl.className = 'stats';
+  const row = (k, v, pill) => { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); if (pill) { const p = document.createElement('span'); p.className = 'pill ' + pill[1]; p.textContent = pill[0]; dd.appendChild(p); } dd.appendChild(document.createTextNode(v)); dl.append(dt, dd); };
+  const s = b.s;
+  if (s.h !== null) row('Elevation', fmtKm(s.h));
+  if (s.slope !== null) row('Slope', s.slope.toFixed(1) + '°', s.slope <= b.maxSlope ? ['within ' + b.maxSlope + '°', 'ok'] : ['over ' + b.maxSlope + '°', 'warn']);
+  if (s.haz !== null) row('Hazard', s.haz.toFixed(2), s.haz < 0.3 ? ['low', 'ok'] : s.haz < 0.55 ? ['moderate', 'warn'] : ['high', 'warn']);
+  if (s.cut !== null) row('Cut and fill', '≈ ' + fmtInt(s.cut) + ' m³');
+  if (s.sols !== null) row('Grading time', s.sols < 1 ? 'under 1 sol' : '≈ ' + fmtInt(s.sols) + ' sols');
+  if (s.pressure !== null) row('Air pressure', '≈ ' + fmtInt(s.pressure) + ' Pa');
+  if (s.near) row('Nearest ' + MINERALS[s.near.t].name.toLowerCase(), Math.round(s.near.d) + ' km');
+  if (s.unit) row('Geologic unit', s.unit);
+  if (s.dem) row('Best elevation data', s.dem);
+  if (b.pad) { row('Site search earthwork', '≈ ' + fmtInt(b.pad.earthwork_m3) + ' m³'); row('Pad level', fmtInt(b.pad.pad_elevation_m) + ' m'); }
+  d.append(n, meta, dl);
+  if (s.missing.length) { const m = document.createElement('div'); m.className = 'base-miss'; m.textContent = 'Not computed (layer dropped): ' + s.missing.join('; '); d.appendChild(m); }
+  return d;
+}
+function removeGroup(g) {
+  for (let i = bases.length - 1; i >= 0; i--) if (bases[i].g === g.id) bases.splice(i, 1);
+  groups.splice(groups.indexOf(g), 1); openBases.delete(g.id); if (selected === g.id) selected = null;
+  if (lock === g.id) unlock();
+  if (buildReady && !groups.length) setPhase('plan');
+  renderBases(); notifyPlanner();
+}
 function renderBases() {
-  renderLockSel(); updateRouteForm();
+  renderLockSel(); updateRouteForm(); if (buildReady) updateBuildForm();
   const list = document.getElementById('base-list'); list.replaceChildren();
-  document.getElementById('base-count').textContent = bases.length + (bases.length === 1 ? ' facility' : ' facilities');
-  for (const b of bases) {
-    const li = document.createElement('li'); li.className = 'base' + (b.id === selected ? ' sel' : '') + (openBases.has(b.id) ? ' open' : ''); li.tabIndex = 0;
+  document.getElementById('base-count').textContent = `${groups.length} base${groups.length === 1 ? '' : 's'} · ${bases.length} facilit${bases.length === 1 ? 'y' : 'ies'}`;
+  for (const g of groups) {
+    const ms = members(g);
+    const li = document.createElement('li'); li.className = 'base' + (g.id === selected ? ' sel' : '') + (openBases.has(g.id) ? ' open' : ''); li.tabIndex = 0;
     const top = document.createElement('div'); top.className = 'base-top';
     const dot = document.createElement('span'); dot.className = 'base-dot';
-    const nm = document.createElement('span'); nm.className = 'base-name'; nm.textContent = b.name;
+    const nm = document.createElement('span'); nm.className = 'base-name'; nm.textContent = g.name;
     top.append(dot, nm);
-    if (b.example) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = 'Example'; top.appendChild(t); }
-    const rm = document.createElement('button'); rm.className = 'icon-btn'; rm.type = 'button'; rm.textContent = '×'; rm.setAttribute('aria-label', 'Remove ' + b.name);
-    rm.addEventListener('click', e => {
-      e.stopPropagation(); bases.splice(bases.indexOf(b), 1); openBases.delete(b.id); if (selected === b.id) selected = null;
-      if (lock === b.id) unlock(); renderBases(); notifyPlanner();
-    });
+    if (g.example) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = 'Example'; top.appendChild(t); }
+    const rm = document.createElement('button'); rm.className = 'icon-btn'; rm.type = 'button'; rm.textContent = '×'; rm.setAttribute('aria-label', 'Remove ' + g.name);
+    rm.addEventListener('click', e => { e.stopPropagation(); removeGroup(g); });
     const ex = document.createElement('button'); ex.className = 'icon-btn base-x'; ex.type = 'button'; ex.textContent = '▾';
-    ex.setAttribute('aria-expanded', String(openBases.has(b.id))); ex.setAttribute('aria-label', (openBases.has(b.id) ? 'Hide details of ' : 'Show details of ') + b.name);
-    ex.addEventListener('click', e => { e.stopPropagation(); openBases.has(b.id) ? openBases.delete(b.id) : openBases.add(b.id); renderBases(); });
+    ex.setAttribute('aria-expanded', String(openBases.has(g.id))); ex.setAttribute('aria-label', (openBases.has(g.id) ? 'Hide details of ' : 'Show details of ') + g.name);
+    ex.addEventListener('click', e => { e.stopPropagation(); openBases.has(g.id) ? openBases.delete(g.id) : openBases.add(g.id); renderBases(); });
     top.append(ex, rm);
-    const meta = document.createElement('div'); meta.className = 'base-meta'; meta.textContent = `${TYPES[b.type].label} · ${b.foot} m · ${fmtLL(U[b.k], V[b.k])}`;
-    const dl = document.createElement('dl'); dl.className = 'stats';
-    const row = (k, v, pill) => { const dt = document.createElement('dt'); dt.textContent = k; const dd = document.createElement('dd'); if (pill) { const p = document.createElement('span'); p.className = 'pill ' + pill[1]; p.textContent = pill[0]; dd.appendChild(p); } dd.appendChild(document.createTextNode(v)); dl.append(dt, dd); };
-    const s = b.s;
-    if (s.h !== null) row('Elevation', fmtKm(s.h));
-    if (s.slope !== null) row('Slope', s.slope.toFixed(1) + '°', s.slope <= b.maxSlope ? ['within ' + b.maxSlope + '°', 'ok'] : ['over ' + b.maxSlope + '°', 'warn']);
-    if (s.haz !== null) row('Hazard', s.haz.toFixed(2), s.haz < 0.3 ? ['low', 'ok'] : s.haz < 0.55 ? ['moderate', 'warn'] : ['high', 'warn']);
-    if (s.cut !== null) row('Cut and fill', '≈ ' + fmtInt(s.cut) + ' m³');
-    if (s.sols !== null) row('Grading time', s.sols < 1 ? 'under 1 sol' : '≈ ' + fmtInt(s.sols) + ' sols');
-    if (s.pressure !== null) row('Air pressure', '≈ ' + fmtInt(s.pressure) + ' Pa');
-    if (s.near) row('Nearest ' + MINERALS[s.near.t].name.toLowerCase(), Math.round(s.near.d) + ' km');
-    if (s.unit) row('Geologic unit', s.unit);
-    if (s.dem) row('Best elevation data', s.dem);
-    if (b.pad) { row('Site search earthwork', '≈ ' + fmtInt(b.pad.earthwork_m3) + ' m³'); row('Pad level', fmtInt(b.pad.pad_elevation_m) + ' m'); }
-    li.append(top, meta, dl);
-    if (s.missing.length) { const m = document.createElement('div'); m.className = 'base-miss'; m.textContent = 'Not computed (layer dropped): ' + s.missing.join('; '); li.appendChild(m); }
-    if (b.id === lock) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = 'Centered'; t.style.color = 'var(--accent)'; top.insertBefore(t, ex); }
-    const focus = () => { openBases.add(b.id); lockOn(b.id); };
+    const a = groupAnchor(g), km = groupLinkKm(g);
+    const meta = document.createElement('div'); meta.className = 'base-meta';
+    meta.textContent = `${ms.length} facilit${ms.length === 1 ? 'y' : 'ies'}${ms.length > 1 ? ` · ${km.toFixed(1)} km of internal roads` : ''} · ${a ? fmtLL(U[a.k], V[a.k]) : ''}`;
+    li.append(top, meta);
+    for (const b of ms) li.appendChild(facilityRow(b));
+    if (g.id === lock) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = 'Centered'; t.style.color = 'var(--accent)'; top.insertBefore(t, ex); }
+    const focus = () => { openBases.add(g.id); lockOn(g.id); };
     li.addEventListener('click', focus);
     li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); focus(); } });
     list.appendChild(li);
@@ -1319,11 +1630,11 @@ const endPointer = e => {
   }
   if (down && down.moved <= 4 && pointers.size === 0 && e.type === 'pointerup') {
     const r = glc.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
-    const hit = !placing && !overview && bases.find(b => b.hit && (Math.hypot(mx - b.hit[0], my - b.hit[1]) < 12 || (mx >= b.hit[2] && mx <= b.hit[2] + b.hit[4] && my >= b.hit[3] && my <= b.hit[3] + b.hit[5])));
+    const hit = !placing && !overview && groups.find(b => b.hit && (Math.hypot(mx - b.hit[0], my - b.hit[1]) < 12 || (mx >= b.hit[2] && mx <= b.hit[2] + b.hit[4] && my >= b.hit[3] && my <= b.hit[3] + b.hit[5])));
     if (hit) lockOn(hit.id);
     const k = placing ? pick(mx, my) : -1;
     if (k >= 0 && placing && placing.pick) {
-      routePt = { lon: lonOf(U[k]), lat: latOf(V[k]) }; stopPlacing(); rTo.value = 'pt'; updateRouteForm();
+      routePt = { lon: lonOf(U[k]), lat: latOf(V[k]) }; stopPlacing(); updateRouteForm(); rTo.value = 'pt'; runRoute();
     }
   }
   if (pointers.size === 0) down = null;
@@ -1435,7 +1746,9 @@ function frame(now) {
   YK = rise;
   // solid surface up close: it starts in the middle of the view around dist 2.2 and fills out by 0.7; in space it
   // is solid within SC[2] of the focus and back to particles by SC[3], both growing with the view (never under ~50 km)
-  const S = (1 - ss(0.7, 2.2, cam.dist)) * (1 - sep) * (SOLID ? 1 : 0);
+  // the Solid ground toggle eases the surface in and out over about half a second
+  solidK = reduced ? +solidOn : Math.abs(+solidOn - solidK) < 0.01 ? +solidOn : solidK + (+solidOn - solidK) * (1 - Math.exp(-dt * 8));
+  const S = (1 - ss(0.7, 2.2, cam.dist)) * (1 - sep) * (SOLID ? 1 : 0) * solidK;
   const [fu, fv] = unbend(cam.target), rin = Math.max(0.9 * cam.dist, 0.25);
   const SC = [2 * fu - 1, 1 - 2 * fv, rin, rin + Math.max(2.2 * cam.dist, 0.5)];
   updateDetail(now, dt);
@@ -1486,7 +1799,7 @@ function frame(now) {
     // up close the dots get hard edges and stop growing past the cap, so close-ups stay sharp instead of blurring
     const cap = 12 * dpr;
     if (D.n) { gl.uniform4f(loc.uHole, D.hole[0], D.hole[1], D.hole[2], D.hole[3]); gl.uniform1f(loc.uHoleF, D.hole[4]); }
-    gl.uniform1f(loc.uHoleA, dA);
+    gl.uniform1f(loc.uHoleA, dA * solidK);   // with the surface off, particles fill the 200 m patch too
     const mapA = 1 - sep;
     if (FAR.n && BG) draw(FAR.set, FAR.col, 0, 1, mapA, 0, base * 2.4 * FAR.du / BG.du, undefined, 0, cap * 4);
     if (BGSET) draw(BGSET, bgCol, 0, 1, mapA, 0, base * 2.4, undefined, 0, cap * 1.5);
@@ -1534,7 +1847,7 @@ function frame(now) {
 function drawOverlay(t) {
   ctx.clearRect(0, 0, W, Hh);
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-  for (const b of bases) b.hit = null;
+  for (const g of groups) g.hit = null;
   if (sep < 0.99) { ctx.globalAlpha = 1 - sep; drawMapOverlay(t); }
   stackUI.style.opacity = sep.toFixed(3);
   if (sep > 0.01) { ctx.globalAlpha = sep; drawStackOverlay(); }
@@ -1617,7 +1930,8 @@ function plannerConfig() {
     inputs: SHEETS.filter(s => !s.fixed && keptSheet(s.id)).map(s => s.id),
     dropped: SHEETS.filter(s => !s.fixed && !keptSheet(s.id)).map(s => s.id),
     hazard: hazTerms.map(t => ({ input: t.sheet, term: t.name, weight: +(t.w / hazW).toFixed(3) })),
-    bases: bases.map(b => ({ id: b.id, name: b.name, type: b.type, footprint_m: b.foot, max_slope_deg: b.maxSlope, grading_rate_m3_per_sol: b.rate, lat: latOf(V[b.k]), lon: lonOf(U[b.k]), stats: { ...b.s } })),
+    bases: groups.map(g => ({ id: g.id, name: g.name, facilities: members(g).map(b => b.id), internal_roads_km: +groupLinkKm(g).toFixed(2) })),
+    facilities: bases.map(b => ({ id: b.id, base: b.g, name: b.name, type: b.type, footprint_m: b.foot, max_slope_deg: b.maxSlope, grading_rate_m3_per_sol: b.rate, lat: latOf(V[b.k]), lon: lonOf(U[b.k]), stats: { ...b.s } })),
   };
 }
 function notifyPlanner() { dispatchEvent(new CustomEvent('planner:change', { detail: plannerConfig() })); }
@@ -1664,7 +1978,7 @@ function drawStackOverlay() {
       for (const b of bases) {
         const p = proj(b.w[0], b.w[1], b.w[2], off, sc); if (!p) continue;
         ctx.fillStyle = '#cdb48e'; ctx.beginPath(); ctx.arc(p[0], p[1], 3.4, 0, Math.PI * 2); ctx.fill();
-        ctx.font = '500 10.5px "IBM Plex Sans", system-ui, sans-serif'; ctx.fillStyle = 'rgba(220,217,210,.9)'; ctx.fillText(b.name, p[0] + 7, p[1] - 6);
+        ctx.font = `500 10.5px ${FN.sans}`; ctx.fillStyle = 'rgba(220,217,210,.9)'; ctx.fillText(b.name, p[0] + 7, p[1] - 6);
       }
     }
     // leader line from the sheet's right-most corner to its label
@@ -1715,7 +2029,7 @@ function drawMapOverlay(t) {
     for (const p of NAMES) {
       const s = proj(...p.w); if (!s) continue;
       const a = L.names.op * clamp(1.6 - s[2] * 0.25, 0.35, 1) * rise;
-      ctx.font = p.big ? 'italic 19px "Instrument Serif", Georgia, serif' : '500 9.5px "IBM Plex Mono", ui-monospace, monospace';
+      ctx.font = p.big ? FN.place : '500 9.5px "IBM Plex Mono", ui-monospace, monospace';
       ctx.fillStyle = p.bg ? `rgba(138,141,149,${a * 0.75})` : `rgba(220,217,210,${a * (p.big ? 0.95 : 0.7)})`;
       const txt = p.big ? p.n : p.n.toUpperCase().split('').join(' ');
       ctx.fillText(txt, s[0], s[1]);
@@ -1730,30 +2044,49 @@ function drawMapOverlay(t) {
   }
   drawAreaSelection();
   drawCalc(performance.now());
-  // bases (a label is skipped when it would cover one already drawn; the dot stays)
-  const taken = [];
-  for (const b of bases) {
-    const s = proj(...b.w); if (!s) continue;
-    const sel = b.id === selected;
-    const pulse = reduced ? 0 : Math.sin(t * 1.3 + b.id) * 0.5 + 0.5;
+  drawBuild(performance.now());
+  // bases: internal roads between their facilities, a dot per facility, one label per base (a label is skipped
+  // when it would cover one already drawn; the dots stay)
+  const taken = [], names = [];
+  for (const g of groups) {
+    const sel = g.id === selected, ms = members(g);
+    ctx.setLineDash([3, 3]); ctx.lineWidth = 1.2; ctx.strokeStyle = `rgba(205,180,142,${sel ? 0.75 : 0.45})`;
+    for (const [a, b] of groupLinks(g)) { const p = proj(...a.w), q = proj(...b.w); if (p && q) { ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke(); } }
+    ctx.setLineDash([]);
+    for (const b of ms) {
+      const s = proj(...b.w); if (!s) continue;
+      ctx.fillStyle = '#cdb48e'; ctx.beginPath(); ctx.arc(s[0], s[1], sel ? 3.2 : 2.6, 0, Math.PI * 2); ctx.fill();
+      if (sel && ms.length > 1) {   // facility names, skipped where they would overlap
+        ctx.font = '400 9px "IBM Plex Mono", ui-monospace, monospace';
+        const r = [s[0] + 6, s[1] - 6, ctx.measureText(b.name).width, 12];
+        if (names.some(q => r[0] < q[0] + q[2] && r[0] + r[2] > q[0] && r[1] < q[1] + q[3] && r[1] + r[3] > q[1])) continue;
+        names.push(r); ctx.fillStyle = 'rgba(220,217,210,.75)'; ctx.fillText(b.name, s[0] + 6, s[1] + 3);
+      }
+    }
+  }
+  for (const g of groups) {
+    const a = groupAnchor(g); if (!a) continue;
+    const s = proj(...a.w); if (!s) continue;
+    const sel = g.id === selected, n = members(g).length;
+    const pulse = reduced ? 0 : Math.sin(t * 1.3 + g.id) * 0.5 + 0.5;
     ctx.strokeStyle = `rgba(205,180,142,${0.18 + 0.25 * (1 - pulse)})`; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(s[0], s[1], 7 + pulse * 7, 0, Math.PI * 2); ctx.stroke();
     ctx.fillStyle = '#cdb48e'; ctx.beginPath(); ctx.arc(s[0], s[1], sel ? 3.6 : 3, 0, Math.PI * 2); ctx.fill();
     const top = s[1] - (sel ? 40 : 30);
-    ctx.font = '600 12px "IBM Plex Sans", system-ui, sans-serif';
-    const tw = ctx.measureText(b.name).width;
+    ctx.font = `600 12px ${FN.sans}`;
+    const tw = ctx.measureText(g.name).width;
     ctx.font = '400 9.5px "IBM Plex Mono", ui-monospace, monospace';
-    const sub = TYPES[b.type].label.toUpperCase();
+    const sub = n === 1 ? TYPES[a.type].label.toUpperCase() : `${n} FACILITIES`;
     const sw = ctx.measureText(sub).width;
     const bw = Math.max(tw, sw) + 18, bh = 34, bx = s[0] - bw / 2, by = top - bh;
-    b.hit = [s[0], s[1], bx, by, bw, bh];
+    g.hit = [s[0], s[1], bx, by, bw, bh];
     if (!sel && taken.some(t => bx < t[0] + t[2] && bx + bw > t[0] && by < t[1] + t[3] && by + bh > t[1])) continue;
     taken.push([bx, by, bw, bh]);
     ctx.strokeStyle = `rgba(205,180,142,${sel ? 0.8 : 0.5})`; ctx.beginPath(); ctx.moveTo(s[0], s[1] - 4); ctx.lineTo(s[0], top); ctx.stroke();
-    ctx.fillStyle = 'rgba(6,7,9,.82)'; ctx.strokeStyle = `rgba(205,180,142,${b.id === lock ? 0.9 : sel ? 0.6 : 0.28})`;
+    ctx.fillStyle = 'rgba(6,7,9,.82)'; ctx.strokeStyle = `rgba(205,180,142,${g.id === lock ? 0.9 : sel ? 0.6 : 0.28})`;
     roundRect(bx, by, bw, bh, 8); ctx.fill(); ctx.stroke();
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#dcd9d2'; ctx.font = '600 12px "IBM Plex Sans", system-ui, sans-serif'; ctx.fillText(b.name, s[0], by + 15);
+    ctx.fillStyle = '#dcd9d2'; ctx.font = `600 12px ${FN.sans}`; ctx.fillText(g.name, s[0], by + 15);
     ctx.fillStyle = '#8a8d95'; ctx.font = '400 9.5px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillText(sub, s[0], by + 27);
     ctx.textAlign = 'left';
   }
@@ -1771,8 +2104,11 @@ const fleetSel = new Set(['hauler']);
 const ROUTE_STYLE = {
   accessible: { label: 'Drivable', color: '#9fbfa8' },
   shortest: { label: 'Shortest + earthwork', color: '#cdb48e' },
+  minimal: { label: 'Least construction', color: '#c79ad6' },
+  through: { label: 'Bore through', color: '#7fa6e0' },
   tunnel: { label: 'With TBM tunnel', color: '#8fb3c4' },
 };
+const ROUTE_KEYS = ['accessible', 'shortest', 'minimal', 'through', 'tunnel'];
 const BLOCK_COLOR = { 1: '212,154,146', 2: '239,230,216', 3: '185,163,220' };   // rocks, crater rim, slope
 
 async function loadCatalog() {
@@ -1786,7 +2122,7 @@ async function loadCatalog() {
     apiStatus.replaceChildren(document.createTextNode(`Planner backend not reachable at ${API}. Start it, then reload: `));
     const c = document.createElement('code'); c.textContent = 'backend/.venv/bin/uvicorn app.main:app --app-dir backend --port 8001'; apiStatus.appendChild(c);
   }
-  renderFleet(); updateRouteForm();
+  renderFleet(); renderBases();   // base cards enable Connect to… once the backend answers
 }
 function renderFleet() {
   const host = document.getElementById('fleet'); host.replaceChildren();
@@ -1802,26 +2138,28 @@ function updateRouteForm() {
   const keep = [rFrom.value, rTo.value];
   const fill = (sel, extra) => {
     sel.replaceChildren();
-    for (const b of bases) { const o = document.createElement('option'); o.value = 'b' + b.id; o.textContent = b.name; sel.appendChild(o); }
+    for (const g of groups) { const o = document.createElement('option'); o.value = 'g' + g.id; o.textContent = g.name; sel.appendChild(o); }
     for (const [v, t] of extra) { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); }
   };
   fill(rFrom, []);
   fill(rTo, [...(routePt ? [['pt', `Map point ${routePt.lat.toFixed(2)}° N ${routePt.lon.toFixed(2)}° E`]] : []), ['pick', 'Pick a point on the map…']]);
   const has = (sel, v) => [...sel.options].some(o => o.value === v);
-  rFrom.value = has(rFrom, keep[0]) ? keep[0] : (bases[0] ? 'b' + bases[0].id : '');
-  rTo.value = has(rTo, keep[1]) && keep[1] !== 'pick' ? keep[1] : (bases.find(b => 'b' + b.id !== rFrom.value) ? 'b' + bases.find(b => 'b' + b.id !== rFrom.value).id : routePt ? 'pt' : 'pick');
-  rBtn.disabled = !apiOk || !fleetSel.size || !bases.length || rTo.value === 'pick' || rFrom.value === rTo.value;
+  rFrom.value = has(rFrom, keep[0]) ? keep[0] : (groups[0] ? 'g' + groups[0].id : '');
+  const other = groups.find(g => 'g' + g.id !== rFrom.value);
+  rTo.value = has(rTo, keep[1]) && keep[1] !== 'pick' ? keep[1] : other ? 'g' + other.id : routePt ? 'pt' : 'pick';
+  rBtn.disabled = !apiOk || !fleetSel.size || !groups.length || rTo.value === 'pick' || rFrom.value === rTo.value;
   const nm = sel => sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : '';
-  document.getElementById('route-sum').textContent = !bases.length ? 'Add a base first' : rTo.value === 'pick' ? `From ${nm(rFrom)} · pick an end point` : `${nm(rFrom)} → ${nm(rTo)} · ${fleetSel.size} vehicle type${fleetSel.size === 1 ? '' : 's'}`;
+  if (buildReady) syncPhases();
 }
 function endpointOf(val) {
   if (val === 'pt') return routePt && { ...routePt, name: 'map point' };
-  const b = bases.find(x => 'b' + x.id === val);
-  return b && { lon: lonOf(U[b.k]), lat: latOf(V[b.k]), name: b.name };
+  const g = groups.find(x => 'g' + x.id === val), b = g && groupAnchor(g);
+  return b && { lon: lonOf(U[b.k]), lat: latOf(V[b.k]), name: g.name, base: g.id };
 }
 rFrom.addEventListener('change', updateRouteForm);
 rTo.addEventListener('change', () => { if (rTo.value === 'pick') { if (overview) setOverview(false); startPlacing({ pick: true, name: 'the route end' }); } updateRouteForm(); });
 rBtn.addEventListener('click', runRoute);
+document.getElementById('route-tbm').addEventListener('change', updateRouteForm);
 
 async function runRoute() {
   const a = endpointOf(rFrom.value), b = endpointOf(rTo.value);
@@ -1830,8 +2168,8 @@ async function runRoute() {
     from: [a.lon, a.lat], to: [b.lon, b.lat], equipment: [...fleetSel],
     throughput_t_per_sol: Math.max(0, +document.getElementById('route-tput').value || 0),
     tbm: { model: TBM_ID, count: clamp(Math.round(+document.getElementById('route-tbm').value || 1), 1, 50) },
-    // the overview's keep/drop choices decide which hazard terms the backend weighs
-    hazard_weights: { slope: keptSheet('slope') ? 1 : 0, roughness: keptSheet('slope') ? 0.5 : 0, crater: keptSheet('craters') ? 0.5 : 0, rock: 1 },
+    // routes always weigh elevation, slope and every hazard term, whatever layers are shown, kept or dropped
+    hazard_weights: { slope: 1, roughness: 0.5, crater: 0.5, rock: 1 },
     trace: true,
   };
   startCalc(a, b, body);
@@ -1852,7 +2190,7 @@ function startCalc(a, b, body) {
   calc = { kind: 'route', a, b, body, res: null, t0: 0, steps: [], sel: null, err: null };
   document.getElementById('calc-title').textContent = `${a.name} → ${b.name}`;
   document.getElementById('calc-sub').textContent = `POST ${API.replace(/^https?:\/\//, '')}/routes`;
-  calcEl.hidden = false; document.body.classList.add('calc-open'); document.getElementById('calc-scrubber').hidden = true;
+  calcEl.hidden = false; document.body.classList.add('calc-open'); hideBuild(); document.getElementById('calc-scrubber').hidden = true;
   if (narrow()) document.body.dataset.sheet = 'none';
   resEl.replaceChildren();
   const fl = [...fleetSel].map(id => (EQUIP.find(v => v.id === id) || { name: id }).name.toLowerCase()).join(', ');
@@ -1907,6 +2245,14 @@ function calcLoaded(j, ms) {
       }
     } else S.push({ id: 'shortest', title: 'No shortest route', d: sh.reason, dur: 0.6 });
   }
+  const mi = j.minimal, th = j.through;
+  if (mi) {
+    if (mi.status === 'ok') {
+      g.minimal = line(mi.geometry.coordinates);
+      S.push({ id: 'minimal', title: 'Least-construction route', d: `${mi.length_km} km · builds only where the fleet can't already drive: ${n(mi.earthwork_m3)} m³ earthwork, ${n(mi.grading_sols + mi.clearing_sols + (mi.bore_sols || 0))} build sols (shortest: ${sh && sh.status === 'ok' ? n(sh.earthwork_m3) + ' m³' : 'none'})`, dur: 1.2 });
+    } else S.push({ id: 'minimal', title: 'No least-construction route', d: mi.reason, dur: 0.6 });
+  }
+  if (th) { setThroughGeo(th); S.push({ id: 'through', ...throughStep(th), dur: th.status === 'ok' ? 1.8 : 0.6 }); }
   if (tu) {
     const tl = tr && tr.tunnel;
     if (tl) { g.pf = tl.portals_from.map(c => wp(...c)); g.pt = tl.portals_to.map(c => wp(...c)); g.pairs = (tl.pairs || []).map(p => ({ a: wp(...p.from), b: wp(...p.to), r: p.result })); }
@@ -1923,6 +2269,62 @@ function calcLoaded(j, ms) {
   calc.end = t; calc.t0 = performance.now(); calc.hold = null;
   document.getElementById('calc-scrubber').hidden = reduced || !t;
   renderSteps(true);
+}
+// bore through: roads to the portals and the bores along the straight A–B line (rule or Claude decides which part)
+function setThroughGeo(th) {
+  const g = calc.geo;
+  g.throughLegs = th.status === 'ok' ? th.legs.map(l => line(l.geometry.coordinates)) : [];
+  g.throughBores = th.status === 'ok' ? th.bores.map(b => ({ b, b3: tunnel3d(b) })) : [];
+}
+function throughStep(th) {
+  const n = fmtInt, who = th.decided_by && th.decided_by.startsWith('ai') ? 'Claude' : th.decided_by === 'given' ? 'you' : 'the rule';
+  if (th.status !== 'ok') return { title: 'No bore-through option', d: th.reason };
+  if (!th.bores.length) return { title: `Bore through: ${who} chose no bore`, d: th.rationale || 'The road goes over the top along the straight line.' };
+  return { title: `Bore through at ${n(th.height_m)} m (${who})${th.beats_shortest ? '' : ' · marginal'}`, d: `Straight A–B line; ground above ${n(th.height_m)} m is bored level: ${th.bores.map(b => `km ${b.from_km}–${b.to_km} (${b.length_km} km, ${n(b.bore_sols)} sols)`).join(', ')} · ${th.road_km} km of road on the line, climbs ${n(th.climb_m)} m · score ${n(th.score_sols)} vs ${n(th.shortest_score_sols)} sols for the shortest route` };
+}
+// Claude reads the elevation along the line and the routes, tries plans and picks which part to bore
+async function askClaudeBore(btn) {
+  const my = calc; if (!my || !my.body) return;
+  my.boreBusy = true; renderResults();
+  try {
+    const body = { ...my.body, decide: 'ai', trace: false };
+    const r = await fetch(API + '/routes/through', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail));
+    if (calc !== my) return;
+    my.res.through = j; setThroughGeo(j);
+    const st = my.steps.find(x => x.id === 'through'); if (st) Object.assign(st, throughStep(j));
+    my.sel = 'through'; my.boreErr = null;
+  } catch (e) { if (calc === my) my.boreErr = String(e.message || e); }
+  if (calc === my) { my.boreBusy = false; renderSteps(true); renderResults(); }
+}
+function borePlan(th) {
+  const box = document.createElement('div'); box.id = 'bore-plan';
+  const h = document.createElement('h4'); h.textContent = th.status === 'ok' && th.height_m != null ? `Bore height ${fmtInt(th.height_m)} m` : 'Bore height'; box.appendChild(h);
+  const who = th.decided_by || '';
+  const p = document.createElement('p');
+  p.textContent = th.status !== 'ok' ? th.reason : th.rationale || ''; box.appendChild(p);
+  const w = document.createElement('p'); w.className = 'who';
+  w.textContent = who.startsWith('ai') ? `Decided by Claude (${who.slice(3)}) after trying ${(th.tries || []).length} plan${(th.tries || []).length === 1 ? '' : 's'}.` : who === 'given' ? 'Costed as given.' : `Decided by ${who || 'the rule'}: the lowest score over a scan of heights.`;
+  w.textContent += ' The route is the straight A–B line whatever the height; ground above it is bored level.';
+  box.appendChild(w);
+  if (th.tries && th.tries.length) {
+    const ol = document.createElement('ol');
+    const win = th.score_sols;
+    for (const t of th.tries) {
+      const li = document.createElement('li');
+      li.textContent = `${t.height_m == null ? 'no bore' : fmtInt(t.height_m) + ' m'}${t.feasible && t.height_m != null ? ` (${t.tunnel_km} km bored)` : ''} → ${t.feasible ? fmtInt(t.score_sols) + ' sols' : 'not buildable'}`;
+      if (t.feasible && t.score_sols === win) li.className = 'win';
+      ol.appendChild(li);
+    }
+    box.appendChild(ol);
+  }
+  const b = document.createElement('button'); b.type = 'button';
+  b.textContent = calc.boreBusy ? 'Claude is reading the elevation…' : who.startsWith('ai') ? 'Ask Claude again' : 'Ask Claude to plan the bore';
+  b.disabled = !!calc.boreBusy; b.addEventListener('click', () => askClaudeBore(b));
+  box.appendChild(b);
+  if (calc.boreErr) { const e = document.createElement('p'); e.className = 'who'; e.style.color = 'var(--warn)'; e.textContent = calc.boreErr; box.appendChild(e); }
+  return box;
 }
 // replay clock in seconds: running from t0, or held at a scrubbed position
 const calcTime = now => calc.hold != null ? calc.hold : (now - calc.t0) / 1000;
@@ -1958,27 +2360,36 @@ function renderSteps(force) {
   if (calc.res && st.endsWith('d') && !resEl.childElementCount) (calc.kind === 'site' ? renderSiteResults : renderResults)();
 }
 function renderResults() {
-  const j = calc.res; resEl.replaceChildren();
-  for (const key of ['accessible', 'shortest', 'tunnel']) {
+  const j = calc.res; resEl.replaceChildren(); if (buildReady) syncPhases();
+  for (const key of ROUTE_KEYS) {
     const r = j[key]; if (!r) continue;
     const ok = r.status === 'ok', stl = ROUTE_STYLE[key];
     const b = document.createElement('button'); b.type = 'button'; b.className = 'rc' + (ok ? '' : ' none'); b.style.setProperty('--rc', stl.color);
-    b.setAttribute('aria-pressed', String(calc.sel === key)); b.disabled = !ok;
+    b.setAttribute('aria-pressed', String(calc.sel === key)); b.disabled = !ok && key !== 'through';
     const k = document.createElement('div'); k.className = 'k'; const i = document.createElement('i'); k.append(i, document.createTextNode(stl.label));
     if (j.recommended && j.recommended.route === key) { const rr = document.createElement('span'); rr.className = 'rec'; rr.textContent = 'Best'; k.appendChild(rr); }
     const v = document.createElement('div'); v.className = 'v';
     const s = document.createElement('div'); s.className = 's';
     if (!ok) { v.textContent = key === 'accessible' ? 'Not drivable' : 'None'; s.textContent = r.gap ? `${r.gap.width_km} km gap · ${Object.keys(r.gap.blocked_by).join(', ').replace('_', ' ')}` : r.reason; }
     else if (key === 'accessible') { v.textContent = r.length_km + ' km'; s.textContent = `${r.travel_h} h · no construction · hazard ${r.hazard.mean}`; }
+    else if (key === 'minimal') { v.textContent = r.length_km + ' km'; s.textContent = `${fmtInt(r.earthwork_m3)} m³ earthwork · ${fmtInt(r.grading_sols + r.clearing_sols + (r.bore_sols || 0))} build sols`; }
+    else if (key === 'through') { v.textContent = r.length_km + ' km'; s.textContent = r.bores.length ? `bored at ${fmtInt(r.height_m)} m · ${r.tunnel_km} km bored · ${fmtInt(r.build_sols)} build sols${r.beats_shortest ? '' : ' · marginal'}${r.decided_by && r.decided_by.startsWith('ai') ? ' · Claude' : ''}` : 'no bore: over the top along the line'; }
     else if (key === 'shortest') { const T = shortestTotals(r); v.textContent = T.km.toFixed(1) + ' km'; s.textContent = `${fmtInt(T.earth)} m³ earthwork${T.bore ? ` · ${fmtInt(T.boreKm * 1000)} m bored` : ''} · ${fmtInt(T.sols)} build sols`; }
     else { v.textContent = r.length_km + ' km'; s.textContent = `${r.beats_surface === false ? `saves ${r.saves_km} km · ` : ''}${r.tunnel.length_km} km bored · ${fmtInt(r.tunnel.bore_sols)} sols · ${fmtInt(r.tunnel.spoil_m3)} m³ spoil`; }
     b.append(k, v, s);
     b.addEventListener('click', () => { calc.sel = key; renderResults(); });
-    resEl.appendChild(b);
+    const rowEl = document.createElement('div'); rowEl.className = 'rc-row';
+    const go = document.createElement('button'); go.type = 'button'; go.className = 'rc-build'; go.textContent = 'Choose';
+    go.disabled = !ok; go.setAttribute('aria-label', `Choose the ${stl.label.toLowerCase()} route and go on to construction`);
+    go.title = 'Choose this route and go on to step 3, construction';
+    go.addEventListener('click', () => chooseRoute(key));
+    rowEl.append(b, go); resEl.appendChild(rowEl);
   }
   const sel = calc.sel && j[calc.sel];
-  if (sel && sel.status === 'ok') resEl.appendChild(profileChart(calc.sel, sel));
+  if (sel && sel.status === 'ok' && (calc.sel !== 'through' || sel.line)) resEl.appendChild(profileChart(calc.sel, sel));
   if (calc.sel === 'shortest' && sel && sel.steep && sel.steep.length) resEl.appendChild(steepChoices(sel));
+  if (calc.sel === 'through' && j.through) resEl.appendChild(borePlan(j.through));
+  else if (j.through && !calc.sel) resEl.appendChild(borePlan(j.through));
   if (j.fleet.trips_per_sol && sel && sel.haulers_needed) {
     const p = document.createElement('p'); p.id = 'calc-note';
     p.textContent = `${j.fleet.trips_per_sol} hauler trips per sol on a ${j.fleet.lanes}-lane, ${j.fleet.road_width_m} m road · ${sel.haulers_needed} hauler${sel.haulers_needed > 1 ? 's' : ''} needed on this route.`;
@@ -2019,7 +2430,8 @@ function steepChoices(r) {
     opts.append(
       mk('ramp', 'Fill a ramp', `straight · ${fmtInt(st.ramp.fill_m3)} m³ fill${st.ramp.cut_m3 ? ` + ${fmtInt(st.ramp.cut_m3)} m³ cut` : ''} · embankment up to ${fmtInt(st.ramp.max_fill_m)} m · ${fmtInt(st.ramp.build_sols)} sols`, '#e0a35c', true),
       mk('road', 'Road on the slope', `${rd.length_km} km${rd.hairpins ? ` · ${rd.hairpins} hairpin${rd.hairpins > 1 ? 's' : ''}` : ''} · ${fmtInt(rd.earthwork_m3)} m³ ${rd.bench} · ${fmtInt(rd.build_sols)} sols`, '#d49a92', true),
-      mk('bore', 'Bore through', bo.status === 'ok' ? `${bo.length_km} km at ${bo.grade_pct}%${bo.spiral_m ? ` (${(bo.spiral_m / 1000).toFixed(1)} km spiral)` : ''} · ${fmtInt(bo.bore_sols)} sols · ${fmtInt(bo.spoil_m3)} m³ spoil` : '', ROUTE_STYLE.tunnel.color, bo.status === 'ok', bo.reason));
+      ...(bo.status === 'ok' || bo.length_km !== undefined   // no third button when steep-stretch bores are off
+        ? [mk('bore', 'Bore through', bo.status === 'ok' ? `${bo.length_km} km at ${bo.grade_pct}%${bo.spiral_m ? ` (${(bo.spiral_m / 1000).toFixed(1)} km spiral)` : ''} · ${fmtInt(bo.bore_sols)} sols · ${fmtInt(bo.spoil_m3)} m³ spoil` : '', ROUTE_STYLE.tunnel.color, bo.status === 'ok', bo.reason)] : []));
     row.append(head, opts);
     row.addEventListener('pointerenter', () => { calc.steepHover = i; }); row.addEventListener('pointerleave', () => { calc.steepHover = null; });
     box.appendChild(row);
@@ -2059,9 +2471,15 @@ function profileChart(key, r) {
     series = [[ground, 'rgba(220,217,210,.55)', ''], [floor, ROUTE_STYLE.tunnel.color, '4 3']];
     title = `${first ? `drive ${first.length_km} km · ` : ''}bore ${r.tunnel.length_km} km · cover ${r.tunnel.cover.min_cover_m}–${Math.round(r.tunnel.cover.max_cover_m)} m${rest.length ? ` · drive ${rest.reduce((a, l) => a + l.length_km, 0).toFixed(1)} km` : ''}`;
   }
-  else if (key === 'shortest' && r.design_profile) {   // ground, and the road line built up with fill where it is too steep
+  else if (key === 'through') {
+    // the straight A–B line: ground, and the floor of each bore under it
+    const ground = r.line.profile.map(q => [q[0], q[1]]), floors = r.bores.map(b => b.profile.map(q => [b.from_km + q[0], q[2]]));
+    series = [[ground, 'rgba(220,217,210,.55)', ''], ...floors.map(f => [f, ROUTE_STYLE.through.color, '4 3'])];
+    title = `Straight A–B line · ${r.bores.length ? `bored level at ${fmtInt(r.height_m)} m: ` + r.bores.map(b => `km ${b.from_km}–${b.to_km}`).join(', ') : 'no bore'}`;
+  }
+  else if ((key === 'shortest' || key === 'minimal') && r.design_profile) {   // ground, and the road line built up with fill where it is too steep
     const p = r.design_profile;
-    series = [[p.map(q => [q[0], q[1]]), 'rgba(220,217,210,.55)', ''], [p.map(q => [q[0], q[2]]), ROUTE_STYLE.shortest.color, '']];
+    series = [[p.map(q => [q[0], q[1]]), 'rgba(220,217,210,.55)', ''], [p.map(q => [q[0], q[2]]), ROUTE_STYLE[key].color, '']];
     title = r.fill_m3 ? `Ground and road line · ${fmtInt(r.fill_m3)} m³ fill, embankment up to ${fmtInt(r.max_fill_m)} m` : `Ground and road line · road follows the ground · ${fmtInt(r.roadbed_m3 + r.bench_m3)} m³ roadbed and side cut`;
   }
   else { series = [[r.profile, ROUTE_STYLE[key].color, '']]; title = `Elevation · climb ${fmtInt(r.climb_m)} m · steepest ${r.max_grade_deg}°`; }
@@ -2117,7 +2535,7 @@ function drawCalc(now) {
   }
   const done = calcTime(now) - calc.end;
   syncScrub(now);
-  const art = done > 0 ? 1 - 0.8 * clamp(done / 1.6) : 1;         // search artifacts fade once the routes are in
+  const art = phase === 'build' ? 0 : done > 0 ? 1 - 0.8 * clamp(done / 1.6) : 1;   // search artifacts fade once the routes are in; gone in step 3
   const ga = ctx.globalAlpha;
   const pw = stepP('window', now);
   if (g.window && pw >= 0) {
@@ -2171,7 +2589,7 @@ function drawCalc(now) {
 function drawRoutes(now, off, sc) {
   const g = calc && calc.kind === 'route' && calc.geo; if (!g) return;
   const P = id => now === null ? 1 : stepP(id, now);
-  const order = ['accessible', 'shortest', 'tunnel'].sort((x, y) => (x === calc.sel) - (y === calc.sel));
+  const order = (phase === 'build' && CHOSEN ? [CHOSEN.key] : ROUTE_KEYS.slice()).sort((x, y) => (x === calc.sel) - (y === calc.sel));
   for (const key of order) {
     const p = P(key); if (p < 0) continue;
     const dim = calc.sel && calc.sel !== key && P('pick') >= 1 ? 0.35 : 1, col = hx(ROUTE_STYLE[key].color).map(c => Math.round(c * 255)).join(',');
@@ -2179,14 +2597,16 @@ function drawRoutes(now, off, sc) {
       ctx.strokeStyle = `rgba(212,154,146,${0.9 * dim})`; ctx.lineWidth = 2.2; ctx.setLineDash([2, 3]); drawPartial(g.gap, p, off, sc); ctx.setLineDash([]);
       const s = proj(...g.gap[0], off, sc); if (s && p >= 1 && now !== null) { ctx.font = '500 9.5px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillStyle = `rgba(212,154,146,${dim})`; ctx.fillText('GAP · ' + calc.res.accessible.gap.width_km + ' KM', s[0] + 6, s[1] - 6); }
     }
-    const paths = key === 'accessible' ? (g.accessible ? [g.accessible] : []) : key === 'shortest' ? (g.shortest ? [g.shortest] : []) : (g.tunnelLegs || []);
+    const paths = key === 'accessible' ? (g.accessible ? [g.accessible] : []) : key === 'shortest' ? (g.shortest ? [g.shortest] : [])
+      : key === 'minimal' ? (g.minimal ? [g.minimal] : []) : key === 'through' ? (g.throughLegs || []) : (g.tunnelLegs || []);
     for (const pts of paths) {
       ctx.lineWidth = 5; ctx.strokeStyle = `rgba(${col},${0.12 * dim})`; drawPartial(pts, p, off, sc);
       ctx.lineWidth = calc.sel === key ? 2 : 1.4; ctx.strokeStyle = `rgba(${col},${0.95 * dim})`; drawPartial(pts, p, off, sc);
     }
     if (key === 'shortest' && g.work && p >= 1) { ctx.lineWidth = 3.2; ctx.strokeStyle = `rgba(212,154,146,${0.85 * dim})`; for (const w of g.work) strokePath(w, off, sc); }
     if (key === 'shortest' && g.steep && p >= 1) drawSteep(g, now, dim, off, sc);
-    if (key === 'tunnel' && g.bore3d) drawBore(g.bore3d, p, col, dim, off, sc, now !== null);
+    if (key === 'tunnel' && g.bore3d) drawBore(g.bore3d, p, col, dim, off, sc, now !== null, calc.res.tunnel.tunnel);
+    if (key === 'through' && g.throughBores) for (const { b, b3 } of g.throughBores) drawBore(b3, p, col, dim, off, sc, now !== null && calc.sel === 'through', b);
   }
 }
 
@@ -2307,7 +2727,7 @@ function drawSteep(g, now, dim, off, sc) {
 }
 
 /* ---------- tunnels underground: depth exaggerated so the bore reads below the surface ---------- */
-const TUNNEL_DEPTH_X = 5;   // on top of the map's ×20 vertical exaggeration
+const TUNNEL_DEPTH_X = 1;   // bores drawn at the map's ×20 vertical exaggeration, like the terrain
 function tunnel3d(tn) {
   const [[lo0, la0], [lo1, la1]] = tn.geometry.coordinates, p = tn.profile, L = p[p.length - 1][0] || 1;
   return p.map(([s, surf, z]) => {
@@ -2317,7 +2737,7 @@ function tunnel3d(tn) {
     return [top, [top[0], top[1] - depth / SPAN_KM * 2 * EXAG * TUNNEL_DEPTH_X, top[2]]];
   });
 }
-function drawBore(b3, p, col, dim, off, sc, labels) {
+function drawBore(b3, p, col, dim, off, sc, labels, t) {
   const n = Math.max(2, Math.ceil(b3.length * p));
   // a faint curtain from the surface down to the bore shows how deep it runs
   ctx.lineWidth = 1; ctx.strokeStyle = `rgba(${col},${0.22 * dim})`;
@@ -2331,7 +2751,7 @@ function drawBore(b3, p, col, dim, off, sc, labels) {
   ctx.lineWidth = 2.2; ctx.setLineDash([7, 4]); ctx.strokeStyle = `rgba(${col},${dim})`; strokePath(b3.slice(0, n).map(q => q[1]), off, sc); ctx.setLineDash([]);
   if (labels && p >= 1) {
     const deepest = b3.reduce((a, q) => (q[0][1] - q[1][1] > a[0][1] - a[1][1] ? q : a));
-    const s = proj(...deepest[1], off, sc), t = calc.res.tunnel.tunnel;
+    const s = proj(...deepest[1], off, sc);
     if (s) { ctx.font = '500 9.5px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillStyle = `rgba(${col},${dim})`; ctx.fillText(`TBM ${t.length_km} KM · COVER UP TO ${Math.round(t.cover.max_cover_m)} M · DEPTH ×${EXAG * TUNNEL_DEPTH_X}`, s[0] + 8, s[1] + 14); }
   }
 }
@@ -2377,16 +2797,10 @@ function updateSiteForm() {
   document.getElementById('area-btn').textContent = a ? 'Mark again' : 'Mark search area';
   sBtn.disabled = !apiOk || !a || !SITE.fac.some(f => SITE.counts[f.id]);
   const pads = SITE.fac.reduce((n, f) => n + (SITE.counts[f.id] || 0), 0);
-  document.getElementById('site-sum').textContent = `${pads} facilit${pads === 1 ? 'y' : 'ies'} · ${a ? areaLabel(a) + ' search area' : 'no area marked'}`;
+  document.getElementById('site-sum').textContent = `${pads} facilit${pads === 1 ? 'y' : 'ies'} · ${a ? areaLabel(a) + ' area' : 'no area marked'}`;
   renderSiteBar();
 }
 document.getElementById('area-btn').addEventListener('click', startArea);
-// the two dropdowns in the Bases panel remember whether they were open
-for (const id of ['route-sec', 'site-sec']) {
-  const d = document.getElementById(id), key = 'mars.open.' + id;
-  try { d.open = localStorage.getItem(key) === '1'; } catch (e) { /* storage unavailable */ }
-  d.addEventListener('toggle', () => { try { localStorage.setItem(key, d.open ? '1' : '0'); } catch (e) { /* storage unavailable */ } });
-}
 sBtn.addEventListener('click', runSiteSearch);
 
 async function runSiteSearch() {
@@ -2401,7 +2815,7 @@ async function runSiteSearch() {
   calc = { kind: 'site', body, area: { ...a, poly: a.poly && a.poly.map(p => [...p]) }, res: null, t0: 0, steps: [], sel: 0, err: null };
   document.getElementById('calc-title').textContent = 'Base site search';
   document.getElementById('calc-sub').textContent = `POST ${API.replace(/^https?:\/\//, '')}/sites/search`;
-  calcEl.hidden = false; document.body.classList.add('calc-open'); document.getElementById('calc-scrubber').hidden = true;
+  calcEl.hidden = false; document.body.classList.add('calc-open'); hideBuild(); document.getElementById('calc-scrubber').hidden = true;
   if (narrow()) document.body.dataset.sheet = 'none';
   resEl.replaceChildren();
   const pads = body.facilities.reduce((s, f) => s + f.count, 0);
@@ -2535,7 +2949,7 @@ function drawPad(p, a, label) {
   const w = Math.max(...s.map(q => q[0])) - Math.min(...s.map(q => q[0]));
   if (label && w > 7) {
     const cx = s.reduce((t, q) => t + q[0], 0) / 4, cy = Math.min(...s.map(q => q[1]));
-    ctx.font = '500 10px "IBM Plex Sans", system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.font = `500 10px ${FN.sans}`; ctx.textAlign = 'center';
     ctx.fillStyle = `rgba(220,217,210,${0.9 * a})`; ctx.fillText(p.name.replace(/ \(.*\)/, ''), cx, cy - 12);
     ctx.font = '400 9px "IBM Plex Mono", ui-monospace, monospace'; ctx.fillStyle = `rgba(${col},${a})`; ctx.fillText(fmtInt(p.earthwork_m3) + ' m³', cx, cy - 3);
     ctx.textAlign = 'left';
@@ -2586,19 +3000,19 @@ function renderSiteResults() {
 function addSiteToPlan(o) {
   if (calc && calc.kind === 'site') calc.added = true;
   SITE.area = null; updateSiteForm();   // this area is done; the bar goes away until a new one is marked
-  const seen = {};
+  const seen = {}, grp = newGroup();
   let last = null;
   for (const p of o.facilities) {
     seen[p.facility] = (seen[p.facility] || 0) + 1;
     const multi = o.facilities.filter(q => q.facility === p.facility).length > 1;
     const name = p.name.replace(/ \(.*\)/, '') + (multi ? ' ' + seen[p.facility] : '');
-    last = addBase(nearestK(uOf(p.center[0]), vOf(p.center[1])), { name, type: TYPE_OF_FACILITY[p.facility] || 'depot', foot: p.side_m, maxSlope: p.max_slope_deg, rate: calc.body.grading_rate_m3_per_sol, pad: p });
+    last = addBase(nearestK(uOf(p.center[0]), vOf(p.center[1])), { name, type: TYPE_OF_FACILITY[p.facility] || 'depot', foot: p.side_m, maxSlope: p.max_slope_deg, rate: calc.body.grading_rate_m3_per_sol, pad: p, g: grp.id });
   }
   const el = document.getElementById('toast'); el.replaceChildren();
   const b = document.createElement('b'); b.textContent = 'Added to the plan. ';
-  el.append(b, document.createTextNode(`${o.facilities.length} facilities, ${fmtInt(o.earthwork_m3)} m³ of earthwork in total.`));
+  el.append(b, document.createTextNode(`${grp.name}: ${o.facilities.length} facilities linked by ${groupLinkKm(grp).toFixed(1)} km of internal roads, ${fmtInt(o.earthwork_m3)} m³ of earthwork in total.`));
   el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 5000);
-  if (last) { selected = last.id; renderBases(); }
+  if (last) { selected = grp.id; renderBases(); }
 }
 // The on-map action bar walks through the flow: area marked -> find the best site -> add the base.
 let barKey = '';
@@ -2622,7 +3036,7 @@ function renderSiteBar() {
 }
 document.getElementById('site-bar-go').addEventListener('click', () => {
   const sc = calc && calc.kind === 'site' && calc.res && calc.res.status === 'ok' && !calc.added ? calc : null;
-  if (sc && resEl.childElementCount) { addSiteToPlan(sc.options[sc.sel]); renderSiteResults(); } else runSiteSearch();
+  if (sc && resEl.childElementCount) { addSiteToPlan(sc.options[sc.sel]); hideCalc(true); } else runSiteSearch();
   renderSiteBar();
 });
 document.getElementById('site-bar-alt').addEventListener('click', () => {
@@ -2630,7 +3044,7 @@ document.getElementById('site-bar-alt').addEventListener('click', () => {
   if (sc && resEl.childElementCount) { focusOption((sc.sel + 1) % sc.options.length); renderSiteResults(); } else startArea();
   renderSiteBar();
 });
-document.getElementById('add-base-btn').addEventListener('click', startArea);
+document.getElementById('add-base-btn').addEventListener('click', () => { if (phase === 'plan') startArea(); });
 // Clear all: first click asks, a second click within 3 s removes every base and marking.
 let clearArm = 0;
 document.getElementById('clear-all').addEventListener('click', e => {
@@ -2643,9 +3057,10 @@ document.getElementById('clear-all').addEventListener('click', e => {
   clearTimeout(clearArm); clearArm = 0; btn.textContent = 'Clear all'; btn.setAttribute('aria-pressed', 'false');
   const n = bases.length;
   if (placing || areaMode) stopPlacing();
-  bases.length = 0; openBases.clear(); selected = null; if (lock != null) unlock();
+  bases.length = 0; groups.length = 0; openBases.clear(); selected = null; if (lock != null) unlock();
   routePt = null; SITE.area = null; SITE.drag = null; SITE.hover = null;
   calc = null; calcEl.hidden = true; document.body.classList.remove('calc-open');
+  closeBuild(); setPhase('plan');
   renderBases(); updateSiteForm(); notifyPlanner();
   const el = document.getElementById('toast'); el.replaceChildren();
   const b = document.createElement('b'); b.textContent = 'Cleared. ';
@@ -2673,13 +3088,435 @@ function drawAreaSelection() {
   if (top) { ctx.font = font; ctx.fillStyle = 'rgba(205,180,142,.95)'; ctx.fillText(`SEARCH AREA · ${areaLabel(a).toUpperCase()}`, top[0] + 6, top[1] - 8); }
 }
 
+/* ---------- construction simulator (backend/construct): units build the picked route tile by tile ---------- */
+// "Construct" on a route option sends that route's line to the backend, which splits it into 400 m tiles. The backend
+// runs the job in chunks (up to the next incident, or to the end with the fixed rule); the page plays the frames back
+// at the chosen speed and stops at each incident for a decision (Claude's, the rule's or the user's). Work the
+// simulator doesn't model takes a fixed time after the road: the TBM bore of a tunnel route, and a pad at each base end.
+const PAD_SOLS = 10;   // a landing/foundation pad at each base the road connects, built in parallel by the pad crew
+const BL = id => document.getElementById(id);
+const buildEl = BL('build');
+let buildTok = 0;
+const freshBuild = () => ({ job: null, title: '', who: 'ai', units: 4, plan: null, state: null, tiles: null, tw: null, geo: null,
+  frames: [], fi: 0, seen: 0, maxSeen: -1, playing: true, busy: false, pendingLog: [], inc: null, thinking: false, incErr: '',
+  holdUntil: 0, done: false, report: null, last: 0, statKey: '', fixed: [], fixedT: 0, roadDone: false, doneTiles: new Set() });
+let B = freshBuild();
+async function capi(path, body) {
+  const r = await fetch(API + path, body === undefined ? {} : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(typeof j.detail === 'string' ? j.detail : Array.isArray(j.detail) ? j.detail.map(d => d.msg).join('; ') : `${r.status} ${r.statusText}`);
+  return j;
+}
+const byLabel = by => !by ? '' : by.startsWith('ai:') ? `Claude (${by.slice(3)})` : by === 'user' ? 'you' : by === 'rule' ? 'fixed rule' : by;
+const fixedSols = () => B.fixed.reduce((s, f) => s + f.sols, 0);
+function updateBuildForm() {
+  BL('ask-job-wrap').hidden = !B.job;
+  const run = jobRunning(), start = BL('build-start');
+  for (const id of ['build-units', 'build-who']) BL(id).disabled = run;
+  start.disabled = run || !CHOSEN || (!CHOSEN.paths.length && !CHOSEN.bores.length);
+  start.textContent = run ? 'Construction running…' : B.done || B.failed ? 'Run construction again' : 'Start construction';
+}
+const setSpeedLabel = () => { const v = +BL('build-speed').value; BL('build-speed-v').textContent = v ? `${v} sol${v === 1 ? '' : 's'}/s` : 'stopped'; };
+BL('build-speed').addEventListener('input', setSpeedLabel);
+BL('build-close').addEventListener('click', closeBuild);
+BL('build-start').addEventListener('click', startBuild);
+
+/* ---------- the three steps in the Bases panel: plan the bases, route between them, build the route ---------- */
+// Strictly in order: routing needs a base, construction needs a chosen route. Going back closes what the later
+// steps had open (a plan change can invalidate the routes, a new route the construction).
+let phase = 'plan';
+const PHASES = ['plan', 'route', 'build'];
+const phaseOk = p => p === 'plan' || (p === 'route' && groups.length > 0) || (p === 'build' && !!CHOSEN);
+function setPhase(p) {
+  if (!phaseOk(p) || p === phase) return syncPhases();
+  // leaving step 3 ends its construction job: ask first while one is running
+  if (phase === 'build' && jobRunning() && !confirm('Construction is still running. Leave step 3 and end this job?')) return;
+  const from = phase; phase = p;
+  if (p === 'plan') { CHOSEN = null; if (calc && calc.kind === 'route') hideCalc(true); closeBuild(); }
+  if (p === 'route') {
+    if (placing && !placing.pick || areaMode) stopPlacing();
+    if (calc && calc.kind === 'site') hideCalc(true);
+    if (from === 'build') { CHOSEN = null; closeBuild(); showRouteCalc(); }
+  }
+  if (p === 'build') { if (placing) stopPlacing(); hideCalc(false); renderChoice(); updateBuildForm(); }
+  syncPhases();
+}
+function syncPhases() {
+  const at = PHASES.indexOf(phase);
+  document.querySelectorAll('#phases button').forEach(b => {
+    const i = PHASES.indexOf(b.dataset.p);
+    b.disabled = !phaseOk(b.dataset.p);
+    b.classList.toggle('done', i < at);
+    if (i === at) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+    b.title = b.disabled ? (b.dataset.p === 'route' ? 'Plan a base first' : 'Choose a route in step 2 first') : '';
+  });
+  for (const p of PHASES) BL('phase-' + p).hidden = p !== phase;
+  const next = BL('to-route'); next.disabled = !groups.length; next.title = groups.length ? '' : 'Plan a base first';
+  next.classList.toggle('ready', groups.length > 0);
+  BL('add-base-btn').hidden = phase !== 'plan';
+  const hint = BL('route-hint'); hint.hidden = !(calc && calc.kind === 'route' && calc.res);
+  hint.textContent = 'Choose one of the routes in the route panel to go on to construction.';
+}
+document.querySelectorAll('#phases button').forEach(b => b.addEventListener('click', () => setPhase(b.dataset.p)));
+document.querySelectorAll('.btn-back').forEach(b => b.addEventListener('click', () => setPhase(b.dataset.go)));
+BL('to-route').addEventListener('click', () => setPhase('route'));
+BL('build-play').addEventListener('click', () => { B.playing = !B.playing; syncPlay(); });
+function syncPlay() { const b = BL('build-play'); b.textContent = B.playing ? '❚❚' : '▶'; b.setAttribute('aria-label', B.playing ? 'Pause' : 'Play'); }
+
+// the line(s) the road is graded along, and the fixed-time work, for a route option
+function routeWork(key) {
+  const r = calc.res[key], ends = [calc.a, calc.b], with0 = c => [[calc.a.lon, calc.a.lat], ...c, [calc.b.lon, calc.b.lat]];
+  // each base's internal roads are built with the route: its facilities come linked by default
+  const internal = [];
+  for (const e of ends) { const g = e.base && groupOf(e.base); if (g) for (const [p, q, km] of groupLinks(g)) internal.push({ km, line: [[lonOf(U[p.k]), latOf(V[p.k])], [lonOf(U[q.k]), latOf(V[q.k])]] }); }
+  const fixed = [], bores = [];   // bores are dug by TBMs in the simulation, alongside the road crews
+  let paths;
+  if (key === 'tunnel') {
+    paths = r.surface_legs.map(l => l.geometry.coordinates);
+    bores.push({ coordinates: r.tunnel.geometry.coordinates, length_m: Math.round(r.tunnel.length_km * 1000) });
+  } else if (key === 'through') {
+    paths = r.legs.map(l => l.geometry.coordinates);
+    for (const b of r.bores) bores.push({ coordinates: b.geometry.coordinates, length_m: Math.round(b.length_km * 1000) });
+    const legBore = r.legs.reduce((t, l) => t + (l.bore_sols || 0), 0);
+    if (legBore) fixed.push({ label: 'TBM bores under steep stretches of the roads', sols: Math.round(legBore) });
+  } else if (key === 'minimal') {
+    // only the stretches the fleet can't already drive are built; the rest is driven as it is
+    paths = r.segments.map(sg => sg.coordinates).filter(c => c.length > 1);
+    if (r.bore_sols) fixed.push({ label: 'TBM bores under steep stretches', sols: Math.round(r.bore_sols) });
+  } else {
+    paths = [with0(r.geometry.coordinates)];
+    if (key === 'shortest') { const T = shortestTotals(r); if (T.bore) fixed.push({ label: `TBM bores under steep stretches, ${T.boreKm.toFixed(1)} km`, sols: Math.round(T.bore) }); }
+  }
+  const nPads = ends.filter(e => e.base).length;
+  if (nPads) fixed.push({ label: `Pad${nPads > 1 ? 's' : ''} at ${ends.filter(e => e.base).map(e => e.name).join(' and ')}`, sols: PAD_SOLS });
+  return { paths: paths.concat(internal.map(l => l.line)), fixed, bores, internalKm: internal.reduce((t, l) => t + l.km, 0),
+    boreKm: bores.reduce((t, b) => t + b.length_m / 1000, 0), tbms: (calc.body && calc.body.tbm && calc.body.tbm.count) || 2 };
+}
+
+// the route results stay in `calc` while step 3 hides their panel, so going back to step 2 restores them
+function hideCalc(drop) { if (drop) calc = null; calcEl.hidden = true; document.body.classList.remove('calc-open'); }
+function showRouteCalc() { if (calc && calc.kind === 'route') { calcEl.hidden = false; document.body.classList.add('calc-open'); hideBuild(); renderResults(); } }
+const jobRunning = () => !!(B && !B.failed && (B.busy || (B.job && !B.done)));
+function openBuildPanel() {
+  hideCalc(false);
+  buildEl.hidden = false; document.body.classList.add('build-open');
+  if (narrow()) document.body.dataset.sheet = 'none';
+}
+function hideBuild() { buildEl.hidden = true; document.body.classList.remove('build-open'); }
+function closeBuild() {
+  buildTok++; B = freshBuild(); hideBuild();
+  for (const id of ['build-log', 'build-inc', 'build-report', 'build-stats', 'build-units-row']) BL(id).replaceChildren();
+  updateBuildForm();
+}
+
+// step 2 → 3: the route chosen in the route panel, with everything construction needs from it
+let CHOSEN = null;
+function chooseRoute(key) {
+  if (!calc || !calc.res || !calc.res[key] || calc.res[key].status !== 'ok') return;
+  const r = calc.res[key], km = key === 'shortest' ? shortestTotals(r).km : key === 'through' ? r.road_km
+    : key === 'minimal' ? r.segments.reduce((t, sg) => t + sg.to_km - sg.from_km, 0) : r.length_km;
+  CHOSEN = { key, a: calc.a, b: calc.b, km, ...routeWork(key) };
+  calc.sel = key; renderResults();
+  setPhase('build');
+}
+function renderChoice() {
+  const host = BL('build-choice'); host.replaceChildren(); if (!CHOSEN) return;
+  host.style.setProperty('--rc', ROUTE_STYLE[CHOSEN.key].color);
+  const line = (tag, text) => { const e = document.createElement(tag); e.textContent = text; host.appendChild(e); };
+  line('b', `${ROUTE_STYLE[CHOSEN.key].label} route · ${CHOSEN.a.name} → ${CHOSEN.b.name}`);
+  line('span', `${CHOSEN.km.toFixed(1)} km of road${CHOSEN.key === 'minimal' ? ' to build (the rest is driven as it is)' : ''}${CHOSEN.internalKm ? ` + ${CHOSEN.internalKm.toFixed(1)} km of internal roads between facilities` : ''}, graded by the units`);
+  if (CHOSEN.bores.length) line('span', `${CHOSEN.boreKm.toFixed(1)} km bored by ${CHOSEN.tbms} TBM${CHOSEN.tbms > 1 ? 's' : ''} at the same time (set up at the portals, boring toward each other); road crews start on both sides and can't cross until a bore breaks through`);
+  for (const f of CHOSEN.fixed) line('span', `${f.label}: fixed ${f.sols} sols after the road`);
+  const none = !CHOSEN.paths.length && !CHOSEN.bores.length;
+  updateBuildForm();
+  if (none) line('span', 'Nothing to grade: the fleet can drive this route as it is, and neither base has internal roads.');
+}
+async function startBuild() {
+  if (!CHOSEN || (!CHOSEN.paths.length && !CHOSEN.bores.length) || jobRunning()) return;
+  const { key, paths, fixed, bores, tbms } = CHOSEN, who = BL('build-who').value;
+  const units = clamp(Math.round(+BL('build-units').value || 4), 1, 40); BL('build-units').value = units;
+  const title = `${ROUTE_STYLE[key].label} road · ${CHOSEN.a.name} → ${CHOSEN.b.name}`;
+  const body = { kind: 'route', mode: key, paths, units, seed: Math.floor(Math.random() * 1e9), ...(bores.length ? { bores, tbms } : {}) };
+  closeBuild();
+  const tok = buildTok;
+  B = { ...freshBuild(), title, who, units, busy: true, fixed };
+  updateBuildForm();
+  BL('build-title').textContent = title; BL('build-sub').textContent = 'Planning tiles from the terrain…'; BL('build-status').textContent = '';
+  syncPlay(); setSpeedLabel(); openBuildPanel();
+  try {
+    const j = await capi('/construct/jobs', body);
+    if (tok !== buildTok) return;
+    const t = await capi(`/construct/jobs/${j.job_id}/tiles`);
+    if (tok !== buildTok) return;
+    Object.assign(B, { job: j.job_id, plan: j.plan, state: j.state, tiles: t.tiles, busy: false });
+    B.tw = t.tiles.map(x => wp(x.lon, x.lat, 0.04));
+    const g = t.geometry; B.geo = (g.type === 'MultiLineString' ? g.coordinates : [g.coordinates]).map(line);
+    const tg = j.state.target;
+    BL('build-sub').textContent = `${j.plan.length_km} km of road${j.plan.bore_km ? ` + ${j.plan.bore_km} km bored by ${j.state.machines.tbms} TBMs` : ''} · ${j.plan.tiles} tiles · ${units} units · plan ${tg.estimate_sols} sols, $${tg.estimate_cost_musd}M`.toUpperCase()
+      + (fixed.length ? ' · THEN ' + fixed.map(f => `${f.label.toLowerCase()} ${f.sols} sols`).join(', ').toUpperCase() + ' (FIXED)' : '');
+    updateBuildForm();
+  } catch (e) { if (tok === buildTok) buildFail(e); }
+}
+function buildFail(e) { B.busy = false; B.failed = true; updateBuildForm(); BL('build-status').textContent = ''; BL('build-sub').textContent = 'Could not run the job: ' + e.message; }
+
+async function fetchMore() {
+  if (B.busy || B.done || !B.job) return;
+  B.busy = true; const tok = buildTok;
+  try {
+    const r = await capi(`/construct/jobs/${B.job}/run`, { decide: B.who === 'rule' ? 'rule' : 'stop', frames: true });
+    if (tok !== buildTok) return;
+    B.frames.push(...r.frames); B.state = r.state; B.pendingLog.push(...r.decided);
+    B.busy = false;
+  } catch (e) { if (tok === buildTok) buildFail(e); }
+}
+// playback: called every animation frame from the overlay
+function tickBuild(now) {
+  const dt = B.last ? Math.min(0.1, (now - B.last) / 1000) : 0; B.last = now;
+  if (!B.job) return;
+  const speed = +BL('build-speed').value;   // sols per second
+  if (B.inc && B.inc.status === 'resolved' && B.playing && now > B.holdUntil) { B.inc = null; renderIncident(); }
+  if (B.playing && !B.inc) {
+    if (B.roadDone) B.fixedT = Math.min(fixedSols(), B.fixedT + dt * speed);
+    else B.fi = Math.min(B.frames.length, B.fi + dt * speed / 0.25);
+  }
+  const n = Math.ceil(B.fi);
+  for (; B.seen < n; B.seen++) for (const t of B.frames[B.seen].finished || []) B.doneTiles.add(t);
+  const cur = n ? B.frames[n - 1] : null;
+  if (cur) while (B.pendingLog.length && B.pendingLog[0].sol <= cur.sol + 1e-6) addLog(B.pendingLog.shift());
+  if (!B.roadDone && B.fi >= B.frames.length && !B.busy && !B.inc && B.state) {
+    const st = B.state;
+    if (st.open_incident) showIncident(st.open_incident);
+    else if (st.done) { B.roadDone = true; while (B.pendingLog.length) addLog(B.pendingLog.shift()); }
+    else fetchMore();
+  }
+  if (B.roadDone && !B.done && B.fixedT >= fixedSols()) finishBuild();
+  renderBuildStats(cur);
+}
+// which fixed stage is under way, and how far along
+function fixedStage() {
+  let t = B.fixedT;
+  for (const f of B.fixed) { if (t < f.sols) return { f, p: t / f.sols }; t -= f.sols; }
+  return null;
+}
+function renderBuildStats(cur) {
+  const st = B.state; if (!st) return;
+  const tg = st.target, road = cur ? cur.sol : 0, sol = road + B.fixedT, spent = cur ? cur.spent_musd : 0, pct = cur ? cur.progress_pct : 0;
+  const fs = B.roadDone && !B.done ? fixedStage() : null;
+  const status = B.done ? 'Finished' : fs ? `${fs.f.label} · fixed ${fs.f.sols} sols · ${Math.round(fs.p * 100)}%` : B.inc ? (B.inc.status === 'resolved' ? 'Decided' : B.thinking ? 'Claude is deciding…' : B.who === 'me' ? 'Your decision' : 'Incident') : cur && cur.storm ? 'Dust storm' : B.playing && +BL('build-speed').value ? 'Grading the road' : 'Paused';
+  const key = [sol.toFixed(2), spent, pct, status, cur && cur.units.map(u => u.status).join()].join('|');
+  if (key === B.statKey) return; B.statKey = key;
+  BL('build-bar').style.width = (B.done ? 100 : pct * (B.fixed.length ? 0.999 : 1)) + '%';
+  const g = BL('build-stats'); g.replaceChildren();
+  const cell = (k, v, over) => { const d = document.createElement('div'); const s = document.createElement('span'); s.className = 'k'; s.textContent = k; d.append(s, document.createTextNode(v)); if (over) d.className = 'over'; g.appendChild(d); };
+  cell('Sol', B.fixed.length ? `${sol.toFixed(1)} · road ${road.toFixed(1)} of ${tg.deadline_sols}` : `${sol.toFixed(1)} of ${tg.deadline_sols}`, road > tg.deadline_sols);
+  cell('Road spend', `$${spent.toFixed(1)}M of $${tg.budget_musd}M`, spent > tg.budget_musd);
+  cell('Road progress', `${pct.toFixed(1)}%`);
+  cell('Tiles left', cur ? String(cur.tiles_left) : String(B.plan ? B.plan.tiles : ''));
+  const ur = BL('build-units-row'); ur.replaceChildren();
+  for (const u of cur ? cur.units : []) { const s = document.createElement('span'); s.className = u.status; s.textContent = `${u.id} ${u.status}`; ur.appendChild(s); }
+  BL('build-status').textContent = status;
+}
+
+function showIncident(inc) {
+  B.inc = inc; B.thinking = false; B.incErr = ''; renderIncident();
+  if (B.who === 'ai') aiDecide();
+}
+async function aiDecide() {
+  const inc = B.inc, tok = buildTok; if (!inc || inc.status !== 'open') return;
+  B.thinking = true; B.incErr = ''; renderIncident();
+  try { const r = await capi(`/construct/jobs/${B.job}/incidents/${inc.id}/ai-decide`, {}); if (tok === buildTok) resolved(r); }
+  catch (e) { if (tok === buildTok) { B.thinking = false; B.incErr = e.message; renderIncident(); } }
+}
+async function userDecide(opt) {
+  const inc = B.inc, tok = buildTok; if (!inc || inc.status !== 'open' || B.thinking) return;
+  B.thinking = true; renderIncident();
+  try { const r = await capi(`/construct/jobs/${B.job}/incidents/${inc.id}/decide`, { option: opt }); if (tok === buildTok) resolved(r); }
+  catch (e) { if (tok === buildTok) { B.thinking = false; B.incErr = e.message; renderIncident(); } }
+}
+function resolved(r) {
+  B.thinking = false; B.inc = r.incident; B.state = r.state; addLog(r.incident); renderIncident();
+  B.holdUntil = performance.now() + (r.incident.rationale ? 4000 : 1200);   // time to read the choice, then carry on
+}
+function renderIncident() {
+  const host = BL('build-inc'); host.replaceChildren();
+  const inc = B.inc; if (!inc) return;
+  const card = document.createElement('div'); card.className = 'binc';
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  card.append(el('b', '', `Sol ${inc.sol.toFixed(1)} · ${inc.title}`), el('p', '', inc.report));
+  if (inc.tile) card.appendChild(el('p', '', `Tile ${inc.tile.index}: slope ${inc.tile.slope_deg}°, rock cover ${inc.tile.rock_cover_pct}%, hazard ${inc.tile.hazard}, ${inc.tile.work_left_unit_sols} unit-sols of work left`));
+  const opts = el('div', 'opts');
+  const pick = B.who === 'me' && inc.status === 'open' && !B.thinking || (B.incErr && inc.status === 'open');
+  for (const o of inc.options) {
+    const b = el('button', 'opt' + (inc.choice === o.id ? ' chosen' : '')); b.type = 'button'; b.disabled = !pick;
+    b.append(o.label, el('small', '', `about +${o.est_delay_sols} sols · $${o.est_cost_musd}M${o.risk ? ' · risk: ' + o.risk : ''}`));
+    b.addEventListener('click', () => userDecide(o.id));
+    opts.appendChild(b);
+  }
+  card.appendChild(opts);
+  if (inc.status === 'open' && B.thinking) card.appendChild(el('p', 'who', B.who === 'me' ? 'Applying…' : 'Claude is weighing the options against the budget and deadline…'));
+  if (inc.status === 'open' && !B.thinking && (B.who === 'me' || B.incErr)) {
+    const row = el('div', 'row'), ask = el('button', 'btn-ghost', B.incErr ? 'Try Claude again' : 'Let Claude decide'); ask.type = 'button';
+    ask.addEventListener('click', aiDecide); row.appendChild(ask); card.appendChild(row);
+  }
+  if (B.incErr) card.appendChild(el('p', 'who', 'Claude could not decide: ' + B.incErr + '. Pick an option yourself.'));
+  if (inc.status === 'resolved') {
+    if (inc.rationale) card.appendChild(el('div', 'why', inc.rationale));
+    card.appendChild(el('span', 'who', `Decided by ${byLabel(inc.decided_by)}${B.playing ? '' : ' · press ▶ to continue'}`));
+  }
+  host.appendChild(card);
+}
+function addLog(inc) {
+  const li = document.createElement('li'), o = inc.options.find(x => x.id === inc.choice);
+  const t = document.createElement('span'); t.className = 't'; t.textContent = `Sol ${inc.sol.toFixed(1)} · ${inc.title}`;
+  const c = document.createElement('span'); c.className = 'c'; c.textContent = ` → ${o ? o.label : inc.choice}`;
+  const r = document.createElement('span'); r.className = 'r'; r.textContent = `${byLabel(inc.decided_by)}${inc.rationale ? ': ' + inc.rationale : ''}`;
+  li.append(t, c, r); BL('build-log').prepend(li);
+}
+async function finishBuild() {
+  B.done = true; updateBuildForm();
+  const tok = buildTok;
+  let rep; try { rep = await capi(`/construct/jobs/${B.job}/report`); } catch (e) { return; }
+  if (tok !== buildTok) return;
+  const host = BL('build-report'); host.replaceChildren();
+  const h = document.createElement('h4'); h.textContent = 'Report'; host.appendChild(h);
+  const tb = document.createElement('table');
+  const row = (cells, th) => { const tr = document.createElement('tr'); for (const c of cells) { const d = document.createElement(th ? 'th' : 'td'); d.textContent = c; tr.appendChild(d); } tb.appendChild(tr); };
+  const pc = v => v == null ? '–' : (v > 0 ? '+' : '') + v + '%';
+  row([B.tiles && B.tiles.some(t => t.kind !== 'road') ? 'Road and bores' : 'Road', 'PLAN', 'TARGET', 'ACTUAL', 'VS TARGET'], true);
+  row(['Time, sols', rep.planned.sols, rep.target.deadline_sols, rep.actual.sols, pc(rep.overrun_pct.time)]);
+  row(['Cost, $M', rep.planned.cost_musd, rep.target.budget_musd, rep.actual.cost_musd, pc(rep.overrun_pct.cost)]);
+  for (const f of B.fixed) row([f.label, f.sols, '', f.sols, 'fixed']);
+  if (B.fixed.length) row(['Total, sols', '', '', +(rep.actual.sols + fixedSols()).toFixed(1), '']);
+  host.appendChild(tb);
+  const by = {}; for (const i of rep.incidents) { const k = byLabel(i.decided_by); by[k] = (by[k] || 0) + 1; }
+  const p = document.createElement('p'); p.className = 'note'; p.style.margin = '0';
+  p.textContent = `${rep.incidents.length} incident${rep.incidents.length === 1 ? '' : 's'}` + (rep.incidents.length ? ' · decided by ' + Object.entries(by).map(([k, n]) => `${k} ${n}`).join(', ') : '') + '.';
+  host.appendChild(p);
+  // docs/construction-guard.md: results shown as the decisions' performance must say the guard is on
+  const g = document.createElement('p'); g.className = 'note'; g.style.margin = '0';
+  g.textContent = 'The simulator\'s overrun guard was on: it keeps every job within 10% of its budget and deadline, so this result doesn\'t measure the decisions alone.';
+  host.appendChild(g);
+  // after-action review: Claude writes procedure improvements from this job (POST /construct/jobs/{id}/review)
+  const rr = document.createElement('div'); rr.id = 'build-review-row';
+  const rb = document.createElement('button'); rb.type = 'button'; rb.className = 'btn-primary'; rb.textContent = 'Write hazard review';
+  const rs = document.createElement('span'); rs.className = 'note';
+  const dl = document.createElement('a'); dl.textContent = 'Download PDF'; dl.hidden = true;
+  const out = document.createElement('div'); out.id = 'build-review'; out.hidden = true;
+  rr.append(rb, rs, dl); host.append(rr, out);
+  rb.addEventListener('click', async () => {
+    const job = B.job; rb.disabled = true; rs.textContent = 'Claude is reviewing the hazards (about a minute)…';
+    try {
+      const r = await capi(`/construct/jobs/${job}/review`, {});
+      if (tok !== buildTok) return;
+      renderMd(out, r.markdown); out.hidden = false; rs.textContent = '';
+      dl.href = API + `/construct/jobs/${job}/review?format=pdf`; dl.download = `${job}-hazard-review.pdf`; dl.hidden = false;
+      rb.textContent = 'Rewrite review';
+    } catch (err) { rs.textContent = 'Claude could not write the review: ' + err.message; }
+    rb.disabled = false;
+  });
+}
+
+// on the map: the road line, its tiles (pending, being worked, done) and the units
+function drawBuild(now) {
+  tickBuild(now);
+  if (!B.tw || buildEl.hidden) return;
+  const ga = ctx.globalAlpha, cur = B.frames[Math.ceil(B.fi) - 1];
+  ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]); ctx.strokeStyle = 'rgba(205,180,142,.55)'; for (const l of B.geo) strokePath(l); ctx.setLineDash([]);
+  // bores: a dashed line through their tiles, portal to portal
+  const boreLines = new Map();
+  B.tiles.forEach((t, i) => { if (t.kind !== 'road' && t.bore != null) { if (!boreLines.has(t.bore)) boreLines.set(t.bore, []); boreLines.get(t.bore).push(B.tw[i]); } });
+  ctx.lineWidth = 1.6; ctx.setLineDash([6, 4]); ctx.strokeStyle = 'rgba(143,179,196,.6)';
+  for (const pts of boreLines.values()) strokePath(pts);   // tiles are stored portal a, the cut in order, portal b
+  ctx.setLineDash([]);
+  const t0 = B.tiles[0], a = proj(...B.tw[0]), b = proj(...wp(t0.lon + 0.2 / (DEG_KM * Math.cos(t0.lat * D2R)), t0.lat, 0.04));
+  const half = a && b ? clamp(Math.hypot(b[0] - a[0], b[1] - a[1]), 1.5, 40) : 3;
+  const busy = new Map(); if (cur) for (const u of cur.units) if (u.tile != null) busy.set(u.tile, u.status === 'down' ? 'down' : busy.get(u.tile) || 'work');
+  const incTile = B.inc && B.inc.tile ? B.inc.tile.index : -1, pulse = 0.5 + 0.5 * Math.sin(now / 200);
+  B.tw.forEach((w, i) => {
+    const s = proj(...w); if (!s) return;
+    const st = B.roadDone ? 'done' : busy.get(i) || (B.doneTiles.has(i) ? 'done' : 'todo');
+    const tk = B.tiles[i].kind;
+    if (tk === 'bore' || tk === 'portal') {   // underground: round markers in the TBM colour
+      const r = tk === 'portal' ? half * 0.8 : half * 0.55;
+      ctx.beginPath(); ctx.arc(s[0], s[1], r, 0, Math.PI * 2);
+      if (i === incTile) { ctx.fillStyle = `rgba(212,120,110,${0.5 + 0.4 * pulse})`; ctx.fill(); }
+      else if (st === 'todo') { ctx.strokeStyle = 'rgba(143,179,196,.45)'; ctx.lineWidth = 0.9; ctx.stroke(); }
+      else { ctx.fillStyle = st === 'done' ? 'rgba(143,179,196,.55)' : st === 'down' ? 'rgba(212,154,146,.85)' : `rgba(143,179,196,${0.7 + 0.3 * pulse})`; ctx.fill(); }
+      return;
+    }
+    if (i === incTile) { ctx.fillStyle = `rgba(212,120,110,${0.5 + 0.4 * pulse})`; }
+    else ctx.fillStyle = st === 'done' ? 'rgba(159,191,168,.55)' : st === 'work' ? 'rgba(224,163,92,.8)' : st === 'down' ? 'rgba(212,154,146,.8)' : 'rgba(220,217,210,.12)';
+    ctx.fillRect(s[0] - half, s[1] - half * 0.7, half * 2, half * 1.4);
+    if (st === 'todo') { ctx.strokeStyle = 'rgba(220,217,210,.3)'; ctx.lineWidth = 0.8; ctx.strokeRect(s[0] - half, s[1] - half * 0.7, half * 2, half * 1.4); }
+  });
+  if (cur && !B.roadDone) {
+    ctx.font = '500 9px "IBM Plex Mono", ui-monospace, monospace';
+    const per = new Map();
+    cur.units.forEach(u => {
+      if (u.tile == null) return;
+      const s = proj(...B.tw[u.tile]); if (!s) return;
+      const k = per.get(u.tile) || 0; per.set(u.tile, k + 1);
+      const x = s[0] + (k ? Math.cos(k * 2.1) * 9 : 0), y = s[1] + (k ? Math.sin(k * 2.1) * 9 : 0);
+      const tbm = u.kind === 'tbm';
+      ctx.fillStyle = u.status === 'down' ? '#d49a92' : tbm ? '#8fb3c4' : '#efdcb8'; ctx.beginPath();
+      if (tbm) ctx.rect(x - 4, y - 4, 8, 8); else ctx.arc(x, y, 3.6, 0, Math.PI * 2);
+      ctx.fill(); ctx.strokeStyle = 'rgba(9,11,14,.8)'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = tbm ? 'rgba(143,179,196,.95)' : 'rgba(239,220,184,.9)'; ctx.fillText(u.id, x + 6, y - 5);
+    });
+  }
+  ctx.globalAlpha = ga;
+}
+
+/* ---------- Ask Claude: questions about the project (and the job on screen), POST /construct/ask ---------- */
+const ASK = { hist: [], busy: false };
+function setAsk(on) {
+  BL('ask').hidden = !on; document.body.classList.toggle('ask-open', on); BL('ask-btn').setAttribute('aria-pressed', String(on));
+  if (on) { BL('ask-job-wrap').hidden = !B.job; BL('ask-q').focus(); }
+}
+function renderMd(el, text) {   // **bold** and `code`; everything else as plain text
+  el.replaceChildren(); text = text.replace(/^#{1,6}\s*/gm, '');
+  const re = /(\*\*[^*]+\*\*|`[^`]+`)/g; let last = 0, m;
+  while ((m = re.exec(text))) {
+    if (m.index > last) el.append(text.slice(last, m.index));
+    const tk = m[0], n = document.createElement(tk[0] === '`' ? 'code' : 'b'); n.textContent = tk[0] === '`' ? tk.slice(1, -1) : tk.slice(2, -2);
+    el.append(n); last = m.index + tk.length;
+  }
+  el.append(text.slice(last));
+}
+BL('ask-btn').addEventListener('click', () => setAsk(BL('ask').hidden));
+BL('ask-close').addEventListener('click', () => setAsk(false));
+BL('ask-clear').addEventListener('click', () => { if (ASK.busy) return; ASK.hist = []; BL('ask-log').replaceChildren(); });
+BL('ask-q').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); BL('ask-form').requestSubmit(); } });
+BL('ask-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const q = BL('ask-q').value.trim(); if (!q || ASK.busy) return;
+  if (!apiOk) { const w = document.createElement('div'); w.className = 'a err'; w.textContent = 'The planner backend is not reachable.'; BL('ask-log').appendChild(w); return; }
+  ASK.busy = true; BL('ask-send').disabled = true; BL('ask-q').value = '';
+  const log = BL('ask-log'), qd = document.createElement('div'); qd.className = 'q'; qd.textContent = q;
+  const ad = document.createElement('div'); ad.className = 'a wait'; ad.textContent = 'Thinking…';
+  log.append(qd, ad); log.scrollTop = log.scrollHeight;
+  const body = { question: q, history: ASK.hist.slice(-20) };
+  if (B.job && BL('ask-job').checked) body.job_id = B.job;
+  try {
+    const r = await capi('/construct/ask', body);
+    ad.className = 'a'; renderMd(ad, r.answer);
+    ASK.hist.push({ role: 'user', content: q }, { role: 'assistant', content: r.answer });
+  } catch (err) { ad.className = 'a err'; ad.textContent = 'Claude could not answer: ' + err.message; }
+  ASK.busy = false; BL('ask-send').disabled = false; log.scrollTop = log.scrollHeight;
+});
+buildReady = true; updateBuildForm(); setSpeedLabel(); syncPhases();
+// left panels start just under the top bar, however its buttons wrap
+{ const hdr = document.querySelector('header.topbar');
+  const fit = () => { const b = hdr.getBoundingClientRect().bottom; document.documentElement.style.setProperty('--hdr', Math.max(0, Math.round(b + 12)) + 'px'); };
+  new ResizeObserver(fit).observe(hdr); addEventListener('resize', fit); fit(); }
+
 /* ---------- boot ---------- */
 document.getElementById('cell-km').textContent = (SPAN_KM / N).toFixed(2) + ' km';
 computeHazard();
 if (gl) initGL();
 buildStackUI();
 resize(); addEventListener('resize', resize);
-addBase(nearestK(J.u + 0.012, J.v - 0.016), { name: 'Habitat Alpha', type: 'habitat', foot: 120, maxSlope: 3, rate: 50 }, true);
+addBase(nearestK(J.u + 0.012, J.v - 0.016), { name: 'Habitat Alpha', type: 'habitat', foot: 120, maxSlope: 3, rate: 50, g: newGroup('Alpha base', true).id }, true);
 plannerChanged();
 for (const s of SHEETS) s.pos = s.slot;
 loadCatalog().then(loadFacilities);

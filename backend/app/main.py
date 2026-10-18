@@ -11,9 +11,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import routing, sites, tunnels
+from . import routing, sites, through, tunnels
 from .catalog import FACILITIES, TBMS, VEHICLES
-from .models import TBM, Facility, RouteRequest, SiteRequest, TunnelRequest, Vehicle
+from .models import TBM, Facility, RouteRequest, SiteRequest, ThroughRequest, TunnelRequest, Vehicle
 from .terrain import get_terrain
 
 
@@ -100,6 +100,15 @@ def catalog_equipment() -> list[Vehicle]:
 def routes(req: RouteRequest):
     _in_bounds(req.from_, req.to)
     return routing.plan_routes(get_terrain(), req, _vehicles(req.equipment), _tbm(req.tbm.model))
+
+
+@app.post("/routes/through")
+def routes_through(req: ThroughRequest):
+    """Bore through: a road to a portal, a straight TBM bore along the A–B line, a road on. `decide: "ai"` has
+    Claude read the elevation along the line and the routes and choose which part to bore (the rule if Claude
+    can't be reached); `"rule"` takes the cheapest single bore; `bores` costs a given plan."""
+    _in_bounds(req.from_, req.to)
+    return through.plan(get_terrain(), req, _vehicles(req.equipment), _tbm(req.tbm.model))
 
 
 @app.post("/tunnels/plan")

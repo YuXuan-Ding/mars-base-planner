@@ -16,6 +16,7 @@ Levers, gentlest first, each used only when the job is trending past a soft targ
      at that step
 """
 from __future__ import annotations
+import math
 
 SOFT_SHARE = 0.6        # soft target = 1 + 0.6 x cap
 MAX_BOOST = 6.0
@@ -47,9 +48,8 @@ class Guard:
     def _slack(self) -> float:
         """Smallest of time and cost headroom under the soft target, as a share of the target."""
         j = self.job
-        rem = sum(j.remaining)
-        finish = j.sol + rem / max(j.n * 0.9, 0.5)
-        cost = j.spent + (finish - j.sol) * j.n * j.p.unit_cost_musd_per_sol
+        finish = j.sol + j.nominal_left()
+        cost = j.spent + (finish - j.sol) * j.cost_rate
         return min((j.deadline * self.soft - finish) / j.deadline, (j.budget * self.soft - cost) / j.budget)
 
     def before_step(self):
@@ -60,12 +60,10 @@ class Guard:
             self._note("incident_odds", f"incident odds x{m:.2f} (slack {100 * slack:.1f}%)")
         self.incident_mult = m
 
-        rem = sum(j.remaining)
-        rate = j.p.unit_cost_musd_per_sol * j.n
+        left = j.nominal_left()               # sols of work left at the current rates
         t_left = j.deadline * self.soft - j.sol
-        t_aff = (j.budget * self.soft - j.spent) / rate
-        avail = self._avail()
-        need = max(rem / t_left if t_left > 0 else float("inf"), rem / t_aff if t_aff > 0 else float("inf")) / avail
+        t_aff = (j.budget * self.soft - j.spent) / j.cost_rate
+        need = max(left / t_left if t_left > 0 else float("inf"), left / t_aff if t_aff > 0 else float("inf"))
         b = min(MAX_BOOST, max(1.0, need))
         if b > 1.05 and (self.boost <= 1.05 or abs(b - self.boost) > 0.25):
             self._note("productivity", f"crew productivity x{b:.2f}")
@@ -85,7 +83,7 @@ class Guard:
         rem = sum(j.remaining)
         if rem <= 1e-9:
             return
-        rate = j.p.unit_cost_musd_per_sol * j.n
+        rate = j.cost_rate
         from .engine import DT
         if j.sol + DT >= j.deadline * self.hard or j.spent + rate * DT >= j.budget * self.hard:
             for k in range(len(j.remaining)):
@@ -107,7 +105,9 @@ class Guard:
     def charge(self, musd: float, what: str) -> float:
         j = self.job
         rem = sum(j.remaining)
-        future = rem / (self._avail() * self.boost) * j.n * j.p.unit_cost_musd_per_sol
+        from .engine import DT
+        steps = math.ceil(j.nominal_left(self.boost) / DT - 1e-9) if rem > 1e-9 else 0   # billed per whole step
+        future = steps * DT * j.cost_rate
         room = j.budget * self.soft - j.spent - future
         amt = min(musd, max(0.0, room))
         if amt < musd - 1e-6:

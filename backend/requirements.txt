@@ -6,3 +6,5 @@ uvicorn[standard]>=0.30
 httpx
 pytest
 anthropic>=1.0
+fpdf2>=2.8
+markdown>=3.5
