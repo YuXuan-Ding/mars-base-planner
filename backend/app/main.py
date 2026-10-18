@@ -54,8 +54,14 @@ if AUDIT_TOKEN:
         if path not in AUDIT_PATHS:
             return JSONResponse({"detail": "not available in audit mode"}, 404)
         if path != "/health":
-            if not hmac.compare_digest(request.headers.get("x-audit-token", ""), AUDIT_TOKEN):
-                return JSONResponse({"detail": "missing or wrong X-Audit-Token"}, 401)
+            h = request.headers
+            auth = h.get("authorization", "")
+            given = [h.get("x-audit-token", ""), h.get("x-api-key", ""), h.get("api-key", ""),
+                     auth[7:] if auth.lower().startswith("bearer ") else auth]
+            if not any(g and hmac.compare_digest(g, AUDIT_TOKEN) for g in given):
+                print(f"audit 401: headers sent {sorted(h.keys())}", flush=True)   # names only, never values
+                return JSONResponse({"detail": "missing or wrong token: send X-Audit-Token, X-API-Key "
+                                               "or Authorization: Bearer"}, 401)
             now = time.monotonic()
             while _calls and now - _calls[0] > 60:
                 _calls.popleft()

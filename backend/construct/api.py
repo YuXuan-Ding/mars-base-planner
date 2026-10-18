@@ -196,6 +196,16 @@ class Ask(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
     job_id: str | None = Field(None, description="include this job's state as context")
     history: list[Turn] = Field(default_factory=list, description="earlier turns, for follow-up questions")
+    image: str | None = Field(None, max_length=8_000_000, description="an image to ask about (base64 or a data: URL; "
+                                                                      "JPEG, PNG, GIF or WebP), e.g. a screenshot of the map")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _prompt_alias(cls, v):
+        # `prompt` (as sent by API test harnesses) means the question
+        if isinstance(v, dict) and "question" not in v and isinstance(v.get("prompt"), str):
+            v = {**v, "question": v["prompt"]}
+        return v
 
 
 @router.post("/ask")
@@ -203,7 +213,9 @@ def ask_claude(req: Ask):
     """Ask Claude a general question about the project (and optionally a job)."""
     job = _get(req.job_id) if req.job_id else None
     try:
-        return ask.ask(req.question, [t.model_dump() for t in req.history], job)
+        return ask.ask(req.question, [t.model_dump() for t in req.history], job, req.image)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
     except RuntimeError as e:
         raise HTTPException(503, f"Claude is unavailable: {e}")
 

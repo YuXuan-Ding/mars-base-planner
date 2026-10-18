@@ -194,3 +194,28 @@ def test_storms_do_not_stop_boring():
     for _ in range(80):
         j.step()
     assert j.bore_left() < before and j.road_left() == pytest.approx(sum(j.tiles[i]["work"] for i in j.road_idx))
+
+
+def test_ask_takes_prompt_alias_and_image(monkeypatch):
+    import base64
+    from types import SimpleNamespace
+    sent = {}
+
+    class Fake:
+        class beta:
+            class messages:
+                @staticmethod
+                def create(**kw):
+                    sent.update(kw)
+                    return SimpleNamespace(stop_reason="end_turn", model="m",
+                                           content=[SimpleNamespace(type="text", text="a red square")])
+    monkeypatch.setattr(ai, "_get_client", lambda: Fake)
+    png = base64.b64encode(b"\x89PNG\r\n\x1a\n" + b"0" * 32).decode()
+    c = TestClient(app)
+    r = c.post("/construct/ask", json={"prompt": "What is this?", "image": f"data:image/png;base64,{png}"})
+    assert r.status_code == 200 and r.json()["answer"] == "a red square"
+    content = sent["messages"][-1]["content"]
+    assert content[0]["type"] == "image" and content[0]["source"]["media_type"] == "image/png"
+    assert content[1] == {"type": "text", "text": "What is this?"}
+    bad = c.post("/construct/ask", json={"question": "x", "image": base64.b64encode(b"not an image").decode()})
+    assert bad.status_code == 422
