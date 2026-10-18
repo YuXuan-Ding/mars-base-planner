@@ -6,7 +6,10 @@ assistant knows nothing about the overrun guard.
 """
 from __future__ import annotations
 
+import base64
+import binascii
 import json
+import re
 from pathlib import Path
 
 from . import ai
@@ -43,12 +46,31 @@ def _job_brief(job) -> str:
     }, indent=1)
 
 
-def ask(question: str, history: list[dict] | None = None, job=None) -> dict:
-    """Returns {"answer", "model"}. Raises RuntimeError if Claude can't be reached."""
+IMAGE_TYPES = {b"\xff\xd8\xff": "image/jpeg", b"\x89PNG": "image/png", b"GIF8": "image/gif", b"RIFF": "image/webp"}
+
+
+def image_block(image: str) -> dict:
+    """An image sent as base64 (or a data: URL) as a Claude image block. Raises ValueError if it isn't a
+    JPEG, PNG, GIF or WebP."""
+    m = re.match(r"^data:(image/[a-z]+);base64,(.*)$", image.strip(), flags=re.S)
+    data = m.group(2) if m else image.strip()
+    try:
+        raw = base64.b64decode(data, validate=False)
+    except (binascii.Error, ValueError) as e:
+        raise ValueError(f"image isn't valid base64: {e}") from e
+    media = next((t for sig, t in IMAGE_TYPES.items() if raw.startswith(sig)), None)
+    if media is None:
+        raise ValueError("image must be a JPEG, PNG, GIF or WebP")
+    return {"type": "image", "source": {"type": "base64", "media_type": media, "data": base64.b64encode(raw).decode()}}
+
+
+def ask(question: str, history: list[dict] | None = None, job=None, image: str | None = None) -> dict:
+    """Returns {"answer", "model"}. An image (base64 or data: URL), if given, is sent with the question.
+    Raises RuntimeError if Claude can't be reached, ValueError if the image can't be read."""
     import anthropic
     msgs = [{"role": m["role"], "content": m["content"]} for m in (history or [])[-MAX_HISTORY:]]
     q = question if job is None else f"Current job:\n{_job_brief(job)}\n\nQuestion: {question}"
-    msgs.append({"role": "user", "content": q})
+    msgs.append({"role": "user", "content": [image_block(image), {"type": "text", "text": q}] if image else q})
     try:
         resp = ai._get_client().beta.messages.create(
             model=ai.MODEL,
