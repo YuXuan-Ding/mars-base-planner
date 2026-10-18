@@ -6,6 +6,7 @@ Docs: http://localhost:8001/docs
 from __future__ import annotations
 
 import base64
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Query
@@ -29,6 +30,40 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 from construct.api import router as construct_router  # noqa: E402
 
 app.include_router(construct_router)
+
+# Audit mode, for an external audit (VEYZL) through a public tunnel: when VEYZL_AUDIT_TOKEN is set, this server
+# answers only the Ask Claude endpoint and /health, every call needs the X-Audit-Token header, and Claude calls are
+# capped per minute and in total, so a leaked URL can't run up the Anthropic bill. Run it as a separate instance.
+AUDIT_TOKEN = os.environ.get("VEYZL_AUDIT_TOKEN")
+if AUDIT_TOKEN:
+    import hmac
+    import time
+    from collections import deque
+
+    from fastapi import Request
+    from fastapi.responses import JSONResponse
+
+    AUDIT_PATHS = {"/construct/ask", "/health"}
+    PER_MIN, MAX_CALLS = int(os.environ.get("AUDIT_PER_MIN", 20)), int(os.environ.get("AUDIT_MAX_CALLS", 300))
+    _calls: deque = deque()
+    _total = [0]
+
+    @app.middleware("http")
+    async def audit_gate(request: Request, call_next):
+        path = request.url.path.rstrip("/") or "/"
+        if path not in AUDIT_PATHS:
+            return JSONResponse({"detail": "not available in audit mode"}, 404)
+        if path != "/health":
+            if not hmac.compare_digest(request.headers.get("x-audit-token", ""), AUDIT_TOKEN):
+                return JSONResponse({"detail": "missing or wrong X-Audit-Token"}, 401)
+            now = time.monotonic()
+            while _calls and now - _calls[0] > 60:
+                _calls.popleft()
+            if len(_calls) >= PER_MIN or _total[0] >= MAX_CALLS:
+                return JSONResponse({"detail": "audit rate limit reached"}, 429)
+            _calls.append(now)
+            _total[0] += 1
+        return await call_next(request)
 
 
 def _in_bounds(*pts):
