@@ -216,6 +216,6 @@ def test_ask_takes_prompt_alias_and_image(monkeypatch):
     assert r.status_code == 200 and r.json()["answer"] == "a red square"
     content = sent["messages"][-1]["content"]
     assert content[0]["type"] == "image" and content[0]["source"]["media_type"] == "image/png"
-    assert content[1] == {"type": "text", "text": "What is this?"}
+    assert content[1]["type"] == "text" and "<question>\nWhat is this?\n</question>" in content[1]["text"]
     bad = c.post("/construct/ask", json={"question": "x", "image": base64.b64encode(b"not an image").decode()})
     assert bad.status_code == 422
