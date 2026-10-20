@@ -307,7 +307,7 @@ body.calc-open #layers{display:none}
 .bctl input[type=range]{flex:1;accent-color:var(--accent);min-width:60px;margin:0}
 .bctl #build-speed-v{min-width:64px;text-align:right;font-variant-numeric:tabular-nums}
 #build{left:calc(env(safe-area-inset-left,0px) + 20px);top:calc(env(safe-area-inset-top,0px) + var(--hdr,132px));width:340px;box-sizing:border-box;max-height:calc(100% - var(--hdr,132px) - 76px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:14px 16px 12px}
-#build[hidden],#ask[hidden]{display:none}
+#build[hidden],#ask[hidden],#grok[hidden]{display:none}
 body.build-open #layers{display:none}
 .bbar{height:6px;border-radius:3px;background:rgba(214,220,230,.08);overflow:hidden;margin:2px 0 8px}
 .bbar i{display:block;height:100%;background:var(--accent);transition:width .2s}
@@ -359,6 +359,19 @@ body.build-open #layers{display:none}
 #ask-form textarea{font:inherit;font-size:12.5px;color:var(--fg);background:rgba(214,220,230,.04);border:1px solid var(--line-strong);border-radius:9px;padding:7px 9px;resize:vertical;min-height:38px}
 #ask-form .row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted)}
 #ask-form .btn-primary{margin:0;padding:6px 14px}
+#grok{right:calc(env(safe-area-inset-right,0px) + 20px);bottom:calc(env(safe-area-inset-bottom,0px) + 20px);width:440px;box-sizing:border-box;max-height:min(78%,720px);padding:14px 16px 12px;display:flex;flex-direction:column;gap:8px;z-index:5}
+#grok-img{width:100%;border-radius:9px;border:1px solid var(--line);display:block;cursor:zoom-in;background:rgba(214,220,230,.04)}
+#grok-img[hidden]{display:none}
+#grok-status{font-size:12px;color:var(--muted);line-height:1.45}
+#grok-status.err{color:var(--warn)}
+#grok-row{display:flex;gap:8px;align-items:center}
+#grok-row input{flex:1;min-width:0;font:inherit;font-size:12px;color:var(--fg);background:rgba(214,220,230,.04);border:1px solid var(--line-strong);border-radius:9px;padding:6px 9px}
+#grok-row .btn-primary{margin:0;padding:6px 14px;white-space:nowrap}
+#grok details{font-size:11px;color:var(--faint)}
+#grok details summary{cursor:pointer;color:var(--muted)}
+#grok details p{margin:6px 0 0;line-height:1.45}
+#grok-links{font-size:11.5px;display:flex;gap:12px}
+#grok-links a{color:var(--accent)}
 .tabbar{display:none}
 #nogl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);padding:0 24px;text-align:center}
 
@@ -387,6 +400,8 @@ body.build-open #layers{display:none}
   body.build-open #build{display:block}
   #build{max-height:46%!important}
   body.ask-open #ask{display:flex}
+  body.grok-open #grok{display:flex}
+  #grok{width:auto!important;left:calc(env(safe-area-inset-left,0px) + 16px);right:16px!important;max-height:70%!important;bottom:calc(env(safe-area-inset-bottom,0px) + 70px)!important}
   #ask{max-height:60%!important;bottom:calc(env(safe-area-inset-bottom,0px) + 70px)!important}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -408,6 +423,7 @@ body.build-open #layers{display:none}
     <button class="btn-ghost" id="planner-btn" type="button" title="Layers the planner computes from. Change them in Overview."></button>
     <button class="btn-ghost" id="add-base-btn" type="button">+ Add a base</button>
     <button class="btn-ghost" id="ask-btn" type="button" aria-pressed="false">Ask Claude</button>
+    <button class="btn-ghost" id="grok-btn" type="button" aria-pressed="false" title="Grok Imagine turns the current 3D view into a concept render of the planned base">Render with Grok</button>
     <button class="btn-ghost" id="clear-all" type="button" title="Remove every base, search outline, route and site result">Clear all</button>
     <button class="btn-ghost" id="sound-btn" type="button" aria-pressed="false" title="Ambient soundtrack: Martian wind, a low drone and distant chimes, made in the browser">Sound: off</button>
     <button class="btn-ghost" id="nasa-btn" type="button" aria-pressed="false" title="Switch to NASA-style fonts: worm-style titles, Helvetica text">NASA fonts: off</button>
@@ -440,6 +456,15 @@ body.build-open #layers{display:none}
     <textarea id="ask-q" rows="2" placeholder="Ask a question… (Enter to send)" aria-label="Question"></textarea>
     <div class="row"><label id="ask-job-wrap" hidden><input type="checkbox" id="ask-job" checked> about the construction job</label><span></span><button class="btn-primary" type="submit" id="ask-send">Ask</button></div>
   </form>
+</section>
+
+<section id="grok" class="panel" hidden aria-label="Render with Grok">
+  <div class="panel-head"><h2>Render with Grok</h2><span><button class="icon-btn" type="button" id="grok-close" aria-label="Close">×</button></span></div>
+  <div id="grok-status" aria-live="polite">Frame the view you want, then render. Grok Imagine keeps this real Jezero terrain and builds the planned bases and road on it.</div>
+  <img id="grok-img" alt="Grok Imagine concept render of the planned base" hidden>
+  <div id="grok-links" hidden><a id="grok-open" target="_blank" rel="noopener">Open full size</a><a id="grok-view" href="#">Show the view I sent</a></div>
+  <div id="grok-row"><input id="grok-style" type="text" maxlength="200" placeholder="Extra direction, e.g. at dusk, dust storm rolling in (optional)" aria-label="Extra direction"><button class="btn-primary" type="button" id="grok-go">Render</button></div>
+  <details id="grok-prompt-wrap" hidden><summary>Prompt sent to Grok</summary><p id="grok-prompt"></p></details>
 </section>
 
 <section id="calc" class="panel" hidden aria-label="Route calculation" aria-live="polite">
@@ -1426,6 +1451,7 @@ function addBase(k, cfg, example) {
   b.g = cfg.g || newGroup(cfg.name ? cfg.name.replace(/^\w+ /, '') + ' base' : null, example).id;
   b.s = stats(k, cfg); bases.push(b); selected = b.g; renderBases(); notifyPlanner(); return b;
 }
+let SHOT = null;   // set by grabView(): called right after the next frame is drawn, while the WebGL buffer still holds it
 const openBases = new Set();   // base cards showing their full details
 let buildReady = false;   // the construction code has loaded
 function facilityRow(b) {
@@ -1841,6 +1867,7 @@ function frame(now) {
     gl.disable(gl.DEPTH_TEST); gl.depthMask(true);
   }
   drawOverlay(t);
+  if (SHOT) { const f = SHOT; SHOT = null; f(); }
   requestAnimationFrame(frame);
 }
 
@@ -3503,6 +3530,54 @@ BL('ask-form').addEventListener('submit', async e => {
     ASK.hist.push({ role: 'user', content: q }, { role: 'assistant', content: r.answer });
   } catch (err) { ad.className = 'a err'; ad.textContent = 'Claude could not answer: ' + err.message; }
   ASK.busy = false; BL('ask-send').disabled = false; log.scrollTop = log.scrollHeight;
+});
+/* ---------- Render with Grok: the 3D view + the plan -> a concept render, POST /imagine/render ---------- */
+const GROK = { busy: false, sent: '', url: '' };
+function setGrok(on) {
+  BL('grok').hidden = !on; document.body.classList.toggle('grok-open', on); BL('grok-btn').setAttribute('aria-pressed', String(on));
+  if (on && !BL('ask').hidden) setAsk(false);
+}
+function grabView(maxW = 1536) {   // the terrain plus the label/route overlay, as a JPEG data URI
+  return new Promise(res => { SHOT = () => {
+    const w = Math.min(maxW, glc.width), h = Math.round(glc.height * w / glc.width);
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const x = c.getContext('2d'); x.drawImage(glc, 0, 0, w, h); x.drawImage(ovc, 0, 0, w, h);
+    res(c.toDataURL('image/jpeg', 0.9));
+  }; });
+}
+function grokScene() {
+  const bs = groups.map(g => ({ name: g.name, facilities: members(g).map(b => b.name || b.type).filter(Boolean) })).filter(g => g.facilities.length);
+  let road = null;
+  if (B.title) road = (B.title + ' · ' + BL('build-sub').textContent).slice(0, 380);
+  else if (CHOSEN) road = `${ROUTE_STYLE[CHOSEN.key].label} road, ${CHOSEN.a.name} to ${CHOSEN.b.name}`.slice(0, 380);
+  return { bases: bs, road, built: !!B.roadDone };
+}
+function grokStatus(t, err) { const el = BL('grok-status'); el.textContent = t; el.classList.toggle('err', !!err); }
+BL('grok-btn').addEventListener('click', () => setGrok(BL('grok').hidden));
+BL('grok-close').addEventListener('click', () => setGrok(false));
+BL('ask-btn').addEventListener('click', () => { if (!BL('ask').hidden) setGrok(false); });
+BL('grok-img').addEventListener('click', () => { if (BL('grok-img').src) window.open(BL('grok-img').src, '_blank', 'noopener'); });
+BL('grok-view').addEventListener('click', e => { e.preventDefault(); const img = BL('grok-img');
+  const showSent = img.src !== GROK.sent; img.src = showSent ? GROK.sent : GROK.url; BL('grok-view').textContent = showSent ? 'Show the render' : 'Show the view I sent'; });
+BL('grok-style').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); BL('grok-go').click(); } });
+BL('grok-go').addEventListener('click', async () => {
+  if (GROK.busy) return;
+  if (!apiOk) { grokStatus('The planner backend is not reachable.', true); return; }
+  GROK.busy = true; BL('grok-go').disabled = true;
+  grokStatus('Capturing the view…');
+  try {
+    const image = await grabView();
+    GROK.sent = image;
+    grokStatus('Grok Imagine is rendering the base on this terrain (usually under a minute)…');
+    const r = await capi('/imagine/render', { image, ...grokScene(), style: BL('grok-style').value.trim() || null });
+    GROK.url = r.url;
+    const img = BL('grok-img'); img.src = r.url; img.hidden = false;
+    BL('grok-open').href = r.url; BL('grok-links').hidden = false; BL('grok-view').textContent = 'Show the view I sent';
+    BL('grok-prompt').textContent = r.prompt; BL('grok-prompt-wrap').hidden = false;
+    grokStatus(`Rendered by ${r.model} from the real HRSC + MOLA elevation in view. Concept art, not a survey.`);
+    BL('grok-go').textContent = 'Render again';
+  } catch (err) { grokStatus('Grok could not render: ' + err.message, true); }
+  GROK.busy = false; BL('grok-go').disabled = false;
 });
 buildReady = true; updateBuildForm(); setSpeedLabel(); syncPhases();
 // left panels start just under the top bar, however its buttons wrap

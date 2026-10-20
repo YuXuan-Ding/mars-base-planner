@@ -30,6 +30,8 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 from construct.api import router as construct_router  # noqa: E402
 
 app.include_router(construct_router)
+from .imagine import router as imagine_router  # noqa: E402
+app.include_router(imagine_router)
 
 # Audit mode, for an external audit (VEYZL) through a public tunnel: when VEYZL_AUDIT_TOKEN is set, this server
 # answers only the Ask Claude endpoint and /health, every call needs the X-Audit-Token header, and Claude calls are
