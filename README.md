@@ -2,6 +2,10 @@
 
 A hackathon project for choosing where to build a Mars base and how to connect it. It uses real terrain from the Jezero crater region (about 405 × 403 km, 15.1–21.9° N, 73.4–80.6° E) to find flat, low-hazard sites, estimate grading work, and plan rover routes.
 
+**Demo video:** [watch on YouTube](https://www.youtube.com/watch?v=oadm2RJAG2Q)
+
+[![Mars Base Planner demo video](https://img.youtube.com/vi/oadm2RJAG2Q/hqdefault.jpg)](https://www.youtube.com/watch?v=oadm2RJAG2Q)
+
 Planning notes, region choice and the data inventory are in [docs/brainstorm.md](docs/brainstorm.md).
 
 ## What's here
